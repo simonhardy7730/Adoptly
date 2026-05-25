@@ -1,0 +1,152 @@
+import { useRef } from 'react';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+
+const SPECIES_EMOJI = {
+  dog: '🐕',
+  cat: '🐈',
+  rabbit: '🐇',
+  guinea_pig: '🐹',
+  other: '🐾',
+};
+
+const TEMPERAMENT_LABEL = {
+  calm: 'Calme',
+  playful: 'Joueur',
+  energetic: 'Énergique',
+  mixed: 'Mixte',
+};
+
+const TEMPERAMENT_COLOR = {
+  calm: 'bg-blue-100 text-blue-700',
+  playful: 'bg-yellow-100 text-yellow-700',
+  energetic: 'bg-orange-100 text-orange-700',
+  mixed: 'bg-purple-100 text-purple-700',
+};
+
+function ageLabel(months) {
+  if (!months) return 'Âge inconnu';
+  if (months < 12) return `${months} mois`;
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return m > 0 ? `${y} an${y > 1 ? 's' : ''} ${m} mois` : `${y} an${y > 1 ? 's' : ''}`;
+}
+
+export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-250, 250], [-18, 18]);
+  const loveOpacity = useTransform(x, [20, 100], [0, 1]);
+  const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
+  const cardOpacity = useTransform(x, [-350, -200, 0, 200, 350], [0, 1, 1, 1, 0]);
+  const dragging = useRef(false);
+
+  async function handleDragEnd(_, info) {
+    dragging.current = false;
+    const threshold = 100;
+    const velThreshold = 600;
+    const goRight = info.offset.x > threshold || info.velocity.x > velThreshold;
+    const goLeft = info.offset.x < -threshold || info.velocity.x < -velThreshold;
+
+    if (goRight) {
+      await animate(x, 1400, { duration: 0.25, ease: 'easeOut' });
+      onSwipe('right');
+    } else if (goLeft) {
+      await animate(x, -1400, { duration: 0.25, ease: 'easeOut' });
+      onSwipe('left');
+    } else {
+      animate(x, 0, { type: 'spring', stiffness: 400, damping: 30 });
+    }
+  }
+
+  const photo = animal.photos?.[0];
+  const scaleOffset = 1 - stackIndex * 0.04;
+  const yOffset = stackIndex * 10;
+
+  return (
+    <motion.div
+      className="absolute inset-0 no-select"
+      style={{
+        x: isTop ? x : 0,
+        rotate: isTop ? rotate : 0,
+        opacity: isTop ? cardOpacity : 1,
+        scale: scaleOffset,
+        y: yOffset,
+        zIndex: 10 - stackIndex,
+        touchAction: isTop ? 'none' : 'auto',
+      }}
+      drag={isTop ? 'x' : false}
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.9}
+      onDragStart={() => { dragging.current = true; }}
+      onDragEnd={isTop ? handleDragEnd : undefined}
+      whileTap={isTop ? { cursor: 'grabbing' } : {}}
+    >
+      <div className="w-full h-full bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col">
+        {/* Photo */}
+        <div className="relative flex-1 min-h-0 bg-gradient-to-br from-blue-100 to-blue-50">
+          {photo ? (
+            <img
+              src={photo}
+              alt={animal.name}
+              className="w-full h-full object-cover"
+              draggable={false}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-8xl">{SPECIES_EMOJI[animal.species] || '🐾'}</span>
+            </div>
+          )}
+
+          {/* Indicateurs de swipe */}
+          {isTop && (
+            <>
+              <motion.div
+                className="absolute top-6 left-6 text-5xl drop-shadow-lg"
+                style={{ opacity: loveOpacity }}
+              >
+                💚
+              </motion.div>
+              <motion.div
+                className="absolute top-6 right-6 text-5xl drop-shadow-lg"
+                style={{ opacity: nopeOpacity }}
+              >
+                👋
+              </motion.div>
+            </>
+          )}
+
+          {/* Badge distance */}
+          {animal.distance != null && (
+            <div className="absolute top-4 right-4 bg-black/40 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+              📍 {animal.distance} km
+            </div>
+          )}
+        </div>
+
+        {/* Infos */}
+        <div className="p-5 space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h2 className="text-2xl font-bold text-primary leading-tight">{animal.name}</h2>
+              <p className="text-gray-500 text-sm">
+                {animal.breed || animal.species} · {ageLabel(animal.age)}
+              </p>
+            </div>
+            {animal.temperament && (
+              <span className={`badge text-xs mt-1 ${TEMPERAMENT_COLOR[animal.temperament]}`}>
+                {TEMPERAMENT_LABEL[animal.temperament] || animal.temperament}
+              </span>
+            )}
+          </div>
+
+          {animal.story && (
+            <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{animal.story}</p>
+          )}
+
+          <p className="text-gray-400 text-xs font-medium">
+            {animal.shelters?.name}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+}

@@ -1,0 +1,561 @@
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+
+// ── Données ──────────────────────────────────────────────────────────────────
+
+const microTestimonials = [
+  { stars: 5, text: '"Enfin une adoption qu\'on ne regrette pas."', author: 'Marie L.' },
+  { stars: 5, text: '"Léo était exactement comme décrit. Le coup de foudre."', author: 'Thomas B.' },
+  { stars: 5, text: '"Le refuge nous a rappelés dans l\'heure."', author: 'Camille R.' },
+];
+
+const etapes = [
+  {
+    emoji: '🧩',
+    title: 'Dressez votre portrait',
+    desc: 'Logement, rythme de vie, expérience avec les animaux. Quelques questions pensées pour trouver la vraie compatibilité.',
+  },
+  {
+    emoji: '💚',
+    title: 'Rencontrez vos compatibilités',
+    desc: "On vous présente des animaux sélectionnés pour vous, dans des refuges proches. Pas des centaines — les bons.",
+  },
+  {
+    emoji: '🏡',
+    title: 'Écrivez une belle histoire',
+    desc: 'Un appel, une visite, une famille. Le refuge vous accompagne à chaque étape.',
+  },
+];
+
+
+const avantagsRefuge = [
+  'Créez vos fiches animaux en quelques minutes',
+  'Recevez uniquement des demandes de familles compatibles',
+  'Suivez chaque prise de contact depuis votre tableau de bord',
+  '100 % gratuit pour les associations partenaires',
+];
+
+const animaux = ['🐕', '🐈', '🐇', '🐹', '🦜', '🐕‍🦺'];
+
+// ── Variants d'animation ──────────────────────────────────────────────────────
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.55, delay, ease: [0.25, 0.46, 0.45, 0.94] },
+});
+
+const fadeUpView = (delay = 0) => ({
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.5, delay },
+});
+
+// ── Carte aperçu (hero) ───────────────────────────────────────────────────────
+
+function PreviewCard() {
+  return (
+    <motion.div
+      className="w-56 bg-white rounded-3xl shadow-2xl overflow-hidden"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.6, duration: 0.6, ease: 'easeOut' }}
+    >
+      <div className="bg-gradient-to-br from-blue-200 to-indigo-100 h-40 flex items-center justify-center">
+        <span className="text-7xl">🐕</span>
+      </div>
+      <div className="p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="font-bold text-primary text-lg">Luna</span>
+          <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">Joueur</span>
+        </div>
+        <p className="text-gray-400 text-xs">Border Collie · 2 ans · 8 km</p>
+        <div className="flex flex-col gap-1 pt-1">
+          <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-lg font-medium">✓ Compatible enfants</span>
+          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-medium">✓ Adapté appartement</span>
+        </div>
+      </div>
+      <div className="px-4 pb-4 flex justify-between">
+        <div className="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-lg">👋</div>
+        <div className="w-12 h-12 rounded-full bg-success flex items-center justify-center text-xl shadow-md">💚</div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Logo texte Adoptly ────────────────────────────────────────────────────────
+
+function AdoptlyLogo({ light = false }) {
+  return (
+    <Link to="/" className="flex items-center gap-2 group">
+      <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors
+        ${light ? 'bg-white/20 group-hover:bg-white/30' : 'bg-primary group-hover:bg-primary-dark'}`}>
+        <span className="text-white font-black text-sm leading-none select-none">A</span>
+      </div>
+      <span className={`font-black text-lg tracking-tight ${light ? 'text-white' : 'text-primary'}`}>
+        Adoptly
+      </span>
+    </Link>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-bg-light overflow-x-hidden">
+
+      {/* ── Navigation ───────────────────────────────────────── */}
+      <nav className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+          <AdoptlyLogo />
+          <div className="flex items-center gap-1">
+            <Link
+              to="/shelter/register"
+              className="hidden md:block btn-ghost text-sm py-1.5 px-4 text-gray-500"
+            >
+              Pour les refuges
+            </Link>
+            <Link to="/adoptant/login" className="btn-ghost text-sm py-1.5 px-4">
+              Connexion
+            </Link>
+            <Link to="/adoptant/register" className="btn-primary text-sm py-2 px-4">
+              Commencer →
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-hero-gradient" />
+        {/* Texture en points */}
+        <div
+          className="absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+            backgroundSize: '28px 28px',
+          }}
+        />
+        {/* Reflet doux en bas */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-bg-light/20 to-transparent" />
+
+        <div className="relative max-w-5xl mx-auto px-6 py-20 md:py-28">
+          <div className="flex flex-col md:flex-row items-center gap-12">
+
+            {/* Texte gauche */}
+            <div className="flex-1 text-white text-center md:text-left">
+              {/* Animaux flottants */}
+              <div className="flex justify-center md:justify-start gap-3 mb-8">
+                {animaux.map((emoji, i) => (
+                  <motion.span
+                    key={i}
+                    className="text-2xl"
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.28, ease: 'easeInOut' }}
+                  >
+                    {emoji}
+                  </motion.span>
+                ))}
+              </div>
+
+              <motion.h1
+                className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight mb-5"
+                {...fadeUp(0)}
+              >
+                Votre prochain compagnon
+                <br />
+                <span className="text-orange-300">vous attend déjà.</span>
+              </motion.h1>
+
+              <motion.p
+                className="text-lg md:text-xl text-blue-100 mb-3 leading-relaxed max-w-lg mx-auto md:mx-0"
+                {...fadeUp(0.12)}
+              >
+                Dites-nous qui vous êtes.
+                <br className="hidden md:block" />
+                On s'occupe du reste.
+              </motion.p>
+
+              <motion.p
+                className="text-blue-200/80 text-sm mb-8 max-w-md mx-auto md:mx-0 leading-relaxed"
+                {...fadeUp(0.22)}
+              >
+                Découvrez des animaux adaptés à votre mode de vie — sélectionnés par notre
+                algorithme de compatibilité, pas au hasard.
+              </motion.p>
+
+              <motion.div
+                className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-6"
+                {...fadeUp(0.32)}
+              >
+                <Link
+                  to="/adoptant/register"
+                  className="bg-accent hover:bg-orange-500 text-white font-bold px-7 py-4 rounded-2xl
+                             text-base shadow-lg hover:shadow-xl active:scale-95 transition-all"
+                >
+                  Trouver mon compagnon idéal
+                </Link>
+                <Link
+                  to="/shelter/register"
+                  className="bg-white/10 hover:bg-white/18 text-white font-semibold px-7 py-4 rounded-2xl
+                             text-base border border-white/25 backdrop-blur-sm active:scale-95 transition-all"
+                >
+                  Je représente un refuge
+                </Link>
+              </motion.div>
+
+              <motion.p
+                className="text-blue-200/60 text-xs"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                🔒 Gratuit · Sans carte bancaire
+              </motion.p>
+            </div>
+
+            {/* Carte aperçu (desktop uniquement) */}
+            <div className="hidden md:flex flex-shrink-0 justify-center">
+              <div className="relative">
+                <div className="absolute -inset-6 bg-white/8 rounded-[2.5rem] blur-2xl" />
+                <PreviewCard />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Micro-témoignages ─────────────────────────────────── */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {microTestimonials.map((t, i) => (
+              <motion.div
+                key={i}
+                className="flex items-start gap-3"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <span className="text-yellow-400 text-sm mt-0.5 flex-shrink-0">
+                  {'★'.repeat(t.stars)}
+                </span>
+                <div>
+                  <p className="text-gray-700 text-sm italic">{t.text}</p>
+                  <p className="text-gray-400 text-xs mt-0.5">— {t.author}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Problème ──────────────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto px-6 py-16 text-center">
+        <motion.div {...fadeUpView()} className="space-y-6">
+          <div className="inline-block bg-accent-light border border-orange-100 text-accent font-bold text-3xl md:text-4xl px-6 py-3 rounded-2xl">
+            1 adoption sur 4
+          </div>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-primary">
+            revient au refuge dans les 12 mois.
+          </h2>
+          <p className="text-gray-500 text-lg leading-relaxed max-w-xl mx-auto">
+            Pas par mauvaise volonté — mais par mauvaise compatibilité.
+          </p>
+          <p className="text-gray-600 leading-relaxed max-w-xl mx-auto">
+            Adoptly part d'une conviction simple : un animal heureux, c'est un animal dans le bon
+            foyer. Pas juste le foyer le plus rapide. Nous analysons votre mode de vie pour vous
+            présenter les animaux qui vous correspondent réellement — et réduire les adoptions
+            ratées.
+          </p>
+        </motion.div>
+      </section>
+
+      {/* ── Comment ça marche ─────────────────────────────────── */}
+      <section className="bg-white py-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <motion.div {...fadeUpView()} className="text-center mb-12">
+            <h2 className="text-3xl font-extrabold text-primary">
+              Simple pour vous.
+              <span className="text-secondary"> Intelligent en coulisses.</span>
+            </h2>
+            <p className="text-gray-400 mt-2">Trois étapes. Aucune complexité.</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {etapes.map((etape, i) => (
+              <motion.div
+                key={etape.title}
+                className="relative p-6 rounded-3xl border-2 border-gray-100
+                           hover:border-secondary/30 hover:shadow-card transition-all group"
+                {...fadeUpView(i * 0.15)}
+              >
+                <div className="w-8 h-8 bg-primary text-white rounded-full text-sm font-bold
+                                flex items-center justify-center mb-4">
+                  {i + 1}
+                </div>
+                <div className="text-4xl mb-3">{etape.emoji}</div>
+                <h3 className="font-bold text-gray-800 text-lg mb-2">{etape.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{etape.desc}</p>
+                {i < etapes.length - 1 && (
+                  <div className="hidden md:block absolute top-12 -right-3 text-gray-300 text-xl z-10">→</div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <Link to="/adoptant/register" className="btn-primary inline-block px-8 py-4 text-base">
+              Trouver mon compagnon idéal
+            </Link>
+            <p className="text-gray-400 text-xs mt-3">Gratuit. Sans engagement.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Compatibilité / différenciation ───────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 py-16">
+        <div className="grid md:grid-cols-2 gap-10 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-5"
+          >
+            <span className="section-label">Notre approche</span>
+            <h2 className="text-3xl font-extrabold text-primary leading-tight">
+              Ce n'est pas qu'une question de coup de cœur.
+            </h2>
+            <p className="text-gray-600 leading-relaxed">
+              Notre algorithme de compatibilité prend en compte 14 critères — du type de logement
+              à votre rapport à l'activité physique, en passant par la présence d'enfants ou
+              d'autres animaux.
+            </p>
+            <p className="text-gray-600 leading-relaxed">
+              Le résultat : des présentations qui ont du sens, des adoptions qui tiennent.
+            </p>
+            <Link
+              to="/adoptant/register"
+              className="inline-flex items-center gap-2 text-secondary font-semibold hover:gap-3 transition-all"
+            >
+              Créer mon profil de compatibilité →
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="flex justify-center"
+          >
+            <div className="card p-5 w-full max-w-sm space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-200 to-blue-100 rounded-2xl flex items-center justify-center text-3xl">
+                  🐈
+                </div>
+                <div>
+                  <p className="font-bold text-gray-800">Milo</p>
+                  <p className="text-gray-400 text-sm">Européen · 3 ans · 4 km</p>
+                </div>
+                <span className="ml-auto text-xs bg-primary-light text-secondary px-2.5 py-1 rounded-full font-semibold">
+                  Très compatible
+                </span>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { label: 'Compatible enfants',   color: 'bg-green-50 text-green-700' },
+                  { label: 'Adapté appartement',   color: 'bg-blue-50 text-blue-700'   },
+                  { label: 'Calme & indépendant',  color: 'bg-gray-50 text-gray-600'   },
+                  { label: 'Aucun besoin spécial', color: 'bg-purple-50 text-purple-700' },
+                ].map((b) => (
+                  <div key={b.label} className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium ${b.color}`}>
+                    <span>✓</span> {b.label}
+                  </div>
+                ))}
+              </div>
+              <p className="text-gray-400 text-xs text-center">Refuge des Lilas · Lyon 3ème</p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+
+      {/* ── Témoignage long ───────────────────────────────────── */}
+      <section className="bg-white py-16">
+        <div className="max-w-2xl mx-auto px-6 text-center">
+          <motion.div {...fadeUpView()} className="space-y-5">
+            <div className="text-4xl">💬</div>
+            <blockquote className="text-xl md:text-2xl font-medium text-gray-700 leading-relaxed">
+              "Je cherchais depuis 6 mois sur les sites habituels. Trop d'animaux, aucun filtre
+              vraiment utile. Avec Adoptly, on m'a présenté 4 animaux en une soirée. Le deuxième,
+              c'était Nino. On ne s'est plus quittés."
+            </blockquote>
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center
+                              font-bold text-primary">
+                S
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-800 text-sm">Sophie M.</p>
+                <p className="text-gray-400 text-xs">Adoptante à Lyon · il y a 3 mois</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Section refuges ───────────────────────────────────── */}
+      <section className="bg-bg-light py-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="card p-8 md:p-12">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div className="space-y-5">
+                <span className="section-label">Pour les refuges & associations</span>
+                <h2 className="text-2xl md:text-3xl font-extrabold text-primary leading-tight">
+                  Donnez à chaque animal la visibilité qu'il mérite.
+                </h2>
+                <p className="text-gray-500 leading-relaxed">
+                  Adoptly vous offre une vitrine numérique moderne et des outils de suivi —
+                  sans frais, sans complexité.
+                </p>
+                <ul className="space-y-3">
+                  {avantagsRefuge.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-gray-700 text-sm">
+                      <span className="text-success font-bold mt-0.5 flex-shrink-0">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Link to="/shelter/register" className="btn-primary text-sm py-3 px-6 text-center">
+                    Rejoindre comme refuge partenaire
+                  </Link>
+                  <Link to="/shelter/login" className="btn-secondary text-sm py-3 px-6 text-center">
+                    Se connecter
+                  </Link>
+                </div>
+                <p className="text-gray-400 text-xs">
+                  Rejoignez les premiers refuges partenaires. Mise en ligne en moins de 10 minutes.
+                </p>
+              </div>
+
+              {/* Mini dashboard preview */}
+              <div className="hidden md:block">
+                <div className="bg-bg-light rounded-2xl p-5 space-y-3 border border-gray-100">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                    Votre impact ce mois-ci
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { n: '12', l: 'Animaux listés', e: '🐾' },
+                      { n: '47', l: 'Matchs',         e: '💚' },
+                      { n: '8',  l: 'Contacts',       e: '📬' },
+                    ].map((s) => (
+                      <div key={s.l} className="bg-white rounded-xl p-3 text-center shadow-sm">
+                        <p className="text-base">{s.e}</p>
+                        <p className="font-extrabold text-primary text-lg">{s.n}</p>
+                        <p className="text-gray-400 text-xs leading-tight">{s.l}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { name: 'Luna', status: 'En recherche de famille',  color: 'bg-green-100 text-green-700'  },
+                      { name: 'Milo', status: 'A trouvé sa famille 🎉',   color: 'bg-purple-100 text-purple-700' },
+                      { name: 'Rex',  status: 'En recherche de famille',  color: 'bg-green-100 text-green-700'  },
+                    ].map((a) => (
+                      <div key={a.name} className="flex items-center justify-between bg-white rounded-xl px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 bg-primary-light rounded-lg flex items-center justify-center text-sm">🐾</div>
+                          <span className="font-medium text-gray-700 text-sm">{a.name}</span>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.color}`}>
+                          {a.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA final ─────────────────────────────────────────── */}
+      <section className="bg-cta-gradient py-20 text-center text-white">
+        <div className="max-w-lg mx-auto px-6 space-y-6">
+          <motion.p
+            className="text-orange-300 font-semibold text-sm uppercase tracking-widest"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            Gratuit · Sans engagement
+          </motion.p>
+          <motion.h2
+            className="text-3xl md:text-4xl font-extrabold leading-tight"
+            {...fadeUpView()}
+          >
+            Votre prochain compagnon vous attend peut-être à 12 km.
+          </motion.h2>
+          <motion.p
+            className="text-blue-100 leading-relaxed"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+          >
+            Créez votre profil en 3 minutes.
+            <br />
+            Découvrez vos premières compatibilités aujourd'hui.
+          </motion.p>
+          <motion.div {...fadeUpView(0.2)}>
+            <Link
+              to="/adoptant/register"
+              className="inline-block bg-accent hover:bg-orange-500 text-white font-bold
+                         px-10 py-4 rounded-2xl text-lg shadow-lg hover:shadow-xl
+                         active:scale-95 transition-all"
+            >
+              Trouver mon compagnon idéal
+            </Link>
+            <p className="text-blue-200/50 text-xs mt-4">Pour les adoptions qui durent.</p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Footer ────────────────────────────────────────────── */}
+      <footer className="bg-white border-t border-gray-100 py-10">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
+                <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+                  <span className="text-white font-black text-xs select-none">A</span>
+                </div>
+                <span className="font-black text-primary text-lg tracking-tight">Adoptly</span>
+              </div>
+              <p className="text-gray-400 text-sm font-medium">Pas juste un animal. Le vôtre.</p>
+            </div>
+
+            <div className="flex gap-6 text-sm">
+              <Link to="/shelter/login"    className="text-gray-400 hover:text-primary transition-colors">Espace refuge</Link>
+              <Link to="/adoptant/login"   className="text-gray-400 hover:text-primary transition-colors">Espace adoptant</Link>
+              <Link to="/shelter/register" className="text-gray-400 hover:text-primary transition-colors">Devenir partenaire</Link>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 mt-8 pt-6 text-center">
+            <p className="text-gray-300 text-xs">
+              © 2025 Adoptly · Connecter des foyers aimants avec des animaux de refuge · 100 % gratuit pour les associations
+            </p>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+}

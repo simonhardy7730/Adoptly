@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /adoptant/questionnaire
+Disallow: /adoptant/swipe
+Disallow: /adoptant/matches
+Disallow: /shelter/dashboard
+Disallow: /shelter/animals/
+
+Sitemap: https://adoptly.fr/sitemap.xml
