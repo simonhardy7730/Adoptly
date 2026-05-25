@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt  from 'bcryptjs';
 import jwt     from 'jsonwebtoken';
 import { supabase }          from '../lib/supabase.js';
-import { sendWelcomeEmail }  from '../lib/email.js';
+import { sendWelcomeEmail, sendShelterWelcomeEmail } from '../lib/email.js';
 
 const router = express.Router();
 
@@ -146,6 +146,9 @@ router.post('/shelter/register', async (req, res) => {
         return res.status(409).json({ error: 'Cet email est déjà utilisé' });
       throw error;
     }
+
+    // Email de bienvenue refuge (non-bloquant)
+    sendShelterWelcomeEmail({ email: data.email, name: data.name }).catch(() => {});
 
     const token = makeToken({ id: data.id, email: data.email, role: 'shelter' });
     res.json({ token, user: data, role: 'shelter' });
