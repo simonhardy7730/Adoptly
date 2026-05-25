@@ -54,8 +54,8 @@ export async function sendWelcomeEmail({ email }) {
       <!-- En-tête gradient -->
       <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:40px 32px;text-align:center;">
         <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:4px;">
-          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;">
-            <span style="color:#fff;font-weight:900;font-size:18px;line-height:1;">A</span>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;vertical-align:middle;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
           </div>
           <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
         </div>
@@ -146,7 +146,7 @@ export async function sendWelcomeEmail({ email }) {
       <!-- Pied de page -->
       <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
         <p style="color:#9CA3AF;font-size:12px;margin:0;">
-          © 2025 Adoptly ·
+          © ${new Date().getFullYear()} Adoptly ·
           <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
         </p>
         <p style="color:#D1D5DB;font-size:11px;margin:8px 0 0;">
@@ -186,8 +186,8 @@ export async function sendShelterWelcomeEmail({ email, name }) {
       <!-- En-tête gradient -->
       <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:40px 32px;text-align:center;">
         <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:4px;">
-          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;">
-            <span style="color:#fff;font-weight:900;font-size:18px;line-height:1;">A</span>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;vertical-align:middle;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
           </div>
           <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
         </div>
@@ -280,7 +280,7 @@ export async function sendShelterWelcomeEmail({ email, name }) {
       <!-- Pied de page -->
       <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
         <p style="color:#9CA3AF;font-size:12px;margin:0;">
-          © 2025 Adoptly ·
+          © ${new Date().getFullYear()} Adoptly ·
           <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
         </p>
         <p style="color:#D1D5DB;font-size:11px;margin:8px 0 0;">
