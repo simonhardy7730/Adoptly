@@ -7,6 +7,7 @@ import AuthCallback  from './pages/auth/AuthCallback';
 import Questionnaire from './pages/adoptant/Questionnaire';
 import Swiper        from './pages/adoptant/Swiper';
 import MatchHistory  from './pages/adoptant/MatchHistory';
+import Profile       from './pages/adoptant/Profile';
 import Dashboard     from './pages/shelter/Dashboard';
 import AnimalForm    from './pages/shelter/AnimalForm';
 
@@ -54,6 +55,9 @@ function AppRoutes() {
       }/>
       <Route path="/adoptant/matches" element={
         <PrivateRoute requiredRole="adoptant"><MatchHistory /></PrivateRoute>
+      }/>
+      <Route path="/adoptant/profile" element={
+        <PrivateRoute requiredRole="adoptant"><Profile /></PrivateRoute>
       }/>
 
       {/* Pages protégées — refuge */}

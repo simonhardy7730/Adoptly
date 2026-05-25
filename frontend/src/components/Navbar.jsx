@@ -31,7 +31,10 @@ export default function Navbar() {
                 Découvrir
               </Link>
               <Link to="/adoptant/matches" className="btn-ghost text-sm py-1.5 px-3">
-                Mes matchs
+                Matchs
+              </Link>
+              <Link to="/adoptant/profile" className="btn-ghost text-sm py-1.5 px-3">
+                Profil
               </Link>
             </>
           )}
