@@ -116,8 +116,26 @@ router.get('/profile', authenticate, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('adoptants')
-      .select('id, email, created_at, questionnaire_answers')
+      .select('id, email, first_name, last_name, created_at, questionnaire_answers')
       .eq('id', req.user.id)
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/profile', authenticate, async (req, res) => {
+  if (req.user.role !== 'adoptant')
+    return res.status(403).json({ error: 'Forbidden' });
+  const { first_name, last_name } = req.body;
+  try {
+    const { data, error } = await supabase
+      .from('adoptants')
+      .update({ first_name: first_name || null, last_name: last_name || null })
+      .eq('id', req.user.id)
+      .select('id, email, first_name, last_name, created_at, questionnaire_answers')
       .single();
     if (error) throw error;
     res.json(data);
