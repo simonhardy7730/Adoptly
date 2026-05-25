@@ -60,6 +60,15 @@ function passesHardFilters(animal, shelter, prefs) {
     if (req.children_compatible === '6+' && ca === '<6') return false;
   }
 
+  // Existing pets compatibility
+  const existingPets = prefs.existing_pets || 'none';
+  if (existingPets === 'cat' || existingPets === 'both') {
+    if (req.cats_compatible === 'no') return false;
+  }
+  if (existingPets === 'dog' || existingPets === 'both') {
+    if (req.dogs_compatible === 'no') return false;
+  }
+
   // Garden
   if (req.needs_garden === 'yes' && prefs.has_garden === 'no') return false;
 

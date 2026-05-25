@@ -28,6 +28,18 @@ const questions = [
     ],
   },
   {
+    id: 'existing_pets',
+    text: 'Avez-vous déjà des animaux à la maison ?',
+    hint: 'Cela nous aide à trouver des animaux compatibles avec les vôtres',
+    type: 'choice',
+    options: [
+      { value: 'none', label: 'Aucun', emoji: '🏠' },
+      { value: 'dog', label: 'Un chien', emoji: '🐕' },
+      { value: 'cat', label: 'Un chat', emoji: '🐈' },
+      { value: 'both', label: 'Chien et chat', emoji: '🐾' },
+    ],
+  },
+  {
     id: 'has_garden',
     text: 'Quel espace extérieur avez-vous ?',
     hint: 'Les chiens adorent avoir de l\'espace pour courir',
@@ -148,6 +160,7 @@ export default function Questionnaire() {
   const [answers, setAnswers] = useState({
     has_children: false,
     children_age: 'n/a',
+    existing_pets: 'none',
     has_garden: 'no',
     housing_type: 'apartment',
     works_outdoor: 'flexible',
