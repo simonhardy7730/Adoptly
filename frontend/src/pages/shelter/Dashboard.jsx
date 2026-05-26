@@ -236,6 +236,48 @@ export default function Dashboard() {
               </Link>
             </div>
 
+            {/* Onboarding — affiché seulement si aucun animal */}
+            {data?.stats?.total_animals === 0 && (
+              <motion.div
+                className="card p-5 border-2 border-secondary/20 bg-gradient-to-br from-blue-50 to-indigo-50 space-y-4"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">👋</span>
+                  <div>
+                    <h2 className="font-bold text-primary text-base">Bienvenue sur Adoptly !</h2>
+                    <p className="text-gray-500 text-sm mt-0.5">
+                      Suivez ces 3 étapes pour recevoir vos premiers matchs.
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { done: true,  label: 'Compte créé',                          link: null },
+                    { done: false, label: 'Complétez le profil de votre refuge',  link: '/shelter/profile' },
+                    { done: false, label: 'Ajoutez votre premier animal',          link: '/shelter/animals/add' },
+                  ].map((step, i) => (
+                    <div key={i} className={`flex items-center gap-3 rounded-xl px-3 py-2.5
+                      ${step.done ? 'bg-green-50' : 'bg-white border border-gray-100'}`}
+                    >
+                      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
+                        ${step.done ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                        {step.done ? '✓' : i + 1}
+                      </span>
+                      {step.link ? (
+                        <Link to={step.link} className="text-sm font-medium text-secondary hover:text-primary transition-colors flex-1">
+                          {step.label} →
+                        </Link>
+                      ) : (
+                        <span className="text-sm font-medium text-green-700 flex-1">{step.label}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* Statistiques */}
             <div className="grid grid-cols-3 gap-3">
               <StatCard value={data?.stats?.total_animals ?? 0} label={t('dash_stat_animals')} emoji="🐾" />

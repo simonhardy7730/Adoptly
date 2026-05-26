@@ -19,6 +19,7 @@ import CGU            from './pages/legal/CGU';
 import PrivacyPolicy  from './pages/legal/PrivacyPolicy';
 import AnimalPublic   from './pages/AnimalPublic';
 import ShelterList    from './pages/ShelterList';
+import ForRefuges     from './pages/ForRefuges';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -95,6 +96,9 @@ function AppRoutes() {
 
       {/* Page publique refuges partenaires */}
       <Route path="/refuges" element={<ShelterList />} />
+
+      {/* Landing page pour les refuges */}
+      <Route path="/pour-les-refuges" element={<ForRefuges />} />
 
       {/* Pages légales */}
       <Route path="/legal/cgu"     element={<CGU />} />

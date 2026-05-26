@@ -171,7 +171,7 @@ export default function LandingPage() {
           <AdoptlyLogo />
           <div className="flex items-center gap-1">
             <Link
-              to="/shelter/register"
+              to="/pour-les-refuges"
               className="hidden md:block btn-ghost text-sm py-1.5 px-4 text-gray-500"
             >
               Pour les refuges
@@ -253,7 +253,7 @@ export default function LandingPage() {
                   Trouver mon compagnon idéal
                 </Link>
                 <Link
-                  to="/shelter/register"
+                  to="/pour-les-refuges"
                   className="bg-white/10 hover:bg-white/18 text-white font-semibold px-7 py-4 rounded-2xl
                              text-base border border-white/25 backdrop-blur-sm active:scale-95 transition-all"
                 >
