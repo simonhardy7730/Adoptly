@@ -566,7 +566,7 @@ export default function LandingPage() {
                   ))}
                 </ul>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link to="/shelter/register" className="btn-primary text-sm py-3 px-6 text-center">
+                  <Link to="/pour-les-refuges" className="btn-primary text-sm py-3 px-6 text-center">
                     Rejoindre comme refuge partenaire
                   </Link>
                   <Link to="/shelter/login" className="btn-secondary text-sm py-3 px-6 text-center">
@@ -682,7 +682,7 @@ export default function LandingPage() {
             </Link>
             <div>
               <Link
-                to="/shelter/register"
+                to="/pour-les-refuges"
                 className="inline-block text-white/70 hover:text-white text-sm underline underline-offset-2 transition-colors"
               >
                 Vous êtes un refuge ? Rejoignez-nous gratuitement →
@@ -710,7 +710,7 @@ export default function LandingPage() {
             <div className="flex flex-wrap justify-center gap-6 text-sm">
               <Link to="/shelter/login"    className="text-gray-400 hover:text-primary transition-colors">Espace refuge</Link>
               <Link to="/adoptant/login"   className="text-gray-400 hover:text-primary transition-colors">Espace adoptant</Link>
-              <Link to="/shelter/register" className="text-gray-400 hover:text-primary transition-colors">Devenir partenaire</Link>
+              <Link to="/pour-les-refuges" className="text-gray-400 hover:text-primary transition-colors">Devenir partenaire</Link>
             </div>
           </div>
 
