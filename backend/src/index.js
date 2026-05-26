@@ -6,6 +6,7 @@ import authRoutes    from './routes/auth.js';
 import adoptantRoutes from './routes/adoptant.js';
 import shelterRoutes from './routes/shelter.js';
 import publicRoutes  from './routes/public.js';
+import adminRoutes   from './routes/admin.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/adoptant', adoptantRoutes);
 app.use('/api/shelter', shelterRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
