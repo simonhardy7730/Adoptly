@@ -14,7 +14,7 @@ const LABELS = {
   monthly_budget:   { '50-100': '💰 50–100 €', '100-200': '💵 100–200 €', '200+': '💎 200 € +' },
   preferred_animal: { dog: '🐕 Chien', cat: '🐈 Chat', both: '🐾 Chien ou chat', small_animal: '🐹 Petit animal' },
   size_preference:  { small: '🐭 Petit', medium: '🐕 Moyen', large: '🦮 Grand', no_preference: '🤷 Peu importe' },
-  age_preference:   { baby: '🍼 Bébé', young: '⚡ Jeune adulte', adult: '🐾 Adulte', senior: '🧡 Senior' },
+  age_preference:   { baby: '🍼 Bébé', young: '⚡ Jeune adulte', adult: '🐾 Adulte', senior: '🧡 Senior', no_preference: '🤷 Peu importe' },
   energy_level:     { calm: '😌 Calme', balanced: '🙂 Équilibré(e)', very_energetic: '🤸 Très énergique' },
 };
 

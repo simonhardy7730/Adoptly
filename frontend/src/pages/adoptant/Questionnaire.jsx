@@ -131,6 +131,7 @@ const questions = [
       { value: 'young', label: 'Jeune adulte', emoji: '⚡' },
       { value: 'adult', label: 'Adulte', emoji: '🐾' },
       { value: 'senior', label: 'Senior', emoji: '🧡' },
+      { value: 'no_preference', label: 'Peu importe', emoji: '🤷' },
     ],
   },
   {
