@@ -190,7 +190,7 @@ export default function ShelterList() {
             Rejoignez Adoptly gratuitement et trouvez des familles compatibles pour vos pensionnaires.
           </p>
           <Link
-            to="/shelter/register"
+            to="/pour-les-refuges"
             className="inline-block bg-white text-primary font-bold text-sm
                        px-6 py-3 rounded-2xl hover:bg-white/90 transition-colors"
           >
