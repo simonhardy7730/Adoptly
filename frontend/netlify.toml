@@ -6,6 +6,13 @@
   command = "npm run build"
   publish = "dist"
 
+# Edge Function — OG tags dynamiques pour /animal/:id
+# Intercepte les crawlers sociaux (Facebook, WhatsApp, Discord...)
+# et leur renvoie un HTML avec les balises OG correctes
+[[edge_functions]]
+  function = "og-animal"
+  path     = "/animal/*"
+
 [build.environment]
   NODE_VERSION = "18"
 
