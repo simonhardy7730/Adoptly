@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../lib/api';
 
 // ── Données ──────────────────────────────────────────────────────────────────
 
@@ -162,6 +163,14 @@ function FaqItem({ q, a }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
+  const [partnerShelters, setPartnerShelters] = useState([]);
+
+  useEffect(() => {
+    api.get('/public/shelters')
+      .then(({ data }) => setPartnerShelters(data || []))
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-bg-light overflow-x-hidden">
 
@@ -481,6 +490,58 @@ export default function LandingPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── Refuges partenaires (social proof) ───────────────── */}
+      {partnerShelters.length > 0 && (
+        <section className="bg-white border-y border-gray-100 py-10 overflow-hidden">
+          <div className="max-w-5xl mx-auto px-6">
+            <motion.div
+              {...fadeUpView()}
+              className="text-center mb-6"
+            >
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">
+                Ils font déjà confiance à Adoptly
+              </p>
+              <p className="text-gray-500 text-sm">
+                {partnerShelters.length} refuge{partnerShelters.length > 1 ? 's' : ''} partenaire{partnerShelters.length > 1 ? 's' : ''} en Belgique et Nord de la France
+              </p>
+            </motion.div>
+
+            {/* Défilement infini des noms de refuges */}
+            <div className="relative">
+              <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+              <motion.div
+                className="flex gap-3 flex-wrap justify-center"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+              >
+                {partnerShelters.map((shelter, i) => (
+                  <motion.span
+                    key={shelter.id}
+                    className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-100
+                               text-gray-600 text-sm font-medium px-3 py-1.5 rounded-full
+                               hover:bg-primary-light hover:text-primary hover:border-secondary/20
+                               transition-colors cursor-default"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.04 }}
+                  >
+                    <span className="text-xs">🏠</span>
+                    {shelter.name}
+                    {shelter.city && (
+                      <span className="text-gray-400 font-normal">· {shelter.city}</span>
+                    )}
+                  </motion.span>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Section refuges ───────────────────────────────────── */}
       <section className="bg-bg-light py-16">

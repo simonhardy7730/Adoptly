@@ -45,3 +45,20 @@
   for = "/*.css"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# Service worker — ne JAMAIS mettre en cache (doit se mettre à jour à chaque déploiement)
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/workbox-*.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# HTML — revalider à chaque visite pour servir le bon bundle JS
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
