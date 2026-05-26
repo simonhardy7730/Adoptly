@@ -202,6 +202,14 @@ export default function Questionnaire() {
 
   const visibleQuestions = questions.filter((q) => !q.showIf || q.showIf(answers));
   const current = visibleQuestions[stepIndex];
+
+  // Auto-détecter la position quand on arrive sur l'étape rayon de recherche
+  useEffect(() => {
+    if (current?.type === 'radius' && !answers.latitude && !geoLoading) {
+      detectLocation();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current?.type]);
   const progress = ((stepIndex + 1) / visibleQuestions.length) * 100;
   const isLast = stepIndex === visibleQuestions.length - 1;
 
@@ -368,20 +376,34 @@ export default function Questionnaire() {
                 <button
                   type="button"
                   onClick={detectLocation}
-                  disabled={geoLoading}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-secondary text-secondary font-medium text-sm hover:bg-secondary/5 transition-colors"
+                  disabled={geoLoading || !!answers.latitude}
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 font-medium text-sm transition-colors
+                    ${answers.latitude
+                      ? 'border-green-300 bg-green-50 text-green-600 cursor-default'
+                      : 'border-dashed border-secondary text-secondary hover:bg-secondary/5'
+                    }`}
                 >
                   {geoLoading ? (
-                    <LoadingSpinner size="sm" />
+                    <>
+                      <LoadingSpinner size="sm" />
+                      <span>Détection en cours…</span>
+                    </>
+                  ) : answers.latitude ? (
+                    <>📍 Position enregistrée ✓</>
                   ) : (
                     <>
-                      📍{' '}
-                      {answers.latitude
-                        ? 'Position enregistrée ✓'
-                        : 'Détecter ma position (facultatif)'}
+                      📍 Détecter ma position
+                      <span className="ml-1 text-xs bg-secondary text-white px-1.5 py-0.5 rounded-full">
+                        Recommandé
+                      </span>
                     </>
                   )}
                 </button>
+                {!answers.latitude && !geoLoading && (
+                  <p className="text-center text-xs text-gray-400">
+                    Sans position, nous ne pouvons pas filtrer par distance
+                  </p>
+                )}
               </div>
             )}
           </motion.div>

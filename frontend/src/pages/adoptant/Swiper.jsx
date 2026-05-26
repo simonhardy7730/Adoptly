@@ -13,6 +13,7 @@ export default function Swiper() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [noMore, setNoMore] = useState(false);
+  const [emptyFromStart, setEmptyFromStart] = useState(false); // aucun animal compatible dès le départ
   const [matchData, setMatchData] = useState(null);
   const [swipeHint, setSwipeHint] = useState(true);
   const swiping = useRef(false);
@@ -22,13 +23,20 @@ export default function Swiper() {
       const { data } = await api.get('/adoptant/animals');
       if (!data.length) {
         setNoMore(true);
+        setEmptyFromStart(true);
       } else {
         setAnimals(data);
         setCurrentIndex(0);
+        setEmptyFromStart(false);
       }
     } catch (err) {
       if (err.response?.status === 400) {
+        // Questionnaire non rempli → rediriger
         navigate('/adoptant/questionnaire');
+      } else {
+        // Autre erreur → montrer l'empty state "aucun animal"
+        setNoMore(true);
+        setEmptyFromStart(true);
       }
     } finally {
       setLoading(false);
@@ -108,19 +116,54 @@ export default function Swiper() {
           </div>
         ) : noMore || currentIndex >= animals.length ? (
           <div className="flex-1 flex items-center justify-center flex-col gap-6 text-center px-8">
-            <div className="text-6xl">🐾</div>
-            <div>
-              <h2 className="text-2xl font-bold text-primary">Vous avez tout vu !</h2>
-              <p className="text-gray-500 mt-2 text-sm">
-                Revenez plus tard pour de nouveaux animaux, ou consultez vos matchs.
-              </p>
-            </div>
-            <button onClick={() => navigate('/adoptant/matches')} className="btn-primary px-8 py-3">
-              Voir mes matchs 💚
-            </button>
-            <button onClick={fetchAnimals} className="btn-ghost text-sm">
-              Actualiser
-            </button>
+            {emptyFromStart ? (
+              /* Aucun animal compatible dès le départ */
+              <>
+                <div className="text-6xl">🔍</div>
+                <div>
+                  <h2 className="text-2xl font-bold text-primary">Aucun animal compatible</h2>
+                  <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+                    Pas encore d'animal qui correspond à votre profil dans votre zone de recherche.<br />
+                    Les refuges partenaires ajoutent régulièrement de nouveaux pensionnaires.
+                  </p>
+                </div>
+                <button onClick={fetchAnimals} className="btn-primary px-8 py-3">
+                  Actualiser
+                </button>
+                <button
+                  onClick={() => navigate('/adoptant/questionnaire')}
+                  className="btn-secondary text-sm px-6 py-2.5"
+                >
+                  ✏️ Modifier mes préférences
+                </button>
+              </>
+            ) : (
+              /* A tout swipé */
+              <>
+                <div className="text-6xl">🎉</div>
+                <div>
+                  <h2 className="text-2xl font-bold text-primary">Vous avez tout vu !</h2>
+                  <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+                    Vous avez swipé tous les animaux compatibles.<br />
+                    Revenez bientôt — les refuges ajoutent de nouveaux pensionnaires régulièrement.
+                  </p>
+                </div>
+                <button onClick={() => navigate('/adoptant/matches')} className="btn-primary px-8 py-3">
+                  Voir mes matchs 💚
+                </button>
+                <div className="flex gap-3">
+                  <button onClick={fetchAnimals} className="btn-secondary text-sm px-5 py-2.5">
+                    Actualiser
+                  </button>
+                  <button
+                    onClick={() => navigate('/adoptant/questionnaire')}
+                    className="btn-secondary text-sm px-5 py-2.5"
+                  >
+                    ✏️ Mes préférences
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <>

@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from 'react';
 
 // ── Données ──────────────────────────────────────────────────────────────────
 
 const microTestimonials = [
-  { stars: 5, text: '"Enfin une adoption qu\'on ne regrette pas."', author: 'Marie L.' },
-  { stars: 5, text: '"Léo était exactement comme décrit. Le coup de foudre."', author: 'Thomas B.' },
-  { stars: 5, text: '"Le refuge nous a rappelés dans l\'heure."', author: 'Camille R.' },
+  { stars: 5, text: '"Enfin une adoption qu\'on ne regrette pas."', author: 'Marie L., Bruxelles' },
+  { stars: 5, text: '"Léo était exactement comme décrit. Le coup de foudre."', author: 'Thomas B., Liège' },
+  { stars: 5, text: '"Le refuge nous a rappelés dans l\'heure."', author: 'Camille R., Namur' },
 ];
 
 const etapes = [
@@ -27,12 +28,42 @@ const etapes = [
   },
 ];
 
-
 const avantagsRefuge = [
-  'Créez vos fiches animaux en quelques minutes',
-  'Recevez uniquement des demandes de familles compatibles',
-  'Suivez chaque prise de contact depuis votre tableau de bord',
-  '100 % gratuit pour les associations partenaires',
+  { emoji: '⚡', text: 'Inscription et mise en ligne en moins de 10 minutes' },
+  { emoji: '🎯', text: 'Recevez uniquement des demandes de familles compatibles' },
+  { emoji: '📬', text: 'Notification email à chaque intérêt qualifié' },
+  { emoji: '📊', text: 'Tableau de bord pour suivre chaque prise de contact' },
+  { emoji: '💚', text: '100 % gratuit pour les associations partenaires' },
+];
+
+const stats = [
+  { value: '14', label: 'critères analysés', emoji: '🧩' },
+  { value: '< 3 min', label: 'pour s\'inscrire', emoji: '⚡' },
+  { value: '100 %', label: 'gratuit refuges', emoji: '💚' },
+  { value: 'Belgique', label: '& Nord de France', emoji: '📍' },
+];
+
+const faqs = [
+  {
+    q: 'C\'est vraiment gratuit pour les refuges ?',
+    a: 'Oui, et ça le restera. Adoptly est gratuit pour tous les refuges et associations partenaires, sans limite d\'animaux, sans abonnement, sans commission sur les adoptions. Notre modèle économique reposera sur des services premium optionnels pour les grands refuges — jamais sur une obligation.',
+  },
+  {
+    q: 'Combien de temps pour mettre en ligne un premier animal ?',
+    a: 'Moins de 10 minutes depuis la création du compte jusqu\'à la première fiche publiée. Il vous faut : le nom de l\'animal, son espèce, son caractère, une photo et quelques critères de compatibilité. C\'est tout.',
+  },
+  {
+    q: 'Est-ce que ça remplace notre site internet ou nos réseaux sociaux ?',
+    a: 'Non, c\'est complémentaire. Adoptly s\'ajoute à vos canaux existants et vous apporte un flux d\'adoptants pré-qualifiés que vous n\'auriez pas touchés autrement. Vous gardez le contrôle total sur vos adoptions.',
+  },
+  {
+    q: 'Comment fonctionne l\'algorithme de compatibilité ?',
+    a: 'Les adoptants répondent à 14 questions sur leur mode de vie (superficie du logement, présence d\'enfants, animaux existants, niveau d\'activité, budget...). L\'algorithme croise ces réponses avec les besoins de chaque animal — distance, compatibilités, caractère — et ne présente l\'animal qu\'aux profils vraiment compatibles.',
+  },
+  {
+    q: 'Quelles informations sont transmises aux adoptants ?',
+    a: 'Les adoptants voient la fiche de votre animal (photo, caractère, besoins) et le nom de votre refuge. Vos coordonnées précises (email, téléphone) ne sont partagées qu\'une fois que l\'adoptant a exprimé un intérêt — et vous en êtes notifié immédiatement.',
+  },
 ];
 
 const animaux = ['🐕', '🐈', '🐇', '🐹', '🦜', '🐕‍🦺'];
@@ -52,7 +83,7 @@ const fadeUpView = (delay = 0) => ({
   transition: { duration: 0.5, delay },
 });
 
-// ── Carte aperçu (hero) ───────────────────────────────────────────────────────
+// ── Composants ────────────────────────────────────────────────────────────────
 
 function PreviewCard() {
   return (
@@ -84,8 +115,6 @@ function PreviewCard() {
   );
 }
 
-// ── Logo texte Adoptly ────────────────────────────────────────────────────────
-
 function AdoptlyLogo({ light = false }) {
   return (
     <Link to="/" className="flex items-center gap-2 group">
@@ -97,6 +126,36 @@ function AdoptlyLogo({ light = false }) {
         Adoptly
       </span>
     </Link>
+  );
+}
+
+function FaqItem({ q, a }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between py-4 text-left gap-4"
+      >
+        <span className="font-semibold text-gray-800 text-sm md:text-base">{q}</span>
+        <span className={`text-secondary flex-shrink-0 text-xl font-light transition-transform ${open ? 'rotate-45' : ''}`}>
+          +
+        </span>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <p className="text-gray-500 text-sm leading-relaxed pb-4">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -130,7 +189,6 @@ export default function LandingPage() {
       {/* ── Hero ──────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-hero-gradient" />
-        {/* Texture en points */}
         <div
           className="absolute inset-0 opacity-[0.05]"
           style={{
@@ -138,15 +196,12 @@ export default function LandingPage() {
             backgroundSize: '28px 28px',
           }}
         />
-        {/* Reflet doux en bas */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-bg-light/20 to-transparent" />
 
         <div className="relative max-w-5xl mx-auto px-6 py-20 md:py-28">
           <div className="flex flex-col md:flex-row items-center gap-12">
 
-            {/* Texte gauche */}
             <div className="flex-1 text-white text-center md:text-left">
-              {/* Animaux flottants */}
               <div className="flex justify-center md:justify-start gap-3 mb-8">
                 {animaux.map((emoji, i) => (
                   <motion.span
@@ -212,17 +267,38 @@ export default function LandingPage() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                🔒 Gratuit · Sans carte bancaire
+                🔒 Gratuit · Sans carte bancaire · Belgique & Nord de la France
               </motion.p>
             </div>
 
-            {/* Carte aperçu (desktop uniquement) */}
             <div className="hidden md:flex flex-shrink-0 justify-center">
               <div className="relative">
                 <div className="absolute -inset-6 bg-white/8 rounded-[2.5rem] blur-2xl" />
                 <PreviewCard />
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Chiffres clés ─────────────────────────────────────── */}
+      <section className="bg-white border-b border-gray-100">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                className="text-center space-y-1"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+              >
+                <p className="text-2xl">{s.emoji}</p>
+                <p className="text-2xl font-extrabold text-primary">{s.value}</p>
+                <p className="text-gray-400 text-xs leading-tight">{s.label}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -330,9 +406,9 @@ export default function LandingPage() {
               Ce n'est pas qu'une question de coup de cœur.
             </h2>
             <p className="text-gray-600 leading-relaxed">
-              Notre algorithme de compatibilité prend en compte 14 critères — du type de logement
-              à votre rapport à l'activité physique, en passant par la présence d'enfants ou
-              d'autres animaux.
+              Notre algorithme de compatibilité prend en compte 14 critères — de la superficie de
+              votre logement à votre rapport à l'activité physique, en passant par la présence
+              d'enfants ou d'autres animaux.
             </p>
             <p className="text-gray-600 leading-relaxed">
               Le résultat : des présentations qui ont du sens, des adoptions qui tiennent.
@@ -376,12 +452,11 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <p className="text-gray-400 text-xs text-center">Refuge des Lilas · Lyon 3ème</p>
+              <p className="text-gray-400 text-xs text-center">Refuge Sans Famille · Namur</p>
             </div>
           </motion.div>
         </div>
       </section>
-
 
       {/* ── Témoignage long ───────────────────────────────────── */}
       <section className="bg-white py-16">
@@ -400,7 +475,7 @@ export default function LandingPage() {
               </div>
               <div className="text-left">
                 <p className="font-semibold text-gray-800 text-sm">Sophie M.</p>
-                <p className="text-gray-400 text-xs">Adoptante à Lyon · il y a 3 mois</p>
+                <p className="text-gray-400 text-xs">Adoptante à Bruxelles · il y a 3 mois</p>
               </div>
             </div>
           </motion.div>
@@ -419,13 +494,13 @@ export default function LandingPage() {
                 </h2>
                 <p className="text-gray-500 leading-relaxed">
                   Adoptly vous offre une vitrine numérique moderne et des outils de suivi —
-                  sans frais, sans complexité.
+                  sans frais, sans complexité. Vos animaux, visibles aux bonnes personnes.
                 </p>
                 <ul className="space-y-3">
                   {avantagsRefuge.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 text-gray-700 text-sm">
-                      <span className="text-success font-bold mt-0.5 flex-shrink-0">✓</span>
-                      {item}
+                      <span className="flex-shrink-0 mt-0.5">{item.emoji}</span>
+                      {item.text}
                     </li>
                   ))}
                 </ul>
@@ -438,7 +513,7 @@ export default function LandingPage() {
                   </Link>
                 </div>
                 <p className="text-gray-400 text-xs">
-                  Rejoignez les premiers refuges partenaires. Mise en ligne en moins de 10 minutes.
+                  Mise en ligne en moins de 10 minutes. Aucun engagement.
                 </p>
               </div>
 
@@ -485,6 +560,28 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── FAQ ───────────────────────────────────────────────── */}
+      <section className="max-w-3xl mx-auto px-6 py-16">
+        <motion.div {...fadeUpView()} className="text-center mb-10">
+          <h2 className="text-3xl font-extrabold text-primary">Questions fréquentes</h2>
+          <p className="text-gray-400 mt-2 text-sm">Tout ce que vous voulez savoir avant de vous lancer.</p>
+        </motion.div>
+        <motion.div
+          className="card p-6 md:p-8 divide-y divide-gray-100"
+          {...fadeUpView(0.1)}
+        >
+          {faqs.map((faq) => (
+            <FaqItem key={faq.q} q={faq.q} a={faq.a} />
+          ))}
+        </motion.div>
+        <p className="text-center text-gray-400 text-sm mt-6">
+          Une autre question ?{' '}
+          <a href="mailto:info@adoptly.fr" className="text-secondary hover:underline font-medium">
+            Écrivez-nous →
+          </a>
+        </p>
+      </section>
+
       {/* ── CTA final ─────────────────────────────────────────── */}
       <section className="bg-cta-gradient py-20 text-center text-white">
         <div className="max-w-lg mx-auto px-6 space-y-6">
@@ -513,7 +610,7 @@ export default function LandingPage() {
             <br />
             Découvrez vos premières compatibilités aujourd'hui.
           </motion.p>
-          <motion.div {...fadeUpView(0.2)}>
+          <motion.div {...fadeUpView(0.2)} className="space-y-3">
             <Link
               to="/adoptant/register"
               className="inline-block bg-accent hover:bg-orange-500 text-white font-bold
@@ -522,7 +619,15 @@ export default function LandingPage() {
             >
               Trouver mon compagnon idéal
             </Link>
-            <p className="text-blue-200/50 text-xs mt-4">Pour les adoptions qui durent.</p>
+            <div>
+              <Link
+                to="/shelter/register"
+                className="inline-block text-white/70 hover:text-white text-sm underline underline-offset-2 transition-colors"
+              >
+                Vous êtes un refuge ? Rejoignez-nous gratuitement →
+              </Link>
+            </div>
+            <p className="text-blue-200/50 text-xs">Pour les adoptions qui durent.</p>
           </motion.div>
         </div>
       </section>
@@ -541,7 +646,7 @@ export default function LandingPage() {
               <p className="text-gray-400 text-sm font-medium">Pas juste un animal. Le vôtre.</p>
             </div>
 
-            <div className="flex gap-6 text-sm">
+            <div className="flex flex-wrap justify-center gap-6 text-sm">
               <Link to="/shelter/login"    className="text-gray-400 hover:text-primary transition-colors">Espace refuge</Link>
               <Link to="/adoptant/login"   className="text-gray-400 hover:text-primary transition-colors">Espace adoptant</Link>
               <Link to="/shelter/register" className="text-gray-400 hover:text-primary transition-colors">Devenir partenaire</Link>
@@ -550,7 +655,7 @@ export default function LandingPage() {
 
           <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-gray-300 text-xs">
-              © {new Date().getFullYear()} Adoptly · Connecter des foyers aimants avec des animaux de refuge · 100 % gratuit pour les associations
+              © {new Date().getFullYear()} Adoptly · Belgique & Nord de la France · 100 % gratuit pour les associations
             </p>
             <div className="flex gap-4 text-xs">
               <Link to="/legal/cgu"     className="text-gray-300 hover:text-gray-500 transition-colors">CGU</Link>

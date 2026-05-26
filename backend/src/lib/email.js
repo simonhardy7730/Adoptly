@@ -364,6 +364,218 @@ export async function sendPasswordResetEmail({ email, resetUrl, role }) {
 }
 
 /**
+ * Notifie un adoptant qu'un nouvel animal compatible vient d'être ajouté.
+ * @param {{ adoptantEmail: string, adoptantFirstName?: string,
+ *           animalName: string, animalSpecies: string, animalBreed?: string,
+ *           shelterName: string, photoUrl?: string }} params
+ */
+export async function sendNewAnimalNotificationEmail({
+  adoptantEmail, adoptantFirstName,
+  animalName, animalSpecies, animalBreed,
+  shelterName, photoUrl,
+}) {
+  const firstName = adoptantFirstName || 'Bonjour';
+  const speciesEmoji = {
+    dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾',
+  }[animalSpecies] || '🐾';
+  const animalDesc = animalBreed ? `${animalBreed} (${animalSpecies})` : animalSpecies;
+
+  const photoBlock = photoUrl
+    ? `<img src="${photoUrl}" alt="${animalName}" style="width:100%;max-height:260px;object-fit:cover;display:block;border-radius:16px 16px 0 0;" />`
+    : `<div style="width:100%;height:180px;background:#E0E9FF;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:center;font-size:64px;text-align:center;line-height:180px;">${speciesEmoji}</div>`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Un nouvel animal vous attend sur Adoptly</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+      <!-- En-tête gradient -->
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:32px 32px 20px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;vertical-align:middle;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
+          </div>
+          <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
+        </div>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:4px 0 0;">Un animal compatible vous attend</p>
+      </div>
+
+      <!-- Photo animal -->
+      <div style="margin:0;">
+        ${photoBlock}
+      </div>
+
+      <!-- Corps -->
+      <div style="padding:32px 32px 40px;">
+        <!-- Badge -->
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="display:inline-block;background:#FFF3E0;border-radius:50px;padding:10px 20px;">
+            <span style="font-size:22px;">${speciesEmoji}</span>
+            <span style="color:#F07A2A;font-weight:800;font-size:16px;margin-left:8px;vertical-align:middle;">Nouveau match potentiel !</span>
+          </div>
+        </div>
+
+        <h1 style="color:#1B4F8A;font-size:22px;font-weight:800;margin:0 0 10px;letter-spacing:-0.3px;text-align:center;">
+          ${firstName}, rencontrez <strong>${animalName}</strong>&nbsp;!
+        </h1>
+        <p style="color:#6B7280;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+          Le refuge <strong>${shelterName}</strong> vient d'ajouter<br>
+          <strong>${animalName}</strong> (${animalDesc}) — et son profil correspond à vos préférences.
+        </p>
+
+        <!-- Infos rapides -->
+        <div style="background:#F4F7FF;border-radius:16px;padding:20px 24px;margin-bottom:28px;text-align:center;">
+          <p style="color:#374151;font-size:14px;margin:0 0 4px;">
+            <strong>${animalName}</strong> est disponible à l'adoption chez
+          </p>
+          <p style="color:#1B4F8A;font-size:15px;font-weight:700;margin:0;">
+            🏠 ${shelterName}
+          </p>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;">
+          <a href="https://adoptly.fr/adoptant/swipe"
+             style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;
+                    letter-spacing:-0.2px;">
+            Voir ${animalName} →
+          </a>
+          <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">
+            Retrouvez-le dans votre file de matchs sur Adoptly.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">
+          © ${new Date().getFullYear()} Adoptly ·
+          <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
+        </p>
+        <p style="color:#D1D5DB;font-size:11px;margin:8px 0 0;">
+          Vous recevez ce message car votre profil est compatible avec cet animal.<br>
+          Connectez-vous à votre compte pour gérer vos préférences.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to:      adoptantEmail,
+    subject: `${speciesEmoji} ${animalName} vous attend — nouveau match sur Adoptly !`,
+    html,
+  });
+}
+
+/**
+ * Notifie un adoptant que l'animal qu'il avait liké vient d'être adopté.
+ * @param {{ adoptantEmail: string, adoptantFirstName?: string,
+ *           animalName: string, animalSpecies: string, shelterName: string }} params
+ */
+export async function sendAnimalAdoptedEmail({
+  adoptantEmail, adoptantFirstName,
+  animalName, animalSpecies, shelterName,
+}) {
+  const firstName = adoptantFirstName ? `, ${adoptantFirstName}` : '';
+  const speciesEmoji = {
+    dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾',
+  }[animalSpecies] || '🐾';
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${animalName} a trouvé sa famille</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+      <!-- En-tête gradient -->
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:32px 32px 24px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;vertical-align:middle;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
+          </div>
+          <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
+        </div>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:4px 0 0;">Une belle nouvelle à partager</p>
+      </div>
+
+      <!-- Corps -->
+      <div style="padding:40px 32px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <span style="font-size:56px;">🎉</span>
+        </div>
+
+        <h1 style="color:#1B4F8A;font-size:22px;font-weight:800;margin:0 0 12px;text-align:center;letter-spacing:-0.3px;">
+          Bonne nouvelle${firstName} !
+        </h1>
+        <p style="color:#6B7280;font-size:15px;line-height:1.7;margin:0 0 24px;text-align:center;">
+          ${speciesEmoji} <strong>${animalName}</strong> a trouvé sa famille pour toujours.<br>
+          Merci d'avoir aimé ${animalName} chez <strong>${shelterName}</strong>.
+        </p>
+
+        <!-- Message encourageant -->
+        <div style="background:#F4F7FF;border-radius:16px;padding:20px 24px;margin-bottom:28px;text-align:center;">
+          <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">
+            Votre prochain compagnon vous attend peut-être déjà.<br>
+            De nouveaux animaux compatibles avec votre profil<br>
+            sont ajoutés régulièrement par nos refuges partenaires.
+          </p>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;">
+          <a href="https://adoptly.fr/adoptant/swipe"
+             style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;
+                    letter-spacing:-0.2px;">
+            Continuer à explorer →
+          </a>
+          <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">
+            De nouveaux animaux vous attendent sur Adoptly.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">
+          © ${new Date().getFullYear()} Adoptly ·
+          <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
+        </p>
+        <p style="color:#D1D5DB;font-size:11px;margin:8px 0 0;">
+          Vous recevez ce message car vous aviez manifesté un intérêt pour ${animalName}.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to:      adoptantEmail,
+    subject: `🎉 ${animalName} a trouvé sa famille — et le vôtre vous attend !`,
+    html,
+  });
+}
+
+/**
  * Envoie l'email de bienvenue après inscription d'un refuge.
  * @param {{ email: string, name: string }} params
  */

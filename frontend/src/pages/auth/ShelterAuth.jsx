@@ -135,7 +135,7 @@ export default function ShelterAuth({ mode = 'login' }) {
                     type="text"
                     required
                     className="input-field"
-                    placeholder="SPA de Lyon"
+                    placeholder="SPA de Liège"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                   />
@@ -146,7 +146,7 @@ export default function ShelterAuth({ mode = 'login' }) {
                   <input
                     type="tel"
                     className="input-field"
-                    placeholder="+33 6 00 00 00 00"
+                    placeholder="+32 4 00 00 00 00"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
@@ -157,7 +157,7 @@ export default function ShelterAuth({ mode = 'login' }) {
                   <input
                     type="text"
                     className="input-field"
-                    placeholder="12 rue des Lilas, Lyon"
+                    placeholder="Rue de la Paix 12, 4000 Liège"
                     value={form.address}
                     onChange={(e) => setForm({ ...form, address: e.target.value })}
                   />

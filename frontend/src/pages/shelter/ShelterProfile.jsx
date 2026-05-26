@@ -102,7 +102,7 @@ export default function ShelterProfile() {
                 </label>
                 <input
                   className="input-field"
-                  placeholder="SPA de Paris"
+                  placeholder="SPA de Namur"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
@@ -115,7 +115,7 @@ export default function ShelterProfile() {
                 </label>
                 <input
                   className="input-field"
-                  placeholder="+33 1 23 45 67 89"
+                  placeholder="+32 81 00 00 00"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
@@ -126,7 +126,7 @@ export default function ShelterProfile() {
                 </label>
                 <input
                   className="input-field"
-                  placeholder="12 rue des Animaux, 75001 Paris"
+                  placeholder="Rue des Animaux 12, 5000 Namur"
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
