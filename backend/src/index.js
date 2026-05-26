@@ -19,6 +19,8 @@ const allowedOrigins = [
   'https://adoptly-fr.netlify.app',
   'https://adoptly.fr',
   'https://www.adoptly.fr',
+  'https://adoptly-teal.vercel.app',
+  'https://adoptly-eta.vercel.app',
 ];
 
 app.use(
