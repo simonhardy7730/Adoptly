@@ -34,6 +34,10 @@ export default function AdoptantAuth({ mode = 'login' }) {
       const endpoint = mode === 'login' ? '/auth/adoptant/login' : '/auth/adoptant/register';
       const { data } = await api.post(endpoint, form);
       login(data.token, data.user, 'adoptant');
+      // GA4 tracking
+      if (typeof window.gtag === 'function' && mode === 'register') {
+        window.gtag('event', 'sign_up', { method: 'email', role: 'adoptant' });
+      }
       navigate(data.user.questionnaire_answers ? '/adoptant/swipe' : '/adoptant/questionnaire');
     } catch (err) {
       setError(err.response?.data?.error || 'Une erreur est survenue. Veuillez réessayer.');

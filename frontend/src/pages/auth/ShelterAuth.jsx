@@ -42,6 +42,10 @@ export default function ShelterAuth({ mode = 'login' }) {
       const payload  = mode === 'login' ? { email: form.email, password: form.password } : form;
       const { data } = await api.post(endpoint, payload);
       login(data.token, data.user, 'shelter');
+      // GA4 tracking
+      if (typeof window.gtag === 'function' && mode === 'register') {
+        window.gtag('event', 'sign_up', { method: 'email', role: 'shelter' });
+      }
       navigate('/shelter/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Une erreur est survenue. Veuillez réessayer.');

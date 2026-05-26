@@ -250,6 +250,10 @@ export default function Questionnaire() {
     setError('');
     try {
       await api.post('/adoptant/questionnaire', answers);
+      // GA4 tracking
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', isEditing ? 'questionnaire_updated' : 'questionnaire_complete');
+      }
       // Si c'est une modification → retour au profil, sinon → découvrir les animaux
       navigate(isEditing ? '/adoptant/profile' : '/adoptant/swipe');
     } catch (err) {

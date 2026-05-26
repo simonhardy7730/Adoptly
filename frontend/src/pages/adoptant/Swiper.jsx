@@ -76,8 +76,24 @@ export default function Swiper() {
         direction,
       });
 
+      // GA4 tracking
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'swipe', {
+          direction,
+          animal_id: animal.id,
+          species: animal.species,
+        });
+      }
+
       if (direction === 'right' && data.isMatch) {
         setMatchData({ animal: data.animal, matchId: data.match.id });
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', 'match', {
+            animal_id: data.animal?.id,
+            animal_name: data.animal?.name,
+            species: data.animal?.species,
+          });
+        }
       }
 
       const next = currentIndex + 1;
