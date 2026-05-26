@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/api';
@@ -155,30 +155,47 @@ const variants = {
   exit: (dir) => ({ x: dir > 0 ? -120 : 120, opacity: 0 }),
 };
 
+const DEFAULTS = {
+  has_children: false,
+  children_age: 'n/a',
+  existing_pets: 'none',
+  has_garden: 'no',
+  housing_type: 'apartment',
+  works_outdoor: 'flexible',
+  allergies: 'none',
+  monthly_budget: '100-200',
+  preferred_animal: 'both',
+  size_preference: 'no_preference',
+  age_preference: 'adult',
+  energy_level: 'balanced',
+  search_radius_km: 25,
+  latitude: null,
+  longitude: null,
+};
+
 export default function Questionnaire() {
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState({
-    has_children: false,
-    children_age: 'n/a',
-    existing_pets: 'none',
-    has_garden: 'no',
-    housing_type: 'apartment',
-    works_outdoor: 'flexible',
-    allergies: 'none',
-    monthly_budget: '100-200',
-    preferred_animal: 'both',
-    size_preference: 'no_preference',
-    age_preference: 'adult',
-    energy_level: 'balanced',
-    search_radius_km: 25,
-    latitude: null,
-    longitude: null,
-  });
+  const [answers, setAnswers] = useState(DEFAULTS);
   const [stepIndex, setStepIndex] = useState(0);
   const [dir, setDir] = useState(1);
   const [geoLoading, setGeoLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [loadingExisting, setLoadingExisting] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Charger les réponses existantes pour pré-remplir le formulaire
+  useEffect(() => {
+    api.get('/adoptant/profile')
+      .then(({ data }) => {
+        if (data.questionnaire_answers && Object.keys(data.questionnaire_answers).length > 0) {
+          setAnswers({ ...DEFAULTS, ...data.questionnaire_answers });
+          setIsEditing(true);
+        }
+      })
+      .catch(() => {}) // silently ignore — on utilise les defaults
+      .finally(() => setLoadingExisting(false));
+  }, []);
 
   const visibleQuestions = questions.filter((q) => !q.showIf || q.showIf(answers));
   const current = visibleQuestions[stepIndex];
@@ -222,7 +239,8 @@ export default function Questionnaire() {
     setError('');
     try {
       await api.post('/adoptant/questionnaire', answers);
-      navigate('/adoptant/swipe');
+      // Si c'est une modification → retour au profil, sinon → découvrir les animaux
+      navigate(isEditing ? '/adoptant/profile' : '/adoptant/swipe');
     } catch (err) {
       setError(err.response?.data?.error || 'Échec de la sauvegarde. Veuillez réessayer.');
       setSaving(false);
@@ -231,6 +249,14 @@ export default function Questionnaire() {
 
   const currentAnswer = answers[current?.id];
   const hasAnswer = currentAnswer !== undefined && currentAnswer !== null && currentAnswer !== '';
+
+  if (loadingExisting) {
+    return (
+      <div className="min-h-screen bg-bg-light flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg-light flex flex-col">
@@ -243,9 +269,16 @@ export default function Questionnaire() {
             </div>
             <span className="font-black text-primary text-lg tracking-tight">Adoptly</span>
           </div>
-          <span className="text-gray-400 text-sm">
-            {stepIndex + 1} / {visibleQuestions.length}
-          </span>
+          <div className="flex items-center gap-3">
+            {isEditing && (
+              <span className="text-xs text-secondary font-medium bg-secondary/10 px-2 py-1 rounded-full">
+                ✏️ Modification
+              </span>
+            )}
+            <span className="text-gray-400 text-sm">
+              {stepIndex + 1} / {visibleQuestions.length}
+            </span>
+          </div>
         </div>
 
         {/* Barre de progression */}
@@ -374,7 +407,7 @@ export default function Questionnaire() {
             {saving ? (
               <LoadingSpinner size="sm" className="text-white" />
             ) : isLast ? (
-              'Trouver mes animaux ✨'
+              isEditing ? 'Sauvegarder les modifications ✓' : 'Trouver mes animaux ✨'
             ) : (
               'Suivant →'
             )}

@@ -1,8 +1,9 @@
 import express from 'express';
 import bcrypt  from 'bcryptjs';
 import jwt     from 'jsonwebtoken';
+import crypto  from 'crypto';
 import { supabase }          from '../lib/supabase.js';
-import { sendWelcomeEmail, sendShelterWelcomeEmail } from '../lib/email.js';
+import { sendWelcomeEmail, sendShelterWelcomeEmail, sendPasswordResetEmail } from '../lib/email.js';
 
 const router = express.Router();
 
@@ -174,6 +175,82 @@ router.post('/shelter/login', async (req, res) => {
     const { password_hash, ...user } = shelter;
     const token = makeToken({ id: user.id, email: user.email, role: 'shelter' });
     res.json({ token, user, role: 'shelter' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Mot de passe oublié ───────────────────────────────────────────────────────
+
+router.post('/forgot-password', async (req, res) => {
+  const { email, role } = req.body; // role: 'adoptant' | 'shelter'
+  if (!email || !role)
+    return res.status(400).json({ error: 'Email et rôle requis' });
+
+  // Réponse toujours OK pour ne pas révéler l'existence du compte
+  res.json({ success: true });
+
+  try {
+    const table = role === 'shelter' ? 'shelters' : 'adoptants';
+    const { data: account } = await supabase
+      .from(table)
+      .select('id, email, password_hash')
+      .eq('email', email)
+      .single();
+
+    if (!account) return; // compte inexistant, on ne dit rien
+    if (account.password_hash === 'GOOGLE_OAUTH') return; // compte Google, pas de mot de passe
+
+    const token   = crypto.randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600 * 1000).toISOString(); // 1h
+
+    await supabase
+      .from(table)
+      .update({ reset_token: token, reset_token_expires_at: expires })
+      .eq('id', account.id);
+
+    const frontendUrl = process.env.FRONTEND_URL || 'https://adoptly.fr';
+    const resetUrl    = `${frontendUrl}/auth/reset-password?token=${token}&role=${role}`;
+
+    await sendPasswordResetEmail({ email, resetUrl, role });
+  } catch (err) {
+    console.error('[ForgotPassword]', err.message);
+  }
+});
+
+// ── Réinitialisation du mot de passe ─────────────────────────────────────────
+
+router.post('/reset-password', async (req, res) => {
+  const { token, password, role } = req.body;
+  if (!token || !password || !role)
+    return res.status(400).json({ error: 'Token, mot de passe et rôle requis' });
+
+  if (password.length < 6)
+    return res.status(400).json({ error: 'Mot de passe trop court (6 caractères minimum)' });
+
+  try {
+    const table = role === 'shelter' ? 'shelters' : 'adoptants';
+
+    const { data: account } = await supabase
+      .from(table)
+      .select('id, email, reset_token, reset_token_expires_at')
+      .eq('reset_token', token)
+      .single();
+
+    if (!account)
+      return res.status(400).json({ error: 'Lien invalide ou expiré' });
+
+    if (!account.reset_token_expires_at || new Date(account.reset_token_expires_at) < new Date())
+      return res.status(400).json({ error: 'Ce lien a expiré. Veuillez en demander un nouveau.' });
+
+    const hash = await bcrypt.hash(password, 10);
+
+    await supabase
+      .from(table)
+      .update({ password_hash: hash, reset_token: null, reset_token_expires_at: null })
+      .eq('id', account.id);
+
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

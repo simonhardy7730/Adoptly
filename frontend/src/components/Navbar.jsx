@@ -46,6 +46,9 @@ export default function Navbar() {
               <Link to="/shelter/animals/add" className="btn-ghost text-sm py-1.5 px-3">
                 + Ajouter
               </Link>
+              <Link to="/shelter/profile" className="btn-ghost text-sm py-1.5 px-3">
+                Profil
+              </Link>
             </>
           )}
           <button

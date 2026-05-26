@@ -1,15 +1,20 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import LandingPage   from './pages/LandingPage';
-import AdoptantAuth  from './pages/auth/AdoptantAuth';
-import ShelterAuth   from './pages/auth/ShelterAuth';
-import AuthCallback  from './pages/auth/AuthCallback';
-import Questionnaire from './pages/adoptant/Questionnaire';
-import Swiper        from './pages/adoptant/Swiper';
-import MatchHistory  from './pages/adoptant/MatchHistory';
-import Profile       from './pages/adoptant/Profile';
-import Dashboard     from './pages/shelter/Dashboard';
-import AnimalForm    from './pages/shelter/AnimalForm';
+import LandingPage    from './pages/LandingPage';
+import AdoptantAuth   from './pages/auth/AdoptantAuth';
+import ShelterAuth    from './pages/auth/ShelterAuth';
+import AuthCallback   from './pages/auth/AuthCallback';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword  from './pages/auth/ResetPassword';
+import Questionnaire  from './pages/adoptant/Questionnaire';
+import Swiper         from './pages/adoptant/Swiper';
+import MatchHistory   from './pages/adoptant/MatchHistory';
+import Profile        from './pages/adoptant/Profile';
+import Dashboard      from './pages/shelter/Dashboard';
+import AnimalForm     from './pages/shelter/AnimalForm';
+import ShelterProfile from './pages/shelter/ShelterProfile';
+import CGU            from './pages/legal/CGU';
+import PrivacyPolicy  from './pages/legal/PrivacyPolicy';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -37,6 +42,10 @@ function AppRoutes() {
 
       {/* Callback Google OAuth */}
       <Route path="/auth/callback" element={<AuthCallback />} />
+
+      {/* Mot de passe oublié / réinitialisation */}
+      <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+      <Route path="/auth/reset-password"  element={<ResetPassword  />} />
 
       {/* Auth adoptant */}
       <Route path="/adoptant/login"    element={<AdoptantAuth mode="login"    />} />
@@ -70,6 +79,13 @@ function AppRoutes() {
       <Route path="/shelter/animals/:id/edit" element={
         <PrivateRoute requiredRole="shelter"><AnimalForm /></PrivateRoute>
       }/>
+      <Route path="/shelter/profile" element={
+        <PrivateRoute requiredRole="shelter"><ShelterProfile /></PrivateRoute>
+      }/>
+
+      {/* Pages légales */}
+      <Route path="/legal/cgu"     element={<CGU />} />
+      <Route path="/legal/privacy" element={<PrivacyPolicy />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

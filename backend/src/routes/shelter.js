@@ -64,6 +64,43 @@ router.get('/dashboard', authenticate, async (req, res) => {
   }
 });
 
+// ── Profil refuge ─────────────────────────────────────────
+
+router.get('/profile', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data, error } = await supabase
+      .from('shelters')
+      .select('id, email, name, phone, address, latitude, longitude, created_at')
+      .eq('id', req.user.id)
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/profile', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  const { name, phone, address } = req.body;
+  if (!name) return res.status(400).json({ error: 'Le nom est requis' });
+  try {
+    const { data, error } = await supabase
+      .from('shelters')
+      .update({ name, phone: phone || null, address: address || null })
+      .eq('id', req.user.id)
+      .select('id, email, name, phone, address, latitude, longitude, created_at')
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Animals CRUD ──────────────────────────────────────────
 
 router.post('/animals', authenticate, upload.array('photos', 3), async (req, res) => {

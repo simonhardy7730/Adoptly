@@ -123,7 +123,18 @@ export default function AdoptantAuth({ mode = 'login' }) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
+                {mode === 'login' && (
+                  <Link
+                    to="/auth/forgot-password?role=adoptant"
+                    className="text-xs text-secondary hover:underline"
+                    tabIndex={-1}
+                  >
+                    Mot de passe oublié ?
+                  </Link>
+                )}
+              </div>
               <input
                 type="password"
                 required

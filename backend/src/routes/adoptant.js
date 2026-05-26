@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
+import { sendMatchNotificationEmail } from '../lib/email.js';
 
 const router = express.Router();
 
@@ -252,6 +253,25 @@ router.post('/swipe', authenticate, async (req, res) => {
         .select('*, shelters(id, name, phone, email, address)')
         .eq('id', animal_id)
         .single();
+
+      // Notifier le refuge par email (non-bloquant)
+      if (animal?.shelters?.email) {
+        const { data: adoptantInfo } = await supabase
+          .from('adoptants')
+          .select('email, first_name, last_name')
+          .eq('id', req.user.id)
+          .single();
+
+        sendMatchNotificationEmail({
+          shelterEmail:      animal.shelters.email,
+          shelterName:       animal.shelters.name,
+          animalName:        animal.name,
+          adoptantEmail:     adoptantInfo?.email || req.user.email,
+          adoptantFirstName: adoptantInfo?.first_name,
+          adoptantLastName:  adoptantInfo?.last_name,
+        }).catch(() => {});
+      }
+
       return res.json({ match, animal, isMatch: true });
     }
 

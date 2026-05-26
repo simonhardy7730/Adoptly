@@ -548,10 +548,15 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="border-t border-gray-100 mt-8 pt-6 text-center">
+          <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-gray-300 text-xs">
-              © 2025 Adoptly · Connecter des foyers aimants avec des animaux de refuge · 100 % gratuit pour les associations
+              © {new Date().getFullYear()} Adoptly · Connecter des foyers aimants avec des animaux de refuge · 100 % gratuit pour les associations
             </p>
+            <div className="flex gap-4 text-xs">
+              <Link to="/legal/cgu"     className="text-gray-300 hover:text-gray-500 transition-colors">CGU</Link>
+              <Link to="/legal/privacy" className="text-gray-300 hover:text-gray-500 transition-colors">Confidentialité</Link>
+              <a href="mailto:info@adoptly.fr" className="text-gray-300 hover:text-gray-500 transition-colors">Contact</a>
+            </div>
           </div>
         </div>
       </footer>
