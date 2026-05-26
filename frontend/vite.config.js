@@ -29,6 +29,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Incrémente le cacheId pour forcer le remplacement de l'ancien cache SW
+        cacheId: 'adoptly-v2',
+        cleanupOutdatedCaches: true,
         // Précache tous les assets statiques de l'app
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         // Stratégies réseau pour les ressources dynamiques
