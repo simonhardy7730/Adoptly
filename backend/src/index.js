@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
+import rateLimit from 'express-rate-limit';
+import authRoutes    from './routes/auth.js';
 import adoptantRoutes from './routes/adoptant.js';
 import shelterRoutes from './routes/shelter.js';
+import publicRoutes  from './routes/public.js';
 
 dotenv.config();
 
@@ -32,9 +34,20 @@ app.use(
 
 app.use(express.json({ limit: '10mb' }));
 
-app.use('/api/auth', authRoutes);
+// ── Rate limiting — protection anti-brute-force ───────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,                   // max 10 tentatives par IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives. Veuillez réessayer dans 15 minutes.' },
+  skip: (req) => req.method !== 'POST', // ne limiter que les POST (login/register)
+});
+
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/adoptant', adoptantRoutes);
 app.use('/api/shelter', shelterRoutes);
+app.use('/api/public', publicRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

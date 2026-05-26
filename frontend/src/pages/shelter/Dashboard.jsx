@@ -98,6 +98,28 @@ function StatCard({ value, label, emoji }) {
   );
 }
 
+function WeeklyChart({ weeks }) {
+  const max = Math.max(...(weeks || []).map((w) => w.count), 1);
+  return (
+    <div className="flex items-end gap-1.5 h-24 w-full">
+      {(weeks || []).map((w, i) => (
+        <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+          <span className="text-[9px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+            {w.count || ''}
+          </span>
+          <div className="w-full flex-1 flex items-end">
+            <div
+              className="w-full rounded-t-md transition-all bg-primary/25 group-hover:bg-primary/50"
+              style={{ height: w.count ? `${Math.max((w.count / max) * 100, 8)}%` : '3px' }}
+            />
+          </div>
+          <span className="text-[9px] text-gray-400 leading-none">{w.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ConfirmModal({ name, onConfirm, onCancel }) {
   return (
     <motion.div
@@ -143,6 +165,15 @@ export default function Dashboard() {
   const [deleting,  setDeleting]  = useState(null);
   const [interested, setInterested] = useState(null); // animal dont on affiche les intéressés
   const [markingAdopted, setMarkingAdopted] = useState(null);
+  const [copiedId,  setCopiedId]  = useState(null);  // id de l'animal dont le lien vient d'être copié
+
+  function shareAnimal(animal) {
+    const url = `https://adoptly.fr/animal/${animal.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(animal.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  }
 
   useEffect(() => {
     api
@@ -214,6 +245,14 @@ export default function Dashboard() {
               <StatCard value={data?.stats?.pending_contacts ?? 0} label="Contacts en attente" emoji="📬" />
             </div>
 
+            {/* Graphique matchs hebdomadaires */}
+            {data?.stats?.weekly?.some((w) => w.count > 0) && (
+              <div className="card p-5">
+                <h2 className="font-bold text-gray-700 mb-4">Matchs — 8 dernières semaines</h2>
+                <WeeklyChart weeks={data.stats.weekly} />
+              </div>
+            )}
+
             {/* Liste des animaux */}
             <div>
               <h2 className="font-bold text-gray-700 mb-3">Vos Animaux</h2>
@@ -277,6 +316,12 @@ export default function Dashboard() {
                               💚 {animal.match_count} intéressé{animal.match_count > 1 ? 's' : ''}
                             </button>
                           )}
+                          <button
+                            onClick={() => shareAnimal(animal)}
+                            className="text-xs font-medium text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            {copiedId === animal.id ? '✓ Copié !' : '🔗 Partager'}
+                          </button>
                           <Link
                             to={`/shelter/animals/${animal.id}/edit`}
                             state={{ animal }}

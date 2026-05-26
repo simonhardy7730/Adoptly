@@ -41,6 +41,27 @@ router.get('/dashboard', authenticate, async (req, res) => {
     thisMonthStart.setDate(1);
     thisMonthStart.setHours(0, 0, 0, 0);
 
+    // Stats hebdomadaires — 8 dernières semaines
+    const weeklyStats = [];
+    for (let i = 7; i >= 0; i--) {
+      const start = new Date();
+      start.setDate(start.getDate() - (i + 1) * 7);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date();
+      end.setDate(end.getDate() - i * 7);
+      end.setHours(23, 59, 59, 999);
+
+      const count = (allMatches || []).filter(
+        (m) => m.swipe_direction === 'right' &&
+               new Date(m.timestamp) >= start &&
+               new Date(m.timestamp) <= end
+      ).length;
+
+      // Label court : "01/04" style
+      const label = end.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      weeklyStats.push({ label, count });
+    }
+
     const stats = {
       total_animals: (animals || []).length,
       matches_this_month: allMatches.filter(
@@ -49,6 +70,7 @@ router.get('/dashboard', authenticate, async (req, res) => {
       pending_contacts: allMatches.filter(
         (m) => m.swipe_direction === 'right' && !m.contacted
       ).length,
+      weekly: weeklyStats,
     };
 
     const enriched = (animals || []).map((a) => ({
