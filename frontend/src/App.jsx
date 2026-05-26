@@ -20,6 +20,7 @@ import PrivacyPolicy  from './pages/legal/PrivacyPolicy';
 import AnimalPublic   from './pages/AnimalPublic';
 import ShelterList    from './pages/ShelterList';
 import ForRefuges     from './pages/ForRefuges';
+import CookieBanner   from './components/CookieBanner';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -115,6 +116,7 @@ export default function App() {
       <LanguageProvider>
         <BrowserRouter>
           <AppRoutes />
+          <CookieBanner />
         </BrowserRouter>
       </LanguageProvider>
     </AuthProvider>
