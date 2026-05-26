@@ -7,6 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      selfDestroying: true,
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon-180x180.png'],
       // Le manifest.json public est conservé tel quel — le plugin le surcharge si on le définit ici
       manifest: {
