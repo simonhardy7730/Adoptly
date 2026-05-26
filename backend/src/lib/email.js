@@ -746,6 +746,7 @@ Retrouvez tous nos pensionnaires sur adoptly.fr et trouvez votre futur compagnon
  */
 export async function sendAdminNewAdoptantEmail({ adoptantEmail, via = 'email' }) {
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  console.log(`[Email] sendAdminNewAdoptantEmail → ${ADMIN_EMAIL} (inscrit: ${adoptantEmail}, via: ${via})`);
   const registeredAt = new Date().toLocaleString('fr-BE', {
     timeZone: 'Europe/Brussels',
     dateStyle: 'full',
@@ -848,6 +849,7 @@ export async function sendAdminNewAdoptantEmail({ adoptantEmail, via = 'email' }
  */
 export async function sendAdminNewShelterEmail({ shelterEmail, shelterName, shelterPhone, shelterAddress }) {
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  console.log(`[Email] sendAdminNewShelterEmail → ${ADMIN_EMAIL} (refuge: ${shelterName})`);
   const registeredAt = new Date().toLocaleString('fr-BE', {
     timeZone: 'Europe/Brussels',
     dateStyle: 'full',

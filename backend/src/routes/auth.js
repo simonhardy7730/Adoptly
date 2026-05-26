@@ -33,8 +33,8 @@ router.post('/adoptant/register', async (req, res) => {
     }
 
     // Email de bienvenue + notification admin (non-bloquant)
-    sendWelcomeEmail({ email }).catch(() => {});
-    sendAdminNewAdoptantEmail({ adoptantEmail: email, via: 'email' }).catch(() => {});
+    sendWelcomeEmail({ email }).catch((err) => console.error('[Email/Welcome]', err.message));
+    sendAdminNewAdoptantEmail({ adoptantEmail: email, via: 'email' }).catch((err) => console.error('[Email/AdminNotif]', err.message));
 
     const token = makeToken({ id: data.id, email: data.email, role: 'adoptant' });
     res.json({ token, user: data, role: 'adoptant' });
@@ -115,8 +115,8 @@ router.post('/google', async (req, res) => {
     }
 
     if (isNew) {
-      sendWelcomeEmail({ email }).catch(() => {});
-      sendAdminNewAdoptantEmail({ adoptantEmail: email, via: 'google' }).catch(() => {});
+      sendWelcomeEmail({ email }).catch((err) => console.error('[Email/Welcome]', err.message));
+      sendAdminNewAdoptantEmail({ adoptantEmail: email, via: 'google' }).catch((err) => console.error('[Email/AdminNotif]', err.message));
     }
 
     const { password_hash, ...user } = adoptant;
@@ -151,7 +151,7 @@ router.post('/shelter/register', async (req, res) => {
     }
 
     // Email de bienvenue refuge + template Facebook (non-bloquant)
-    sendShelterWelcomeEmail({ email: data.email, name: data.name }).catch(() => {});
+    sendShelterWelcomeEmail({ email: data.email, name: data.name }).catch((err) => console.error('[Email/ShelterWelcome]', err.message));
 
     // Notification admin — nouveau refuge inscrit (non-bloquant)
     sendAdminNewShelterEmail({
@@ -159,7 +159,7 @@ router.post('/shelter/register', async (req, res) => {
       shelterName:    data.name,
       shelterPhone:   data.phone   || null,
       shelterAddress: data.address || null,
-    }).catch(() => {});
+    }).catch((err) => console.error('[Email/AdminShelterNotif]', err.message));
 
     const token = makeToken({ id: data.id, email: data.email, role: 'shelter' });
     res.json({ token, user: data, role: 'shelter' });
