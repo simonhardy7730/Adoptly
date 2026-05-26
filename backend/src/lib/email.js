@@ -577,9 +577,12 @@ export async function sendAnimalAdoptedEmail({
 
 /**
  * Envoie l'email de bienvenue après inscription d'un refuge.
+ * Inclut un template Facebook prêt à publier pour maximiser leur visibilité.
  * @param {{ email: string, name: string }} params
  */
 export async function sendShelterWelcomeEmail({ email, name }) {
+  const fbTemplate = `🐾 Bonne nouvelle ! ${name} rejoint Adoptly, la plateforme qui connecte les animaux à adopter avec les familles qui leur correspondent vraiment.\n\nRetrouvez tous nos pensionnaires sur adoptly.fr et trouvez votre futur compagnon idéal !\n\n👉 adoptly.fr\n\n#Adoption #Refuge #Animaux #Adoptly #AdoptionResponsable`;
+
   const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -672,6 +675,34 @@ export async function sendShelterWelcomeEmail({ email, name }) {
           </table>
         </div>
 
+        <!-- Section Facebook -->
+        <div style="border:2px solid #E8F0FE;border-radius:16px;padding:24px;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <div style="width:32px;height:32px;background:#1877F2;border-radius:8px;text-align:center;line-height:32px;flex-shrink:0;">
+              <span style="color:#fff;font-weight:900;font-size:16px;">f</span>
+            </div>
+            <p style="color:#374151;font-size:13px;font-weight:700;margin:0;text-transform:uppercase;letter-spacing:0.05em;">
+              Annoncez-le à votre communauté Facebook !
+            </p>
+          </div>
+          <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 14px;">
+            Copiez ce message et publiez-le sur la page Facebook de votre refuge.
+            Plus vous serez visibles, plus vous recevrez de demandes d'adoption !
+          </p>
+          <div style="background:#F8F9FF;border:1px solid #DBEAFE;border-radius:12px;padding:16px;">
+            <p style="color:#374151;font-size:13px;line-height:1.7;margin:0;white-space:pre-line;font-family:Georgia,serif;">🐾 Bonne nouvelle ! ${name} rejoint Adoptly, la plateforme qui connecte les animaux à adopter avec les familles qui leur correspondent vraiment.
+
+Retrouvez tous nos pensionnaires sur adoptly.fr et trouvez votre futur compagnon idéal !
+
+👉 adoptly.fr
+
+#Adoption #Refuge #Animaux #Adoptly #AdoptionResponsable</p>
+          </div>
+          <p style="color:#9CA3AF;font-size:11px;margin:10px 0 0;">
+            💡 Astuce : ajoutez une photo de l'un de vos animaux pour maximiser l'engagement.
+          </p>
+        </div>
+
         <!-- CTA -->
         <div style="text-align:center;margin:32px 0 0;">
           <a href="https://adoptly.fr/shelter/dashboard"
@@ -705,6 +736,126 @@ export async function sendShelterWelcomeEmail({ email, name }) {
   await sendEmail({
     to:      email,
     subject: `Bienvenue sur Adoptly, ${name} — votre refuge est en ligne 🏠`,
+    html,
+  });
+}
+
+/**
+ * Notifie l'admin (Simon) qu'un nouveau refuge vient de s'inscrire.
+ * @param {{ shelterEmail: string, shelterName: string, shelterPhone?: string, shelterAddress?: string }} params
+ */
+export async function sendAdminNewShelterEmail({ shelterEmail, shelterName, shelterPhone, shelterAddress }) {
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  const registeredAt = new Date().toLocaleString('fr-BE', {
+    timeZone: 'Europe/Brussels',
+    dateStyle: 'full',
+    timeStyle: 'short',
+  });
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouveau refuge inscrit sur Adoptly</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+      <!-- En-tête gradient -->
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:36px 32px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;vertical-align:middle;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
+          </div>
+          <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
+        </div>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:0;">Notification admin</p>
+      </div>
+
+      <!-- Corps -->
+      <div style="padding:36px 32px;">
+
+        <!-- Badge -->
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="display:inline-block;background:#ECFDF5;border-radius:50px;padding:12px 24px;">
+            <span style="font-size:26px;">🏠</span>
+            <span style="color:#059669;font-weight:800;font-size:17px;margin-left:8px;vertical-align:middle;">Nouveau refuge inscrit !</span>
+          </div>
+        </div>
+
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 6px;text-align:center;letter-spacing:-0.3px;">
+          ${shelterName}
+        </h1>
+        <p style="color:#9CA3AF;font-size:13px;text-align:center;margin:0 0 28px;">${registeredAt}</p>
+
+        <!-- Infos refuge -->
+        <div style="background:#F4F7FF;border-radius:16px;padding:24px;margin-bottom:24px;">
+          <p style="color:#374151;font-size:13px;font-weight:700;margin:0 0 16px;text-transform:uppercase;letter-spacing:0.05em;">
+            Détails du refuge
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding-bottom:12px;">
+                <span style="font-size:15px;">🏷️</span>
+                <span style="color:#374151;font-size:14px;font-weight:600;margin-left:8px;">Nom :</span>
+                <span style="color:#4B5563;font-size:14px;margin-left:4px;">${shelterName}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-bottom:12px;">
+                <span style="font-size:15px;">✉️</span>
+                <span style="color:#374151;font-size:14px;font-weight:600;margin-left:8px;">Email :</span>
+                <a href="mailto:${shelterEmail}" style="color:#1B4F8A;font-size:14px;margin-left:4px;text-decoration:none;font-weight:600;">${shelterEmail}</a>
+              </td>
+            </tr>
+            ${shelterPhone ? `
+            <tr>
+              <td style="padding-bottom:12px;">
+                <span style="font-size:15px;">📞</span>
+                <span style="color:#374151;font-size:14px;font-weight:600;margin-left:8px;">Téléphone :</span>
+                <span style="color:#4B5563;font-size:14px;margin-left:4px;">${shelterPhone}</span>
+              </td>
+            </tr>` : ''}
+            ${shelterAddress ? `
+            <tr>
+              <td>
+                <span style="font-size:15px;">📍</span>
+                <span style="color:#374151;font-size:14px;font-weight:600;margin-left:8px;">Adresse :</span>
+                <span style="color:#4B5563;font-size:14px;margin-left:4px;">${shelterAddress}</span>
+              </td>
+            </tr>` : ''}
+          </table>
+        </div>
+
+        <!-- CTA admin -->
+        <div style="text-align:center;">
+          <a href="https://adoptly.fr/shelter/dashboard"
+             style="background:#1B4F8A;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:14px;padding:12px 28px;border-radius:12px;display:inline-block;
+                    letter-spacing:-0.2px;">
+            Voir le tableau de bord →
+          </a>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <div style="border-top:1px solid #F3F4F6;padding:20px 32px;text-align:center;">
+        <p style="color:#D1D5DB;font-size:11px;margin:0;">
+          Notification automatique Adoptly — nouveau refuge partenaire.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to:      ADMIN_EMAIL,
+    subject: `🏠 Nouveau refuge : ${shelterName} vient de s'inscrire sur Adoptly`,
     html,
   });
 }

@@ -3,7 +3,7 @@ import bcrypt  from 'bcryptjs';
 import jwt     from 'jsonwebtoken';
 import crypto  from 'crypto';
 import { supabase }          from '../lib/supabase.js';
-import { sendWelcomeEmail, sendShelterWelcomeEmail, sendPasswordResetEmail } from '../lib/email.js';
+import { sendWelcomeEmail, sendShelterWelcomeEmail, sendAdminNewShelterEmail, sendPasswordResetEmail } from '../lib/email.js';
 
 const router = express.Router();
 
@@ -148,8 +148,16 @@ router.post('/shelter/register', async (req, res) => {
       throw error;
     }
 
-    // Email de bienvenue refuge (non-bloquant)
+    // Email de bienvenue refuge + template Facebook (non-bloquant)
     sendShelterWelcomeEmail({ email: data.email, name: data.name }).catch(() => {});
+
+    // Notification admin — nouveau refuge inscrit (non-bloquant)
+    sendAdminNewShelterEmail({
+      shelterEmail:   data.email,
+      shelterName:    data.name,
+      shelterPhone:   data.phone   || null,
+      shelterAddress: data.address || null,
+    }).catch(() => {});
 
     const token = makeToken({ id: data.id, email: data.email, role: 'shelter' });
     res.json({ token, user: data, role: 'shelter' });
