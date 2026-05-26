@@ -3,7 +3,7 @@ import bcrypt  from 'bcryptjs';
 import jwt     from 'jsonwebtoken';
 import crypto  from 'crypto';
 import { supabase }          from '../lib/supabase.js';
-import { sendWelcomeEmail, sendShelterWelcomeEmail, sendAdminNewShelterEmail, sendPasswordResetEmail } from '../lib/email.js';
+import { sendWelcomeEmail, sendAdminNewAdoptantEmail, sendShelterWelcomeEmail, sendAdminNewShelterEmail, sendPasswordResetEmail } from '../lib/email.js';
 
 const router = express.Router();
 
@@ -32,8 +32,9 @@ router.post('/adoptant/register', async (req, res) => {
       throw error;
     }
 
-    // Email de bienvenue (non-bloquant)
+    // Email de bienvenue + notification admin (non-bloquant)
     sendWelcomeEmail({ email }).catch(() => {});
+    sendAdminNewAdoptantEmail({ adoptantEmail: email, via: 'email' }).catch(() => {});
 
     const token = makeToken({ id: data.id, email: data.email, role: 'adoptant' });
     res.json({ token, user: data, role: 'adoptant' });
@@ -115,6 +116,7 @@ router.post('/google', async (req, res) => {
 
     if (isNew) {
       sendWelcomeEmail({ email }).catch(() => {});
+      sendAdminNewAdoptantEmail({ adoptantEmail: email, via: 'google' }).catch(() => {});
     }
 
     const { password_hash, ...user } = adoptant;

@@ -741,6 +741,108 @@ Retrouvez tous nos pensionnaires sur adoptly.fr et trouvez votre futur compagnon
 }
 
 /**
+ * Notifie l'admin (Simon) qu'un nouvel adoptant vient de s'inscrire.
+ * @param {{ adoptantEmail: string, via?: 'email'|'google' }} params
+ */
+export async function sendAdminNewAdoptantEmail({ adoptantEmail, via = 'email' }) {
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  const registeredAt = new Date().toLocaleString('fr-BE', {
+    timeZone: 'Europe/Brussels',
+    dateStyle: 'full',
+    timeStyle: 'short',
+  });
+  const viaLabel = via === 'google' ? 'Google OAuth' : 'Email / mot de passe';
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvel adoptant inscrit sur Adoptly</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+      <!-- En-tête gradient -->
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:36px 32px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;vertical-align:middle;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
+          </div>
+          <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
+        </div>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:0;">Notification admin</p>
+      </div>
+
+      <!-- Corps -->
+      <div style="padding:36px 32px;">
+
+        <!-- Badge -->
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="display:inline-block;background:#EFF6FF;border-radius:50px;padding:12px 24px;">
+            <span style="font-size:26px;">🐾</span>
+            <span style="color:#1B4F8A;font-weight:800;font-size:17px;margin-left:8px;vertical-align:middle;">Nouvel adoptant inscrit !</span>
+          </div>
+        </div>
+
+        <p style="color:#9CA3AF;font-size:13px;text-align:center;margin:0 0 28px;">${registeredAt}</p>
+
+        <!-- Infos adoptant -->
+        <div style="background:#F4F7FF;border-radius:16px;padding:24px;margin-bottom:24px;">
+          <p style="color:#374151;font-size:13px;font-weight:700;margin:0 0 16px;text-transform:uppercase;letter-spacing:0.05em;">
+            Détails
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding-bottom:12px;">
+                <span style="font-size:15px;">✉️</span>
+                <span style="color:#374151;font-size:14px;font-weight:600;margin-left:8px;">Email :</span>
+                <a href="mailto:${adoptantEmail}" style="color:#1B4F8A;font-size:14px;margin-left:4px;text-decoration:none;font-weight:600;">${adoptantEmail}</a>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span style="font-size:15px;">🔑</span>
+                <span style="color:#374151;font-size:14px;font-weight:600;margin-left:8px;">Inscription via :</span>
+                <span style="color:#4B5563;font-size:14px;margin-left:4px;">${viaLabel}</span>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- CTA admin -->
+        <div style="text-align:center;">
+          <a href="https://adoptly.fr"
+             style="background:#1B4F8A;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:14px;padding:12px 28px;border-radius:12px;display:inline-block;
+                    letter-spacing:-0.2px;">
+            Voir la plateforme →
+          </a>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <div style="border-top:1px solid #F3F4F6;padding:20px 32px;text-align:center;">
+        <p style="color:#D1D5DB;font-size:11px;margin:0;">
+          Notification automatique Adoptly — nouvel adoptant inscrit.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to:      ADMIN_EMAIL,
+    subject: `🐾 Nouvel adoptant : ${adoptantEmail} vient de s'inscrire sur Adoptly`,
+    html,
+  });
+}
+
+/**
  * Notifie l'admin (Simon) qu'un nouveau refuge vient de s'inscrire.
  * @param {{ shelterEmail: string, shelterName: string, shelterPhone?: string, shelterAddress?: string }} params
  */
