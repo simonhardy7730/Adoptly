@@ -3,31 +3,12 @@ import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
 const SPECIES = ['dog', 'cat', 'rabbit', 'guinea_pig', 'other'];
-const SPECIES_LABELS = {
-  dog: 'Chien',
-  cat: 'Chat',
-  rabbit: 'Lapin',
-  guinea_pig: "Cochon d'Inde",
-  other: 'Autre',
-};
-
 const TEMPERAMENTS = ['calm', 'playful', 'energetic', 'mixed'];
-const TEMPERAMENT_LABELS = {
-  calm: 'Calme',
-  playful: 'Joueur',
-  energetic: 'Énergique',
-  mixed: 'Mixte',
-};
-
 const SIZES = ['small', 'medium', 'large'];
-const SIZE_LABELS = {
-  small: 'Petit',
-  medium: 'Moyen',
-  large: 'Grand',
-};
 
 const EMPTY_REQUIREMENTS = {
   needs_garden: 'no',
@@ -67,6 +48,7 @@ export default function AnimalForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
+  const { t } = useLanguage();
   const isEdit = Boolean(id);
   const existing = location.state?.animal;
 
@@ -103,7 +85,7 @@ export default function AnimalForm() {
     const arr = Array.from(files);
     const total = existingPhotos.length + newFiles.length + arr.length;
     if (total > 3) {
-      setError('Maximum 3 photos autorisées');
+      setError(t('form_photos_max_err'));
       return;
     }
     setNewFiles((prev) => [...prev, ...arr]);
@@ -149,12 +131,12 @@ export default function AnimalForm() {
         await api.put(`/shelter/animals/${id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        setSuccess('Animal mis à jour avec succès !');
+        setSuccess(t('form_success_edit'));
       } else {
         await api.post('/shelter/animals', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-        setSuccess('Animal ajouté avec succès !');
+        setSuccess(t('form_success_add'));
         setForm({
           name: '',
           species: 'dog',
@@ -172,13 +154,23 @@ export default function AnimalForm() {
         setExistingPhotos([]);
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Échec de la sauvegarde. Veuillez réessayer.');
+      setError(err.response?.data?.error || t('form_error'));
     } finally {
       setSaving(false);
     }
   }
 
   const storyLength = form.story.length;
+
+  // Labels traduits
+  const speciesOptions = SPECIES.map((s) => ({ value: s, label: t(`sp_${s}`) }));
+  const sizeOptions    = SIZES.map((s) => ({ value: s, label: t(`sz_${s}`) }));
+  const tempOptions    = TEMPERAMENTS.map((tp) => ({ value: tp, label: t(`tp_${tp}`) }));
+
+  const yesNo = [
+    { value: 'yes', label: t('val_yes') },
+    { value: 'no',  label: t('val_no') },
+  ];
 
   return (
     <div className="min-h-screen bg-bg-light">
@@ -190,14 +182,14 @@ export default function AnimalForm() {
             ←
           </button>
           <h1 className="text-2xl font-extrabold text-primary">
-            {isEdit ? "Modifier l'animal" : 'Ajouter un animal'}
+            {isEdit ? t('form_title_edit') : t('form_title_add')}
           </h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Photos */}
           <div className="card p-5 space-y-3">
-            <h2 className="font-bold text-gray-700">Photos (jusqu'à 3)</h2>
+            <h2 className="font-bold text-gray-700">{t('form_photos')}</h2>
 
             <div className="flex gap-3 flex-wrap">
               {existingPhotos.map((url, i) => (
@@ -233,7 +225,7 @@ export default function AnimalForm() {
                   className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-secondary hover:text-secondary transition-colors"
                 >
                   <span className="text-2xl">+</span>
-                  <span className="text-xs">Ajouter</span>
+                  <span className="text-xs">{t('form_photo_add')}</span>
                 </button>
               )}
             </div>
@@ -250,11 +242,11 @@ export default function AnimalForm() {
 
           {/* Informations de base */}
           <div className="card p-5 space-y-4">
-            <h2 className="font-bold text-gray-700">Informations de base</h2>
+            <h2 className="font-bold text-gray-700">{t('form_basic_info')}</h2>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Nom <span className="text-red-400">*</span>
+                {t('form_name')} <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -267,15 +259,15 @@ export default function AnimalForm() {
             </div>
 
             <RadioGroup
-              label="Espèce"
+              label={t('form_species')}
               name="species"
-              options={SPECIES.map((s) => ({ value: s, label: SPECIES_LABELS[s] }))}
+              options={speciesOptions}
               value={form.species}
               onChange={(v) => setField('species', v)}
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Race (facultatif)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form_breed')}</label>
               <input
                 type="text"
                 className="input-field"
@@ -286,7 +278,7 @@ export default function AnimalForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Âge (en mois)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form_age')}</label>
               <input
                 type="number"
                 min={0}
@@ -295,30 +287,30 @@ export default function AnimalForm() {
                 value={form.age}
                 onChange={(e) => setField('age', e.target.value)}
               />
-              <p className="text-gray-400 text-xs mt-1">ex. 6 = 6 mois, 24 = 2 ans</p>
+              <p className="text-gray-400 text-xs mt-1">{t('form_age_hint')}</p>
             </div>
 
             <RadioGroup
-              label="Taille"
+              label={t('form_size')}
               name="size"
-              options={SIZES.map((s) => ({ value: s, label: SIZE_LABELS[s] }))}
+              options={sizeOptions}
               value={form.size}
               onChange={(v) => setField('size', v)}
             />
 
             <RadioGroup
-              label="Caractère"
+              label={t('form_temperament')}
               name="temperament"
-              options={TEMPERAMENTS.map((t) => ({ value: t, label: TEMPERAMENT_LABELS[t] }))}
+              options={tempOptions}
               value={form.temperament}
               onChange={(v) => setField('temperament', v)}
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Besoins spéciaux</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form_special_needs')}</label>
               <textarea
                 className="input-field resize-none h-20"
-                placeholder="Médicaments, régime alimentaire, etc."
+                placeholder={t('form_special_ph')}
                 value={form.special_needs}
                 onChange={(e) => setField('special_needs', e.target.value)}
               />
@@ -326,7 +318,7 @@ export default function AnimalForm() {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">Histoire</label>
+                <label className="block text-sm font-medium text-gray-700">{t('form_story')}</label>
                 <span className={`text-xs ${storyLength > 180 ? 'text-orange-500' : 'text-gray-400'}`}>
                   {storyLength}/200
                 </span>
@@ -334,7 +326,7 @@ export default function AnimalForm() {
               <textarea
                 className="input-field resize-none h-24"
                 maxLength={200}
-                placeholder="Décrivez la personnalité de cet animal aux futurs adoptants..."
+                placeholder={t('form_story_ph')}
                 value={form.story}
                 onChange={(e) => setField('story', e.target.value)}
               />
@@ -342,11 +334,11 @@ export default function AnimalForm() {
 
             {isEdit && (
               <RadioGroup
-                label="Statut"
+                label={t('form_status')}
                 name="status"
                 options={[
-                  { value: 'active', label: 'Actif' },
-                  { value: 'adopted', label: 'Adopté' },
+                  { value: 'active',  label: t('val_active') },
+                  { value: 'adopted', label: t('val_adopted') },
                 ]}
                 value={form.status}
                 onChange={(v) => setField('status', v)}
@@ -357,77 +349,77 @@ export default function AnimalForm() {
           {/* Besoins de l'animal */}
           <div className="card p-5 space-y-4">
             <h2 className="font-bold text-gray-700">
-              De quoi a besoin {form.name || 'cet animal'} ?
+              {t('form_needs_title', { name: form.name || '…' })}
             </h2>
 
             <RadioGroup
-              label="Besoin d'un jardin ?"
+              label={t('form_needs_garden')}
               name="needs_garden"
               options={[
-                { value: 'yes', label: 'Oui' },
-                { value: 'no', label: 'Non' },
-                { value: 'preferable', label: 'Préférable' },
+                { value: 'yes',        label: t('val_yes') },
+                { value: 'no',         label: t('val_no') },
+                { value: 'preferable', label: t('val_preferable') },
               ]}
               value={form.requirements.needs_garden}
               onChange={(v) => setReq('needs_garden', v)}
             />
 
             <RadioGroup
-              label="Compatible avec les enfants ?"
+              label={t('form_needs_children')}
               name="children_compatible"
               options={[
-                { value: 'yes', label: 'Oui' },
-                { value: 'no', label: 'Non' },
-                { value: '6+', label: '6 ans +' },
-                { value: '12+', label: '12 ans +' },
+                { value: 'yes', label: t('val_yes') },
+                { value: 'no',  label: t('val_no') },
+                { value: '6+',  label: '6+' },
+                { value: '12+', label: '12+' },
               ]}
               value={form.requirements.children_compatible}
               onChange={(v) => setReq('children_compatible', v)}
             />
 
             <RadioGroup
-              label="Compatible avec les chats ?"
+              label={t('form_needs_cats')}
               name="cats_compatible"
               options={[
-                { value: 'yes', label: 'Oui' },
-                { value: 'no', label: 'Non' },
-                { value: 'unknown', label: 'Inconnu' },
+                { value: 'yes',     label: t('val_yes') },
+                { value: 'no',      label: t('val_no') },
+                { value: 'unknown', label: t('val_unknown') },
               ]}
               value={form.requirements.cats_compatible}
               onChange={(v) => setReq('cats_compatible', v)}
             />
 
             <RadioGroup
-              label="Compatible avec les chiens ?"
+              label={t('form_needs_dogs')}
               name="dogs_compatible"
               options={[
-                { value: 'yes', label: 'Oui' },
-                { value: 'no', label: 'Non' },
-                { value: 'unknown', label: 'Inconnu' },
+                { value: 'yes',     label: t('val_yes') },
+                { value: 'no',      label: t('val_no') },
+                { value: 'unknown', label: t('val_unknown') },
               ]}
               value={form.requirements.dogs_compatible}
               onChange={(v) => setReq('dogs_compatible', v)}
             />
 
             <RadioGroup
-              label="Promenades quotidiennes nécessaires ?"
+              label={t('form_needs_outdoor')}
               name="daily_outdoor_time"
               options={[
-                { value: 'yes', label: 'Oui' },
-                { value: 'no', label: 'Non' },
-                { value: 'ideal', label: 'Idéal' },
+                { value: 'yes',   label: t('val_yes') },
+                { value: 'no',    label: t('val_no') },
+                { value: 'ideal', label: t('val_ideal') },
               ]}
               value={form.requirements.daily_outdoor_time}
               onChange={(v) => setReq('daily_outdoor_time', v)}
             />
 
             <RadioGroup
-              label="Logement spacieux nécessaire ?"
+              label={t('form_needs_space')}
               name="spacious_home"
               options={[
-                { value: 'yes', label: 'Oui' },
-                { value: 'no', label: 'Non' },
-                { value: 'flexible', label: 'Flexible' },
+                { value: 'yes',      label: t('val_yes') },
+                { value: 'no',       label: t('val_no') },
+                { value: 'flexible', label: t('val_flexible') },
               ]}
               value={form.requirements.spacious_home}
               onChange={(v) => setReq('spacious_home', v)}
@@ -435,11 +427,11 @@ export default function AnimalForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes spéciales pour les adoptants
+                {t('form_special_notes')}
               </label>
               <textarea
                 className="input-field resize-none h-20"
-                placeholder="Tout ce que les adoptants devraient savoir..."
+                placeholder={t('form_notes_ph')}
                 value={form.requirements.special_notes}
                 onChange={(e) => setReq('special_notes', e.target.value)}
               />
@@ -471,9 +463,9 @@ export default function AnimalForm() {
               {saving ? (
                 <LoadingSpinner size="sm" className="text-white" />
               ) : isEdit ? (
-                'Enregistrer les modifications'
+                t('form_save_edit')
               ) : (
-                'Ajouter cet animal 🐾'
+                t('form_save_add')
               )}
             </button>
 
@@ -483,7 +475,7 @@ export default function AnimalForm() {
                 onClick={() => navigate('/shelter/dashboard')}
                 className="btn-secondary px-5"
               >
-                Terminer
+                {t('form_done')}
               </button>
             )}
           </div>

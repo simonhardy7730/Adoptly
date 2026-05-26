@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar() {
   const { role, logout } = useAuth();
   const navigate = useNavigate();
+  const { t, lang, setLang } = useLanguage();
 
   function handleLogout() {
     logout();
@@ -38,25 +40,37 @@ export default function Navbar() {
               </Link>
             </>
           )}
+
           {role === 'shelter' && (
             <>
               <Link to="/shelter/dashboard" className="btn-ghost text-sm py-1.5 px-3">
-                Tableau de bord
+                {t('nav_dashboard')}
               </Link>
               <Link to="/shelter/animals/add" className="btn-ghost text-sm py-1.5 px-3">
-                + Ajouter
+                {t('nav_add')}
               </Link>
               <Link to="/shelter/profile" className="btn-ghost text-sm py-1.5 px-3">
-                Profil
+                {t('nav_profile')}
               </Link>
+
+              {/* Toggle FR / NL */}
+              <button
+                onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
+                className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200
+                           text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
+                title={lang === 'fr' ? 'Switch to Nederlands' : 'Passer en français'}
+              >
+                {lang === 'fr' ? 'NL' : 'FR'}
+              </button>
             </>
           )}
+
           <button
             onClick={handleLogout}
             className="text-sm py-1.5 px-3 rounded-xl font-medium text-red-400
                        hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all"
           >
-            Déconnexion
+            {role === 'shelter' ? t('nav_logout') : 'Déconnexion'}
           </button>
         </div>
       </div>

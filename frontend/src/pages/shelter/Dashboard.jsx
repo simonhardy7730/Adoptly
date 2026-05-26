@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
 // ── Modal : liste des adoptants intéressés ────────────────
-function InterestedModal({ animal, onClose }) {
+function InterestedModal({ animal, onClose, t }) {
   const [loading, setLoading]       = useState(true);
   const [interested, setInterested] = useState([]);
 
@@ -34,9 +35,9 @@ function InterestedModal({ animal, onClose }) {
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <div>
-            <h3 className="font-bold text-gray-800">Intéressé(e)s par {animal.name}</h3>
+            <h3 className="font-bold text-gray-800">{t('interested_title', { name: animal.name })}</h3>
             <p className="text-gray-400 text-xs mt-0.5">
-              {interested.length} adoptant{interested.length > 1 ? 's' : ''}
+              {interested.length} {interested.length > 1 ? t('interested_adoptants') : t('interested_adoptant')}
             </p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
@@ -47,7 +48,7 @@ function InterestedModal({ animal, onClose }) {
             <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
           ) : interested.length === 0 ? (
             <div className="text-center py-8 text-gray-400 text-sm">
-              Aucun adoptant pour l'instant
+              {t('interested_empty')}
             </div>
           ) : (
             interested.map((person) => {
@@ -75,7 +76,7 @@ function InterestedModal({ animal, onClose }) {
                   <div className="flex-shrink-0 text-right">
                     <p className="text-gray-300 text-xs">{date}</p>
                     {person.contacted && (
-                      <p className="text-blue-400 text-xs">📬 contacté</p>
+                      <p className="text-blue-400 text-xs">{t('interested_contacted')}</p>
                     )}
                   </div>
                 </div>
@@ -120,7 +121,7 @@ function WeeklyChart({ weeks }) {
   );
 }
 
-function ConfirmModal({ name, onConfirm, onCancel }) {
+function ConfirmModal({ name, onConfirm, onCancel, t }) {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
@@ -138,20 +139,18 @@ function ConfirmModal({ name, onConfirm, onCancel }) {
       >
         <div className="text-center space-y-2">
           <div className="text-4xl">🗑️</div>
-          <h3 className="font-bold text-gray-800 text-lg">Supprimer {name} ?</h3>
-          <p className="text-gray-500 text-sm">
-            Cela supprimera définitivement cet animal ainsi que toutes ses données de match.
-          </p>
+          <h3 className="font-bold text-gray-800 text-lg">{t('confirm_delete_title', { name })}</h3>
+          <p className="text-gray-500 text-sm">{t('confirm_delete_body')}</p>
         </div>
         <div className="flex gap-3">
           <button onClick={onCancel} className="btn-secondary flex-1 text-sm py-3">
-            Annuler
+            {t('confirm_cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="flex-1 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-colors active:scale-95"
           >
-            Supprimer
+            {t('confirm_delete')}
           </button>
         </div>
       </motion.div>
@@ -160,12 +159,13 @@ function ConfirmModal({ name, onConfirm, onCancel }) {
 }
 
 export default function Dashboard() {
+  const { t } = useLanguage();
   const [data,      setData]      = useState(null);
   const [loading,   setLoading]   = useState(true);
   const [deleting,  setDeleting]  = useState(null);
-  const [interested, setInterested] = useState(null); // animal dont on affiche les intéressés
+  const [interested, setInterested] = useState(null);
   const [markingAdopted, setMarkingAdopted] = useState(null);
-  const [copiedId,  setCopiedId]  = useState(null);  // id de l'animal dont le lien vient d'être copié
+  const [copiedId,  setCopiedId]  = useState(null);
 
   function shareAnimal(animal) {
     const url = `https://adoptly.fr/animal/${animal.id}`;
@@ -227,42 +227,40 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-extrabold text-primary">
-                  {data?.shelter?.name || 'Tableau de bord'}
+                  {data?.shelter?.name || t('nav_dashboard')}
                 </h1>
-                <p className="text-gray-500 text-sm mt-0.5">
-                  Gérez vos animaux et suivez les adoptions
-                </p>
+                <p className="text-gray-500 text-sm mt-0.5">{t('dash_subtitle')}</p>
               </div>
               <Link to="/shelter/animals/add" className="btn-primary text-sm py-2.5 px-4">
-                + Ajouter un animal
+                {t('dash_add_btn')}
               </Link>
             </div>
 
             {/* Statistiques */}
             <div className="grid grid-cols-3 gap-3">
-              <StatCard value={data?.stats?.total_animals ?? 0} label="Animaux listés" emoji="🐾" />
-              <StatCard value={data?.stats?.matches_this_month ?? 0} label="Matchs ce mois" emoji="💚" />
-              <StatCard value={data?.stats?.pending_contacts ?? 0} label="Contacts en attente" emoji="📬" />
+              <StatCard value={data?.stats?.total_animals ?? 0} label={t('dash_stat_animals')} emoji="🐾" />
+              <StatCard value={data?.stats?.matches_this_month ?? 0} label={t('dash_stat_matches')} emoji="💚" />
+              <StatCard value={data?.stats?.pending_contacts ?? 0} label={t('dash_stat_contacts')} emoji="📬" />
             </div>
 
             {/* Graphique matchs hebdomadaires */}
             {data?.stats?.weekly?.some((w) => w.count > 0) && (
               <div className="card p-5">
-                <h2 className="font-bold text-gray-700 mb-4">Matchs — 8 dernières semaines</h2>
+                <h2 className="font-bold text-gray-700 mb-4">{t('dash_chart_title')}</h2>
                 <WeeklyChart weeks={data.stats.weekly} />
               </div>
             )}
 
             {/* Liste des animaux */}
             <div>
-              <h2 className="font-bold text-gray-700 mb-3">Vos Animaux</h2>
+              <h2 className="font-bold text-gray-700 mb-3">{t('dash_animals_title')}</h2>
 
               {!data?.animals?.length ? (
                 <div className="card p-8 text-center space-y-4">
                   <div className="text-5xl">🐾</div>
-                  <p className="text-gray-500 font-medium">Aucun animal listé pour l'instant</p>
+                  <p className="text-gray-500 font-medium">{t('dash_empty')}</p>
                   <Link to="/shelter/animals/add" className="btn-primary inline-block px-6 py-2.5 text-sm">
-                    Ajouter votre premier animal
+                    {t('dash_empty_cta')}
                   </Link>
                 </div>
               ) : (
@@ -293,15 +291,15 @@ export default function Dashboard() {
                             <span
                               className={`badge text-xs flex-shrink-0 ${STATUS_COLOR[animal.status] || STATUS_COLOR.active}`}
                             >
-                              {animal.status === 'adopted' ? 'Adopté 🎉' : 'Actif'}
+                              {animal.status === 'adopted' ? t('dash_status_adopted') : t('dash_status_active')}
                             </span>
                           </div>
                           <p className="text-gray-500 text-xs mt-0.5">
                             {animal.species}{animal.breed ? ` · ${animal.breed}` : ''}
                           </p>
                           <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
-                            <span>💚 {animal.match_count} match{animal.match_count > 1 ? 's' : ''}</span>
-                            <span>📬 {animal.contact_count} contact{animal.contact_count > 1 ? 's' : ''}</span>
+                            <span>💚 {animal.match_count} {animal.match_count > 1 ? t('dash_matches') : t('dash_match')}</span>
+                            <span>📬 {animal.contact_count} {animal.contact_count > 1 ? t('dash_contacts') : t('dash_contact')}</span>
                           </div>
                         </div>
 
@@ -313,21 +311,21 @@ export default function Dashboard() {
                               onClick={() => setInterested(animal)}
                               className="text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
                             >
-                              💚 {animal.match_count} intéressé{animal.match_count > 1 ? 's' : ''}
+                              💚 {animal.match_count} {animal.match_count > 1 ? t('dash_interested_pl') : t('dash_interested')}
                             </button>
                           )}
                           <button
                             onClick={() => shareAnimal(animal)}
                             className="text-xs font-medium text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-lg transition-colors"
                           >
-                            {copiedId === animal.id ? '✓ Copié !' : '🔗 Partager'}
+                            {copiedId === animal.id ? t('dash_copied') : t('dash_share')}
                           </button>
                           <Link
                             to={`/shelter/animals/${animal.id}/edit`}
                             state={{ animal }}
                             className="text-xs font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors text-center"
                           >
-                            Modifier
+                            {t('dash_edit')}
                           </Link>
                           {animal.status !== 'adopted' && (
                             <button
@@ -335,14 +333,14 @@ export default function Dashboard() {
                               disabled={markingAdopted === animal.id}
                               className="text-xs font-medium text-purple-500 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
                             >
-                              {markingAdopted === animal.id ? '…' : '🎉 Adopté !'}
+                              {markingAdopted === animal.id ? '…' : t('dash_mark_adopted')}
                             </button>
                           )}
                           <button
                             onClick={() => setDeleting(animal)}
                             className="text-xs font-medium text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
                           >
-                            Supprimer
+                            {t('dash_delete')}
                           </button>
                         </div>
                       </motion.div>
@@ -361,12 +359,14 @@ export default function Dashboard() {
             name={deleting.name}
             onConfirm={() => deleteAnimal(deleting.id)}
             onCancel={() => setDeleting(null)}
+            t={t}
           />
         )}
         {interested && (
           <InterestedModal
             animal={interested}
             onClose={() => setInterested(null)}
+            t={t}
           />
         )}
       </AnimatePresence>

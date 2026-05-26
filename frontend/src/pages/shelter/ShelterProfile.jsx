@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
 export default function ShelterProfile() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function ShelterProfile() {
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err) {
-      setError(err.response?.data?.error || 'Une erreur est survenue.');
+      setError(err.response?.data?.error || t('profile_error'));
     } finally {
       setSaving(false);
     }
@@ -78,7 +80,7 @@ export default function ShelterProfile() {
             <div className="w-full">
               <p className="font-bold text-primary text-xl">{profile?.name}</p>
               <p className="text-gray-400 text-sm mt-1">{profile?.email}</p>
-              <p className="text-gray-300 text-xs mt-0.5">Membre depuis {memberSince}</p>
+              <p className="text-gray-300 text-xs mt-0.5">{t('profile_member_since')} {memberSince}</p>
 
               {profile?.phone && (
                 <p className="text-gray-500 text-sm mt-2">📞 {profile.phone}</p>
@@ -91,18 +93,18 @@ export default function ShelterProfile() {
                 onClick={() => setEditing(true)}
                 className="mt-4 text-secondary text-sm font-medium hover:underline"
               >
-                ✏️ Modifier les informations
+                {t('profile_edit_btn')}
               </button>
             </div>
           ) : (
             <form onSubmit={handleSave} className="w-full space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1 text-left">
-                  Nom du refuge <span className="text-red-400">*</span>
+                  {t('profile_name_label')} <span className="text-red-400">*</span>
                 </label>
                 <input
                   className="input-field"
-                  placeholder="SPA de Namur"
+                  placeholder={t('profile_name_ph')}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
@@ -111,22 +113,22 @@ export default function ShelterProfile() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1 text-left">
-                  Téléphone
+                  {t('profile_phone_label')}
                 </label>
                 <input
                   className="input-field"
-                  placeholder="+32 81 00 00 00"
+                  placeholder={t('profile_phone_ph')}
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1 text-left">
-                  Adresse
+                  {t('profile_address_label')}
                 </label>
                 <input
                   className="input-field"
-                  placeholder="Rue des Animaux 12, 5000 Namur"
+                  placeholder={t('profile_address_ph')}
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
@@ -144,14 +146,14 @@ export default function ShelterProfile() {
                   disabled={saving}
                   className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-2"
                 >
-                  {saving ? <LoadingSpinner size="sm" className="text-white" /> : 'Sauvegarder'}
+                  {saving ? <LoadingSpinner size="sm" className="text-white" /> : t('profile_save')}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEdit}
                   className="btn-secondary flex-1 py-2.5 text-sm"
                 >
-                  Annuler
+                  {t('profile_cancel')}
                 </button>
               </div>
             </form>
@@ -163,40 +165,40 @@ export default function ShelterProfile() {
               animate={{ opacity: 1, y: 0 }}
               className="text-green-500 text-sm font-medium"
             >
-              ✓ Informations sauvegardées !
+              {t('profile_saved_msg')}
             </motion.p>
           )}
         </div>
 
         {/* Actions rapides */}
         <div className="card p-5 space-y-3">
-          <h2 className="font-bold text-gray-700">Actions</h2>
+          <h2 className="font-bold text-gray-700">{t('profile_actions')}</h2>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => navigate('/shelter/dashboard')}
               className="bg-blue-50 hover:bg-blue-100 text-primary font-semibold text-sm py-4 rounded-2xl transition-colors"
             >
-              📊 Tableau de bord
+              {t('profile_goto_dash')}
             </button>
             <button
               onClick={() => navigate('/shelter/animals/add')}
               className="bg-orange-50 hover:bg-orange-100 text-accent font-semibold text-sm py-4 rounded-2xl transition-colors"
             >
-              ➕ Ajouter un animal
+              {t('profile_add_animal')}
             </button>
           </div>
         </div>
 
-        {/* Informations légales */}
+        {/* Informations du compte */}
         <div className="card p-5">
-          <h2 className="font-bold text-gray-700 mb-3">Informations du compte</h2>
+          <h2 className="font-bold text-gray-700 mb-3">{t('profile_account')}</h2>
           <div className="space-y-2 text-sm text-gray-500">
             <div className="flex justify-between">
-              <span>Email</span>
+              <span>{t('profile_email_label')}</span>
               <span className="font-medium text-gray-700">{profile?.email}</span>
             </div>
             <div className="flex justify-between">
-              <span>Membre depuis</span>
+              <span>{t('profile_member_since')}</span>
               <span className="font-medium text-gray-700">{memberSince}</span>
             </div>
           </div>
@@ -205,7 +207,7 @@ export default function ShelterProfile() {
               href="/auth/forgot-password?role=shelter"
               className="text-secondary text-sm font-medium hover:underline"
             >
-              🔑 Changer mon mot de passe
+              {t('profile_change_pwd')}
             </a>
           </div>
         </div>
