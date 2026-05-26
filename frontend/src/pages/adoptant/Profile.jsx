@@ -6,9 +6,9 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import api from '../../lib/api';
 
 const LABELS = {
-  existing_pets:    { none: '🏠 Aucun', dog: '🐕 Un chien', cat: '🐈 Un chat', both: '🐾 Chien et chat' },
+  existing_pets:    { none: '🏠 Aucun', dog: '🐕 Un chien', cat: '🐈 Un chat', both: '🐾 Chien et chat', other: '🐹 Autre animal' },
   has_garden:       { yes: '🌳 Jardin', balcony: '🪴 Balcon', no: '🏢 Aucun' },
-  housing_type:     { house: '🏠 Maison', apartment: '🏙️ Appartement' },
+  housing_size:     { small: '📦 < 40 m²', medium: '🏠 40–80 m²', large: '🏡 80–150 m²', xlarge: '🏘️ > 150 m²' },
   works_outdoor:    { yes: '🏃 Très actif(ve)', flexible: '🚶 Flexible', no: '🛋️ Casanier(ère)' },
   allergies:        { none: '✅ Aucune', cats: '🐈 Chats', dogs: '🐕 Chiens', other: '🤧 Autre' },
   monthly_budget:   { '50-100': '💰 50–100 €', '100-200': '💵 100–200 €', '200+': '💎 200 € +' },
@@ -21,7 +21,7 @@ const LABELS = {
 const PREFS = [
   { label: 'Animaux existants',  key: 'existing_pets' },
   { label: 'Espace extérieur',   key: 'has_garden' },
-  { label: 'Logement',           key: 'housing_type' },
+  { label: 'Superficie',         key: 'housing_size' },
   { label: 'Activité',           key: 'works_outdoor' },
   { label: 'Allergies',          key: 'allergies' },
   { label: 'Budget mensuel',     key: 'monthly_budget' },

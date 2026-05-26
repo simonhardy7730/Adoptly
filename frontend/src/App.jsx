@@ -9,6 +9,7 @@ import ResetPassword  from './pages/auth/ResetPassword';
 import Questionnaire  from './pages/adoptant/Questionnaire';
 import Swiper         from './pages/adoptant/Swiper';
 import MatchHistory   from './pages/adoptant/MatchHistory';
+import AnimalDetail   from './pages/adoptant/AnimalDetail';
 import Profile        from './pages/adoptant/Profile';
 import Dashboard      from './pages/shelter/Dashboard';
 import AnimalForm     from './pages/shelter/AnimalForm';
@@ -67,6 +68,9 @@ function AppRoutes() {
       }/>
       <Route path="/adoptant/profile" element={
         <PrivateRoute requiredRole="adoptant"><Profile /></PrivateRoute>
+      }/>
+      <Route path="/adoptant/animal" element={
+        <PrivateRoute requiredRole="adoptant"><AnimalDetail /></PrivateRoute>
       }/>
 
       {/* Pages protégées — refuge */}

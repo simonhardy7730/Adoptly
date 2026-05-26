@@ -101,6 +101,80 @@ router.put('/profile', authenticate, async (req, res) => {
   }
 });
 
+// ── Adoptants intéressés par un animal ───────────────────
+
+router.get('/animals/:id/interested', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    // Vérifier que l'animal appartient bien à ce refuge
+    const { data: animal } = await supabase
+      .from('animals')
+      .select('id, name')
+      .eq('id', req.params.id)
+      .eq('shelter_id', req.user.id)
+      .single();
+
+    if (!animal) return res.status(404).json({ error: 'Animal introuvable' });
+
+    const { data: matches, error } = await supabase
+      .from('matches')
+      .select('id, timestamp, contacted, adoptant_id')
+      .eq('animal_id', req.params.id)
+      .eq('swipe_direction', 'right')
+      .order('timestamp', { ascending: false });
+
+    if (error) throw error;
+
+    // Récupérer les infos des adoptants
+    const adoptantIds = (matches || []).map((m) => m.adoptant_id);
+    let adoptants = [];
+    if (adoptantIds.length > 0) {
+      const { data } = await supabase
+        .from('adoptants')
+        .select('id, email, first_name, last_name')
+        .in('id', adoptantIds);
+      adoptants = data || [];
+    }
+
+    const result = (matches || []).map((m) => {
+      const a = adoptants.find((ad) => ad.id === m.adoptant_id) || {};
+      return {
+        match_id:   m.id,
+        timestamp:  m.timestamp,
+        contacted:  m.contacted,
+        email:      a.email,
+        first_name: a.first_name,
+        last_name:  a.last_name,
+      };
+    });
+
+    res.json({ animal, interested: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Marquer un animal comme adopté ───────────────────────
+
+router.patch('/animals/:id/adopted', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data, error } = await supabase
+      .from('animals')
+      .update({ status: 'adopted' })
+      .eq('id', req.params.id)
+      .eq('shelter_id', req.user.id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Animals CRUD ──────────────────────────────────────────
 
 router.post('/animals', authenticate, upload.array('photos', 3), async (req, res) => {

@@ -69,6 +69,7 @@ function passesHardFilters(animal, shelter, prefs) {
   if (existingPets === 'dog' || existingPets === 'both') {
     if (req.dogs_compatible === 'no') return false;
   }
+  // 'other' = autre animal inconnu → on ne bloque pas sur chats/chiens
 
   // Garden
   if (req.needs_garden === 'yes' && prefs.has_garden === 'no') return false;
@@ -77,7 +78,11 @@ function passesHardFilters(animal, shelter, prefs) {
   if (req.daily_outdoor_time === 'yes' && prefs.works_outdoor === 'no')
     return false;
 
-  // Spacious home
+  // Spacious home — besoin de grand espace (≥ 80 m²)
+  const SMALL_SIZES = ['small', 'medium'];
+  if (req.spacious_home === 'yes' && SMALL_SIZES.includes(prefs.housing_size))
+    return false;
+  // Compatibilité rétrograde : ancienne valeur 'apartment'
   if (req.spacious_home === 'yes' && prefs.housing_type === 'apartment')
     return false;
 

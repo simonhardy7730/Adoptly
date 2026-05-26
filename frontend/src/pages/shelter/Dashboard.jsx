@@ -5,6 +5,89 @@ import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import api from '../../lib/api';
 
+// ── Modal : liste des adoptants intéressés ────────────────
+function InterestedModal({ animal, onClose }) {
+  const [loading, setLoading]       = useState(true);
+  const [interested, setInterested] = useState([]);
+
+  useEffect(() => {
+    api.get(`/shelter/animals/${animal.id}/interested`)
+      .then(({ data }) => setInterested(data.interested || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [animal.id]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white rounded-3xl w-full max-w-sm max-h-[80vh] flex flex-col shadow-2xl"
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h3 className="font-bold text-gray-800">Intéressé(e)s par {animal.name}</h3>
+            <p className="text-gray-400 text-xs mt-0.5">
+              {interested.length} adoptant{interested.length > 1 ? 's' : ''}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-4 space-y-3">
+          {loading ? (
+            <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
+          ) : interested.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              Aucun adoptant pour l'instant
+            </div>
+          ) : (
+            interested.map((person) => {
+              const name = [person.first_name, person.last_name].filter(Boolean).join(' ') || 'Anonyme';
+              const date = new Date(person.timestamp).toLocaleDateString('fr-FR', {
+                day: 'numeric', month: 'short',
+              });
+              return (
+                <div key={person.match_id} className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-secondary to-accent
+                                  flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-bold text-sm">
+                      {(person.first_name?.[0] || person.email?.[0] || '?').toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-700 text-sm truncate">{name}</p>
+                    <a
+                      href={`mailto:${person.email}`}
+                      className="text-secondary text-xs hover:underline truncate block"
+                    >
+                      {person.email}
+                    </a>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-gray-300 text-xs">{date}</p>
+                    {person.contacted && (
+                      <p className="text-blue-400 text-xs">📬 contacté</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 function StatCard({ value, label, emoji }) {
   return (
     <div className="card p-4 text-center space-y-1">
@@ -55,9 +138,11 @@ function ConfirmModal({ name, onConfirm, onCancel }) {
 }
 
 export default function Dashboard() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(null);
+  const [data,      setData]      = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [deleting,  setDeleting]  = useState(null);
+  const [interested, setInterested] = useState(null); // animal dont on affiche les intéressés
+  const [markingAdopted, setMarkingAdopted] = useState(null);
 
   useEffect(() => {
     api
@@ -77,6 +162,18 @@ export default function Dashboard() {
       }));
     } catch {}
     setDeleting(null);
+  }
+
+  async function markAdopted(animal) {
+    setMarkingAdopted(animal.id);
+    try {
+      await api.patch(`/shelter/animals/${animal.id}/adopted`);
+      setData((d) => ({
+        ...d,
+        animals: d.animals.map((a) => a.id === animal.id ? { ...a, status: 'adopted' } : a),
+      }));
+    } catch {}
+    setMarkingAdopted(null);
   }
 
   const STATUS_COLOR = {
@@ -171,6 +268,15 @@ export default function Dashboard() {
 
                         {/* Actions */}
                         <div className="flex flex-col gap-2 flex-shrink-0">
+                          {/* Intéressés */}
+                          {animal.match_count > 0 && (
+                            <button
+                              onClick={() => setInterested(animal)}
+                              className="text-xs font-medium text-green-600 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              💚 {animal.match_count} intéressé{animal.match_count > 1 ? 's' : ''}
+                            </button>
+                          )}
                           <Link
                             to={`/shelter/animals/${animal.id}/edit`}
                             state={{ animal }}
@@ -178,6 +284,15 @@ export default function Dashboard() {
                           >
                             Modifier
                           </Link>
+                          {animal.status !== 'adopted' && (
+                            <button
+                              onClick={() => markAdopted(animal)}
+                              disabled={markingAdopted === animal.id}
+                              className="text-xs font-medium text-purple-500 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {markingAdopted === animal.id ? '…' : '🎉 Adopté !'}
+                            </button>
+                          )}
                           <button
                             onClick={() => setDeleting(animal)}
                             className="text-xs font-medium text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors"
@@ -201,6 +316,12 @@ export default function Dashboard() {
             name={deleting.name}
             onConfirm={() => deleteAnimal(deleting.id)}
             onCancel={() => setDeleting(null)}
+          />
+        )}
+        {interested && (
+          <InterestedModal
+            animal={interested}
+            onClose={() => setInterested(null)}
           />
         )}
       </AnimatePresence>

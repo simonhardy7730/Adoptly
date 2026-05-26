@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -85,19 +85,29 @@ export default function MatchHistory() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
                 >
-                  {/* Photo */}
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden bg-blue-50 flex-shrink-0">
+                  {/* Photo — cliquable vers la fiche */}
+                  <Link
+                    to="/adoptant/animal"
+                    state={{ match }}
+                    className="w-20 h-20 rounded-2xl overflow-hidden bg-blue-50 flex-shrink-0 block"
+                  >
                     {photo ? (
                       <img src={photo} alt={animal?.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">🐾</div>
                     )}
-                  </div>
+                  </Link>
 
                   {/* Infos */}
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-bold text-gray-800 truncate">{animal?.name}</h3>
+                      <Link
+                        to="/adoptant/animal"
+                        state={{ match }}
+                        className="font-bold text-gray-800 hover:text-primary truncate transition-colors"
+                      >
+                        {animal?.name}
+                      </Link>
                       <span className={`badge text-xs flex-shrink-0 ${badge.color}`}>
                         {badge.label}
                       </span>
