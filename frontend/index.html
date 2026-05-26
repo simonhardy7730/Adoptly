@@ -81,6 +81,19 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Force SW cache bust — supprime l'ancien SW qui servait des fichiers obsolètes -->
+    <script>
+      if ('serviceWorker' in navigator && !localStorage.getItem('sw-cache-v2')) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          var hadSW = registrations.length > 0;
+          var promises = registrations.map(function(r) { return r.unregister(); });
+          Promise.all(promises).then(function() {
+            localStorage.setItem('sw-cache-v2', '1');
+            if (hadSW) window.location.reload();
+          });
+        });
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
