@@ -5,10 +5,12 @@ import Navbar from '../../components/Navbar';
 import SwipeCard from '../../components/SwipeCard';
 import MatchModal from '../../components/MatchModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
 export default function Swiper() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [animals, setAnimals] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -128,7 +130,7 @@ export default function Swiper() {
         {loading ? (
           <div className="flex-1 flex items-center justify-center flex-col gap-4">
             <LoadingSpinner size="lg" />
-            <p className="text-gray-500 text-sm">Recherche de vos matchs...</p>
+            <p className="text-gray-500 text-sm">{t('sw_searching')}</p>
           </div>
         ) : noMore || currentIndex >= animals.length ? (
           <div className="flex-1 flex items-center justify-center flex-col gap-6 text-center px-8">
@@ -137,20 +139,19 @@ export default function Swiper() {
               <>
                 <div className="text-6xl">🔍</div>
                 <div>
-                  <h2 className="text-2xl font-bold text-primary">Aucun animal compatible</h2>
+                  <h2 className="text-2xl font-bold text-primary">{t('sw_no_match_title')}</h2>
                   <p className="text-gray-500 mt-2 text-sm leading-relaxed">
-                    Pas encore d'animal qui correspond à votre profil dans votre zone de recherche.<br />
-                    Les refuges partenaires ajoutent régulièrement de nouveaux pensionnaires.
+                    {t('sw_no_match_body1')}<br />{t('sw_no_match_body2')}
                   </p>
                 </div>
                 <button onClick={fetchAnimals} className="btn-primary px-8 py-3">
-                  Actualiser
+                  {t('sw_refresh')}
                 </button>
                 <button
                   onClick={() => navigate('/adoptant/questionnaire')}
                   className="btn-secondary text-sm px-6 py-2.5"
                 >
-                  ✏️ Modifier mes préférences
+                  {t('sw_edit_prefs')}
                 </button>
               </>
             ) : (
@@ -158,24 +159,23 @@ export default function Swiper() {
               <>
                 <div className="text-6xl">🎉</div>
                 <div>
-                  <h2 className="text-2xl font-bold text-primary">Vous avez tout vu !</h2>
+                  <h2 className="text-2xl font-bold text-primary">{t('sw_seen_title')}</h2>
                   <p className="text-gray-500 mt-2 text-sm leading-relaxed">
-                    Vous avez swipé tous les animaux compatibles.<br />
-                    Revenez bientôt — les refuges ajoutent de nouveaux pensionnaires régulièrement.
+                    {t('sw_seen_body1')}<br />{t('sw_seen_body2')}
                   </p>
                 </div>
                 <button onClick={() => navigate('/adoptant/matches')} className="btn-primary px-8 py-3">
-                  Voir mes matchs 💚
+                  {t('sw_see_matches')}
                 </button>
                 <div className="flex gap-3">
                   <button onClick={fetchAnimals} className="btn-secondary text-sm px-5 py-2.5">
-                    Actualiser
+                    {t('sw_refresh')}
                   </button>
                   <button
                     onClick={() => navigate('/adoptant/questionnaire')}
                     className="btn-secondary text-sm px-5 py-2.5"
                   >
-                    ✏️ Mes préférences
+                    {t('sw_my_prefs')}
                   </button>
                 </div>
               </>
@@ -186,13 +186,13 @@ export default function Swiper() {
             {/* Compteur */}
             <div className="flex items-center justify-between mb-3 px-1">
               <p className="text-gray-400 text-sm font-medium">
-                {totalRemaining} animal{totalRemaining > 1 ? 'aux' : ''} restant{totalRemaining > 1 ? 's' : ''}
+                {totalRemaining} {totalRemaining > 1 ? t('sw_remaining_p') : t('sw_remaining_s')}
               </p>
               <button
                 onClick={() => navigate('/adoptant/matches')}
                 className="text-secondary text-sm font-medium"
               >
-                Mes matchs 💚
+                {t('sw_my_matches')}
               </button>
             </div>
 
@@ -213,9 +213,9 @@ export default function Swiper() {
               {/* Indication de swipe */}
               {swipeHint && remaining.length > 0 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/50 text-white text-xs px-4 py-2 rounded-full backdrop-blur-sm pointer-events-none">
-                  <span>👋 glisser à gauche</span>
+                  <span>{t('sw_hint_left')}</span>
                   <span className="opacity-40">·</span>
-                  <span>💚 glisser à droite</span>
+                  <span>{t('sw_hint_right')}</span>
                 </div>
               )}
             </div>
@@ -243,7 +243,7 @@ export default function Swiper() {
 
             {/* Aide clavier */}
             <p className="text-center text-gray-300 text-xs pb-2">
-              A / ← pour passer · D / → pour adorer
+              {t('sw_key_hint')}
             </p>
           </>
         )}

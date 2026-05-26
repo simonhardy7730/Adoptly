@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../lib/supabase';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
@@ -21,6 +22,7 @@ function GoogleIcon() {
 export default function AdoptantAuth({ mode = 'login' }) {
   const navigate  = useNavigate();
   const { login } = useAuth();
+  const { t, lang, setLang } = useLanguage();
   const [form,    setForm]    = useState({ email: '', password: '' });
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export default function AdoptantAuth({ mode = 'login' }) {
       }
       navigate(data.user.questionnaire_answers ? '/adoptant/swipe' : '/adoptant/questionnaire');
     } catch (err) {
-      setError(err.response?.data?.error || 'Une erreur est survenue. Veuillez réessayer.');
+      setError(err.response?.data?.error || t('auth_error_default'));
     } finally {
       setLoading(false);
     }
@@ -49,7 +51,7 @@ export default function AdoptantAuth({ mode = 'login' }) {
   // ── Connexion Google OAuth ────────────────────────────────────
   async function handleGoogleAuth() {
     if (!supabase) {
-      setError("Google OAuth n'est pas configuré. Utilisez email/mot de passe.");
+      setError(t('auth_error_default'));
       return;
     }
     setLoading(true);
@@ -58,23 +60,30 @@ export default function AdoptantAuth({ mode = 'login' }) {
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (oauthError) {
-      setError('Erreur lors de la connexion Google. Veuillez réessayer.');
+      setError(t('auth_error_default'));
       setLoading(false);
     }
-    // Sinon, la page redirige vers Google → AuthCallback s'occupe du reste
   }
 
   return (
     <div className="min-h-screen bg-bg-light flex flex-col">
-      {/* Header retour */}
-      <div className="p-4">
+      {/* Header retour + toggle langue */}
+      <div className="p-4 flex items-center justify-between">
         <Link
           to="/"
-          className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors w-fit"
+          className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors"
         >
           <span>←</span>
-          <span className="text-sm font-medium">Retour</span>
+          <span className="text-sm font-medium">{t('ad_back')}</span>
         </Link>
+        <button
+          onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
+          className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200
+                     text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
+          title={lang === 'fr' ? 'Switch to Nederlands' : 'Passer en français'}
+        >
+          {lang === 'fr' ? 'NL' : 'FR'}
+        </button>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 pb-16">
@@ -94,28 +103,26 @@ export default function AdoptantAuth({ mode = 'login' }) {
               <span className="font-black text-primary text-xl tracking-tight">Adoptly</span>
             </Link>
             <h1 className="text-2xl font-extrabold text-gray-900 mt-1">
-              {mode === 'login' ? 'Bon retour !' : 'Commencez à adopter'}
+              {mode === 'login' ? t('ad_login_title') : t('ad_register_title')}
             </h1>
             <p className="text-gray-500 mt-1.5 text-sm">
-              {mode === 'login'
-                ? 'Connectez-vous pour continuer votre recherche'
-                : 'Créez votre compte gratuitement'}
+              {mode === 'login' ? t('ad_login_sub') : t('ad_register_sub')}
             </p>
           </div>
 
           {/* Bouton Google */}
           <button type="button" onClick={handleGoogleAuth} disabled={loading} className="btn-google mb-4">
             <GoogleIcon />
-            Continuer avec Google
+            {t('ad_google_btn')}
           </button>
 
           {/* Séparateur */}
-          <div className="divider-text mb-4">ou</div>
+          <div className="divider-text mb-4">{t('ad_or')}</div>
 
           {/* Formulaire email/mdp */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth_email')}</label>
               <input
                 type="email"
                 required
@@ -128,14 +135,14 @@ export default function AdoptantAuth({ mode = 'login' }) {
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
+                <label className="block text-sm font-medium text-gray-700">{t('auth_password')}</label>
                 {mode === 'login' && (
                   <Link
                     to="/auth/forgot-password?role=adoptant"
                     className="text-xs text-secondary hover:underline"
                     tabIndex={-1}
                   >
-                    Mot de passe oublié ?
+                    {t('ad_forgot')}
                   </Link>
                 )}
               </div>
@@ -164,9 +171,9 @@ export default function AdoptantAuth({ mode = 'login' }) {
               {loading ? (
                 <LoadingSpinner size="sm" className="text-white" />
               ) : mode === 'login' ? (
-                'Se connecter'
+                t('ad_login_btn')
               ) : (
-                'Créer mon compte'
+                t('ad_register_btn')
               )}
             </button>
           </form>
@@ -175,25 +182,25 @@ export default function AdoptantAuth({ mode = 'login' }) {
           <p className="text-center text-gray-500 text-sm mt-6">
             {mode === 'login' ? (
               <>
-                Pas encore de compte ?{' '}
+                {t('ad_no_account')}{' '}
                 <Link to="/adoptant/register" className="text-secondary font-semibold hover:underline">
-                  S'inscrire
+                  {t('ad_register_link')}
                 </Link>
               </>
             ) : (
               <>
-                Déjà un compte ?{' '}
+                {t('ad_has_account')}{' '}
                 <Link to="/adoptant/login" className="text-secondary font-semibold hover:underline">
-                  Se connecter
+                  {t('ad_login_link')}
                 </Link>
               </>
             )}
           </p>
 
           <div className="text-center mt-4">
-            <p className="text-gray-400 text-xs">Vous êtes un refuge ?</p>
+            <p className="text-gray-400 text-xs">{t('ad_shelter_q')}</p>
             <Link to="/shelter/login" className="text-secondary text-sm font-medium hover:underline">
-              Espace refuge →
+              {t('ad_shelter_link')}
             </Link>
           </div>
         </motion.div>

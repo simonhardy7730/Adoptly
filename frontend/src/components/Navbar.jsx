@@ -30,14 +30,24 @@ export default function Navbar() {
           {role === 'adoptant' && (
             <>
               <Link to="/adoptant/swipe" className="btn-ghost text-sm py-1.5 px-3">
-                Découvrir
+                {t('nav_discover')}
               </Link>
               <Link to="/adoptant/matches" className="btn-ghost text-sm py-1.5 px-3">
-                Matchs
+                {t('nav_matches')}
               </Link>
               <Link to="/adoptant/profile" className="btn-ghost text-sm py-1.5 px-3">
-                Profil
+                {t('nav_profile')}
               </Link>
+
+              {/* Toggle FR / NL */}
+              <button
+                onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
+                className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200
+                           text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
+                title={lang === 'fr' ? 'Switch to Nederlands' : 'Passer en français'}
+              >
+                {lang === 'fr' ? 'NL' : 'FR'}
+              </button>
             </>
           )}
 
@@ -70,7 +80,7 @@ export default function Navbar() {
             className="text-sm py-1.5 px-3 rounded-xl font-medium text-red-400
                        hover:bg-red-50 hover:text-red-500 active:scale-95 transition-all"
           >
-            {role === 'shelter' ? t('nav_logout') : 'Déconnexion'}
+            {t('nav_logout')}
           </button>
         </div>
       </div>

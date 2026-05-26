@@ -3,43 +3,50 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
-const LABELS = {
-  existing_pets:    { none: '🏠 Aucun', dog: '🐕 Un chien', cat: '🐈 Un chat', both: '🐾 Chien et chat', other: '🐹 Autre animal' },
-  has_garden:       { yes: '🌳 Jardin', balcony: '🪴 Balcon', no: '🏢 Aucun' },
-  housing_size:     { small: '📦 < 40 m²', medium: '🏠 40–80 m²', large: '🏡 80–150 m²', xlarge: '🏘️ > 150 m²' },
-  works_outdoor:    { yes: '🏃 Très actif(ve)', flexible: '🚶 Flexible', no: '🛋️ Casanier(ère)' },
-  allergies:        { none: '✅ Aucune', cats: '🐈 Chats', dogs: '🐕 Chiens', other: '🤧 Autre' },
-  monthly_budget:   { '50-100': '💰 50–100 €', '100-200': '💵 100–200 €', '200+': '💎 200 € +' },
-  preferred_animal: { dog: '🐕 Chien', cat: '🐈 Chat', both: '🐾 Chien ou chat', small_animal: '🐹 Petit animal' },
-  size_preference:  { small: '🐭 Petit', medium: '🐕 Moyen', large: '🦮 Grand', no_preference: '🤷 Peu importe' },
-  age_preference:   { baby: '🍼 Bébé', young: '⚡ Jeune adulte', adult: '🐾 Adulte', senior: '🧡 Senior', no_preference: '🤷 Peu importe' },
-  energy_level:     { calm: '😌 Calme', balanced: '🙂 Équilibré(e)', very_energetic: '🤸 Très énergique' },
+// Clés de préférences à afficher
+const PREF_KEYS = [
+  'existing_pets',
+  'has_garden',
+  'housing_size',
+  'works_outdoor',
+  'allergies',
+  'monthly_budget',
+  'preferred_animal',
+  'size_preference',
+  'age_preference',
+  'energy_level',
+];
+
+// Carte de traduction : champ → valeur → clé de traduction
+const LABEL_MAP = {
+  existing_pets:    { none: 'lbl_pets_none', dog: 'lbl_pets_dog', cat: 'lbl_pets_cat', both: 'lbl_pets_both', other: 'lbl_pets_other' },
+  has_garden:       { yes: 'lbl_garden_yes', balcony: 'lbl_garden_bal', no: 'lbl_garden_no' },
+  housing_size:     { small: 'lbl_house_sm', medium: 'lbl_house_md', large: 'lbl_house_lg', xlarge: 'lbl_house_xl' },
+  works_outdoor:    { yes: 'lbl_act_yes', flexible: 'lbl_act_fl', no: 'lbl_act_no' },
+  allergies:        { none: 'lbl_alg_none', cats: 'lbl_alg_cats', dogs: 'lbl_alg_dogs', other: 'lbl_alg_other' },
+  monthly_budget:   { '50-100': 'lbl_bud_sm', '100-200': 'lbl_bud_md', '200+': 'lbl_bud_lg' },
+  preferred_animal: { dog: 'lbl_pref_dog', cat: 'lbl_pref_cat', both: 'lbl_pref_both', small_animal: 'lbl_pref_small' },
+  size_preference:  { small: 'lbl_sz_sm', medium: 'lbl_sz_md', large: 'lbl_sz_lg', no_preference: 'lbl_sz_no_pref' },
+  age_preference:   { baby: 'lbl_age_baby', young: 'lbl_age_young', adult: 'lbl_age_adult', senior: 'lbl_age_senior', no_preference: 'lbl_age_no_pref' },
+  energy_level:     { calm: 'lbl_en_calm', balanced: 'lbl_en_bal', very_energetic: 'lbl_en_high' },
 };
 
-const PREFS = [
-  { label: 'Animaux existants',  key: 'existing_pets' },
-  { label: 'Espace extérieur',   key: 'has_garden' },
-  { label: 'Superficie',         key: 'housing_size' },
-  { label: 'Activité',           key: 'works_outdoor' },
-  { label: 'Allergies',          key: 'allergies' },
-  { label: 'Budget mensuel',     key: 'monthly_budget' },
-  { label: 'Animal souhaité',    key: 'preferred_animal' },
-  { label: 'Taille préférée',    key: 'size_preference' },
-  { label: 'Âge préféré',        key: 'age_preference' },
-  { label: "Niveau d'énergie",   key: 'energy_level' },
-];
+const CHILDREN_AGE_KEY = { '<6': 'lbl_lt6', '6-12': 'lbl_6to12', '12+': 'lbl_12plus' };
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [profile, setProfile]       = useState(null);
-  const [loading, setLoading]       = useState(true);
+  const { t }    = useLanguage();
+
+  const [profile, setProfile]         = useState(null);
+  const [loading, setLoading]         = useState(true);
   const [editingName, setEditingName] = useState(false);
-  const [firstName, setFirstName]   = useState('');
-  const [lastName, setLastName]     = useState('');
-  const [saving, setSaving]         = useState(false);
-  const [saved, setSaved]           = useState(false);
+  const [firstName, setFirstName]     = useState('');
+  const [lastName, setLastName]       = useState('');
+  const [saving, setSaving]           = useState(false);
+  const [saved, setSaved]             = useState(false);
 
   useEffect(() => {
     api.get('/adoptant/profile')
@@ -102,14 +109,14 @@ export default function Profile() {
               <div className="flex gap-2">
                 <input
                   className="input-field flex-1 text-center"
-                  placeholder="Prénom"
+                  placeholder={t('prof_fn_ph')}
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   autoFocus
                 />
                 <input
                   className="input-field flex-1 text-center"
-                  placeholder="Nom"
+                  placeholder={t('prof_ln_ph')}
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
@@ -120,13 +127,17 @@ export default function Profile() {
                   disabled={saving}
                   className="btn-primary flex-1 py-2 text-sm flex items-center justify-center gap-2"
                 >
-                  {saving ? <LoadingSpinner size="sm" className="text-white" /> : 'Sauvegarder'}
+                  {saving ? <LoadingSpinner size="sm" className="text-white" /> : t('profile_save')}
                 </button>
                 <button
-                  onClick={() => { setEditingName(false); setFirstName(profile?.first_name || ''); setLastName(profile?.last_name || ''); }}
+                  onClick={() => {
+                    setEditingName(false);
+                    setFirstName(profile?.first_name || '');
+                    setLastName(profile?.last_name || '');
+                  }}
                   className="btn-secondary flex-1 py-2 text-sm"
                 >
-                  Annuler
+                  {t('profile_cancel')}
                 </button>
               </div>
             </div>
@@ -135,15 +146,15 @@ export default function Profile() {
               {fullName ? (
                 <p className="font-bold text-primary text-xl">{fullName}</p>
               ) : (
-                <p className="text-gray-400 text-sm italic">Aucun nom renseigné</p>
+                <p className="text-gray-400 text-sm italic">{t('prof_no_name')}</p>
               )}
               <p className="text-gray-400 text-sm mt-1">{profile?.email}</p>
-              <p className="text-gray-300 text-xs mt-0.5">Membre depuis {memberSince}</p>
+              <p className="text-gray-300 text-xs mt-0.5">{t('profile_member_since')} {memberSince}</p>
               <button
                 onClick={() => setEditingName(true)}
                 className="mt-2 text-secondary text-sm font-medium hover:underline"
               >
-                ✏️ {fullName ? 'Modifier mon nom' : 'Ajouter mon nom'}
+                ✏️ {fullName ? t('prof_edit_name') : t('prof_add_name')}
               </button>
             </div>
           )}
@@ -154,16 +165,16 @@ export default function Profile() {
               animate={{ opacity: 1, y: 0 }}
               className="text-green-500 text-sm font-medium"
             >
-              ✓ Sauvegardé !
+              {t('prof_saved')}
             </motion.p>
           )}
 
           <div className="flex gap-2">
             <Link to="/adoptant/matches" className="btn-secondary text-sm py-2 px-4">
-              🐾 Mes matchs
+              {t('prof_my_matches')}
             </Link>
             <Link to="/adoptant/swipe" className="btn-primary text-sm py-2 px-4">
-              Découvrir →
+              {t('prof_discover')}
             </Link>
           </div>
         </div>
@@ -171,24 +182,26 @@ export default function Profile() {
         {/* Préférences */}
         <div className="card p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-gray-700">Mes préférences</h2>
+            <h2 className="font-bold text-gray-700">{t('prof_prefs')}</h2>
             <button
               onClick={() => navigate('/adoptant/questionnaire')}
               className="text-secondary text-sm font-medium hover:underline"
             >
-              Modifier ✏️
+              {t('prof_edit_prefs')}
             </button>
           </div>
 
           {hasAnswers ? (
             <>
               <div className="grid grid-cols-2 gap-3">
-                {PREFS.map(({ label, key }) =>
+                {PREF_KEYS.map((key) =>
                   answers[key] ? (
                     <div key={key} className="bg-gray-50 rounded-xl p-3">
-                      <p className="text-gray-400 text-xs mb-1">{label}</p>
+                      <p className="text-gray-400 text-xs mb-1">{t(`pref_${key}`)}</p>
                       <p className="text-gray-700 text-sm font-medium">
-                        {LABELS[key]?.[answers[key]] ?? answers[key]}
+                        {LABEL_MAP[key]?.[answers[key]]
+                          ? t(LABEL_MAP[key][answers[key]])
+                          : answers[key]}
                       </p>
                     </div>
                   ) : null
@@ -197,30 +210,28 @@ export default function Profile() {
 
               {answers.search_radius_km && (
                 <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-gray-400 text-xs mb-1">Rayon de recherche</p>
+                  <p className="text-gray-400 text-xs mb-1">{t('prof_radius')}</p>
                   <p className="text-gray-700 text-sm font-medium">📍 {answers.search_radius_km} km</p>
                 </div>
               )}
 
               {answers.has_children && answers.children_age && (
                 <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-gray-400 text-xs mb-1">Enfants</p>
+                  <p className="text-gray-400 text-xs mb-1">{t('prof_children')}</p>
                   <p className="text-gray-700 text-sm font-medium">
-                    👶 {{ '<6': 'Moins de 6 ans', '6-12': '6–12 ans', '12+': '12 ans +' }[answers.children_age]}
+                    {t(CHILDREN_AGE_KEY[answers.children_age] || answers.children_age)}
                   </p>
                 </div>
               )}
             </>
           ) : (
             <div className="text-center py-4 space-y-3">
-              <p className="text-gray-400 text-sm">
-                Complétez votre profil pour trouver votre animal idéal.
-              </p>
+              <p className="text-gray-400 text-sm">{t('prof_no_prefs')}</p>
               <button
                 onClick={() => navigate('/adoptant/questionnaire')}
                 className="btn-primary py-3 px-6"
               >
-                Compléter mon profil →
+                {t('prof_complete')}
               </button>
             </div>
           )}

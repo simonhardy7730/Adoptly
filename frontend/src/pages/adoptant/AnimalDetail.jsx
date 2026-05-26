@@ -2,46 +2,68 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import Navbar from '../../components/Navbar';
+import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
-
-function ageLabel(months) {
-  if (!months) return 'Âge inconnu';
-  if (months < 12) return `${months} mois`;
-  const y = Math.floor(months / 12);
-  return `${y} an${y > 1 ? 's' : ''}`;
-}
-
-const TEMPERAMENT = {
-  calm: '😌 Calme',
-  playful: '🎾 Joueur',
-  energetic: '⚡ Énergique',
-  mixed: '🙂 Équilibré',
-};
-
-const SIZE_LABEL = {
-  small: '🐭 Petit',
-  medium: '🐕 Moyen',
-  large: '🦮 Grand',
-};
 
 const SPECIES_EMOJI = {
   dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾',
 };
 
+function ageLabel(months, t) {
+  if (!months) return t('detail_age_unk');
+  if (months < 12) return `${months} ${months > 1 ? t('age_months') : t('age_month')}`;
+  const y = Math.floor(months / 12);
+  return `${y} ${y > 1 ? t('age_years') : t('age_year')}`;
+}
+
+function CompatBadge({ label, value, icons, textKeys, t }) {
+  const icon      = icons[value]    || '❓';
+  const textKey   = textKeys[value] || value;
+  const text      = t(textKey);
+  const isPositive = value === 'yes';
+  const isNegative = value === 'no';
+  return (
+    <div className={`rounded-2xl p-3 text-xs ${
+      isPositive ? 'bg-green-50' : isNegative ? 'bg-red-50' : 'bg-gray-50'
+    }`}>
+      <p className="text-gray-400 mb-0.5">{label}</p>
+      <p className={`font-semibold ${
+        isPositive ? 'text-green-700' : isNegative ? 'text-red-600' : 'text-gray-600'
+      }`}>
+        {icon} {text}
+      </p>
+    </div>
+  );
+}
+
 export default function AnimalDetail() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t }    = useLanguage();
   const { match } = location.state || {};
   const [photoIndex, setPhotoIndex] = useState(0);
+
+  const TEMPERAMENT = {
+    calm:     `😌 ${t('tp_calm')}`,
+    playful:  `🎾 ${t('tp_playful')}`,
+    energetic:`⚡ ${t('tp_energetic')}`,
+    mixed:    `🙂 ${t('tp_mixed')}`,
+  };
+
+  const SIZE_LABEL = {
+    small:  `🐭 ${t('sz_small')}`,
+    medium: `🐕 ${t('sz_medium')}`,
+    large:  `🦮 ${t('sz_large')}`,
+  };
 
   if (!match) {
     return (
       <div className="min-h-screen bg-bg-light flex items-center justify-center">
         <div className="text-center space-y-4 p-8">
           <div className="text-5xl">😕</div>
-          <p className="text-gray-500">Animal introuvable.</p>
+          <p className="text-gray-500">{t('detail_not_found')}</p>
           <button onClick={() => navigate('/adoptant/matches')} className="btn-primary px-6 py-2">
-            ← Mes matchs
+            {t('detail_back_m')}
           </button>
         </div>
       </div>
@@ -68,7 +90,7 @@ export default function AnimalDetail() {
           onClick={() => navigate('/adoptant/matches')}
           className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors text-sm font-medium"
         >
-          ← Retour aux matchs
+          {t('detail_back')}
         </button>
 
         {/* Galerie photos */}
@@ -131,7 +153,7 @@ export default function AnimalDetail() {
               <h1 className="text-2xl font-extrabold text-primary">{animal?.name}</h1>
               <p className="text-gray-500 text-sm mt-0.5">
                 {SPECIES_EMOJI[animal?.species]} {animal?.breed || animal?.species}
-                {animal?.age ? ` · ${ageLabel(animal.age)}` : ''}
+                {animal?.age ? ` · ${ageLabel(animal.age, t)}` : ''}
               </p>
             </div>
             <div className="flex flex-col items-end gap-1.5">
@@ -150,7 +172,7 @@ export default function AnimalDetail() {
 
           {animal?.story && (
             <div>
-              <h3 className="font-semibold text-gray-700 text-sm mb-1.5">Son histoire</h3>
+              <h3 className="font-semibold text-gray-700 text-sm mb-1.5">{t('detail_story')}</h3>
               <p className="text-gray-500 text-sm leading-relaxed">{animal.story}</p>
             </div>
           )}
@@ -158,7 +180,7 @@ export default function AnimalDetail() {
           {animal?.special_needs && (
             <div className="bg-yellow-50 border border-yellow-100 rounded-2xl p-3">
               <p className="text-yellow-700 text-sm">
-                ⚠️ <strong>Besoins spéciaux :</strong> {animal.special_needs}
+                ⚠️ <strong>{t('detail_special')}</strong> {animal.special_needs}
               </p>
             </div>
           )}
@@ -168,54 +190,60 @@ export default function AnimalDetail() {
         {(req.children_compatible || req.cats_compatible || req.dogs_compatible ||
           req.needs_garden || req.daily_outdoor_time || req.spacious_home) && (
           <div className="card p-5 space-y-3">
-            <h3 className="font-semibold text-gray-700">Compatibilités</h3>
+            <h3 className="font-semibold text-gray-700">{t('detail_compat')}</h3>
             <div className="grid grid-cols-2 gap-2">
               {req.children_compatible && (
                 <CompatBadge
-                  label="Enfants"
+                  label={t('compat_children')}
                   value={req.children_compatible}
                   icons={{ yes: '✅', no: '❌', '6+': '⚠️', '12+': '⚠️' }}
-                  texts={{ yes: 'Oui', no: 'Non', '6+': '+ 6 ans', '12+': '+ 12 ans' }}
+                  textKeys={{ yes: 'val_yes', no: 'compat_no', '6+': 'compat_6plus', '12+': 'compat_12plus' }}
+                  t={t}
                 />
               )}
               {req.cats_compatible && (
                 <CompatBadge
-                  label="Avec chats"
+                  label={t('compat_cats')}
                   value={req.cats_compatible}
                   icons={{ yes: '✅', no: '❌', unknown: '❓' }}
-                  texts={{ yes: 'Compatible', no: 'Non', unknown: 'Inconnu' }}
+                  textKeys={{ yes: 'compat_compat', no: 'compat_no', unknown: 'val_unknown' }}
+                  t={t}
                 />
               )}
               {req.dogs_compatible && (
                 <CompatBadge
-                  label="Avec chiens"
+                  label={t('compat_dogs')}
                   value={req.dogs_compatible}
                   icons={{ yes: '✅', no: '❌', unknown: '❓' }}
-                  texts={{ yes: 'Compatible', no: 'Non', unknown: 'Inconnu' }}
+                  textKeys={{ yes: 'compat_compat', no: 'compat_no', unknown: 'val_unknown' }}
+                  t={t}
                 />
               )}
               {req.needs_garden && (
                 <CompatBadge
-                  label="Jardin"
+                  label={t('compat_garden')}
                   value={req.needs_garden}
-                  icons={{ yes: '🌳', no: '🏢' }}
-                  texts={{ yes: 'Nécessaire', no: 'Non requis' }}
+                  icons={{ yes: '🌳', no: '🏢', preferable: '🌿' }}
+                  textKeys={{ yes: 'compat_required', no: 'compat_not_req', preferable: 'val_preferable' }}
+                  t={t}
                 />
               )}
               {req.daily_outdoor_time && (
                 <CompatBadge
-                  label="Sorties/jour"
+                  label={t('compat_outdoor')}
                   value={req.daily_outdoor_time}
-                  icons={{ yes: '🏃', no: '🛋️' }}
-                  texts={{ yes: 'Oui requis', no: 'Non requis' }}
+                  icons={{ yes: '🏃', no: '🛋️', ideal: '🚶' }}
+                  textKeys={{ yes: 'compat_yes_req', no: 'compat_not_req', ideal: 'val_ideal' }}
+                  t={t}
                 />
               )}
               {req.spacious_home && (
                 <CompatBadge
-                  label="Grand logement"
+                  label={t('compat_space')}
                   value={req.spacious_home}
-                  icons={{ yes: '🏡', no: '📦' }}
-                  texts={{ yes: 'Nécessaire', no: 'Non requis' }}
+                  icons={{ yes: '🏡', no: '📦', flexible: '🏠' }}
+                  textKeys={{ yes: 'compat_required', no: 'compat_not_req', flexible: 'val_flexible' }}
+                  t={t}
                 />
               )}
             </div>
@@ -236,16 +264,16 @@ export default function AnimalDetail() {
                   onClick={markContacted}
                   className="btn-primary text-sm py-2.5 px-4"
                 >
-                  📞 Appeler
+                  {t('detail_call')}
                 </a>
               )}
               {shelter.email && (
                 <a
-                  href={`mailto:${shelter.email}?subject=Intérêt pour ${animal?.name}&body=Bonjour, je suis intéressé(e) par l'adoption de ${animal?.name} que j'ai découvert sur Adoptly.`}
+                  href={`mailto:${shelter.email}?subject=${encodeURIComponent(t('detail_email_sub', { name: animal?.name }))}&body=${encodeURIComponent(t('detail_email_body', { name: animal?.name }))}`}
                   onClick={markContacted}
                   className="btn-secondary text-sm py-2.5 px-4"
                 >
-                  ✉️ Envoyer un email
+                  {t('detail_email')}
                 </a>
               )}
               {shelter.address && (
@@ -255,7 +283,7 @@ export default function AnimalDetail() {
                   rel="noopener noreferrer"
                   className="btn-secondary text-sm py-2.5 px-4"
                 >
-                  🗺️ Voir sur la carte
+                  {t('detail_map')}
                 </a>
               )}
             </div>
@@ -263,25 +291,6 @@ export default function AnimalDetail() {
         )}
 
       </div>
-    </div>
-  );
-}
-
-function CompatBadge({ label, value, icons, texts }) {
-  const icon = icons[value] || '❓';
-  const text = texts[value] || value;
-  const isPositive = value === 'yes';
-  const isNegative = value === 'no';
-  return (
-    <div className={`rounded-2xl p-3 text-xs ${
-      isPositive ? 'bg-green-50' : isNegative ? 'bg-red-50' : 'bg-gray-50'
-    }`}>
-      <p className="text-gray-400 mb-0.5">{label}</p>
-      <p className={`font-semibold ${
-        isPositive ? 'text-green-700' : isNegative ? 'text-red-600' : 'text-gray-600'
-      }`}>
-        {icon} {text}
-      </p>
     </div>
   );
 }

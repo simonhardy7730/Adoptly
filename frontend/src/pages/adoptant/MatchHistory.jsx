@@ -3,26 +3,28 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
-function ageLabel(months) {
+function ageLabel(months, t) {
   if (!months) return '';
-  if (months < 12) return `${months} mois`;
+  if (months < 12) return `${months} ${months > 1 ? t('age_months') : t('age_month')}`;
   const y = Math.floor(months / 12);
-  return `${y} an${y > 1 ? 's' : ''}`;
+  return `${y} ${y > 1 ? t('age_years') : t('age_year')}`;
 }
-
-const STATUS_BADGE = {
-  interested: { label: 'Match !', color: 'bg-green-100 text-green-700' },
-  contacted: { label: 'Contacté', color: 'bg-blue-100 text-blue-700' },
-  adopted: { label: 'Adopté ! 🎉', color: 'bg-purple-100 text-purple-700' },
-  closed: { label: 'Fermé', color: 'bg-gray-100 text-gray-500' },
-};
 
 export default function MatchHistory() {
   const navigate = useNavigate();
+  const { t }    = useLanguage();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const STATUS_BADGE = {
+    interested: { labelKey: 'status_match',        color: 'bg-green-100 text-green-700' },
+    contacted:  { labelKey: 'status_contacted',    color: 'bg-blue-100 text-blue-700' },
+    adopted:    { labelKey: 'status_adopted_b',    color: 'bg-purple-100 text-purple-700' },
+    closed:     { labelKey: 'status_closed',       color: 'bg-gray-100 text-gray-500' },
+  };
 
   useEffect(() => {
     api
@@ -46,13 +48,13 @@ export default function MatchHistory() {
       <div className="max-w-lg mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary">Mes Matchs 💚</h1>
+            <h1 className="text-2xl font-extrabold text-primary">{t('match_title')}</h1>
             <p className="text-gray-500 text-sm mt-0.5">
-              {matches.length} animal{matches.length > 1 ? 'aux' : ''} que vous avez aimé{matches.length > 1 ? 's' : ''}
+              {matches.length} {matches.length > 1 ? t('match_count_p') : t('match_count_s')}
             </p>
           </div>
           <button onClick={() => navigate('/adoptant/swipe')} className="btn-primary text-sm py-2 px-4">
-            Continuer à swiper
+            {t('match_continue')}
           </button>
         </div>
 
@@ -63,19 +65,19 @@ export default function MatchHistory() {
         ) : matches.length === 0 ? (
           <div className="text-center py-16 space-y-4">
             <div className="text-6xl">🐾</div>
-            <p className="text-gray-500 font-medium">Pas encore de match</p>
-            <p className="text-gray-400 text-sm">Commencez à swiper pour trouver votre animal idéal !</p>
+            <p className="text-gray-500 font-medium">{t('match_empty_title')}</p>
+            <p className="text-gray-400 text-sm">{t('match_empty_body')}</p>
             <button onClick={() => navigate('/adoptant/swipe')} className="btn-primary px-8 py-3">
-              Commencer à swiper
+              {t('match_start')}
             </button>
           </div>
         ) : (
           <div className="space-y-3">
             {matches.map((match, i) => {
-              const animal = match.animals;
+              const animal  = match.animals;
               const shelter = animal?.shelters;
-              const photo = animal?.photos?.[0];
-              const badge = STATUS_BADGE[match.status] || STATUS_BADGE.interested;
+              const photo   = animal?.photos?.[0];
+              const badge   = STATUS_BADGE[match.status] || STATUS_BADGE.interested;
 
               return (
                 <motion.div
@@ -85,7 +87,7 @@ export default function MatchHistory() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
                 >
-                  {/* Photo — cliquable vers la fiche */}
+                  {/* Photo */}
                   <Link
                     to="/adoptant/animal"
                     state={{ match }}
@@ -109,13 +111,13 @@ export default function MatchHistory() {
                         {animal?.name}
                       </Link>
                       <span className={`badge text-xs flex-shrink-0 ${badge.color}`}>
-                        {badge.label}
+                        {t(badge.labelKey)}
                       </span>
                     </div>
 
                     <p className="text-gray-500 text-xs">
                       {animal?.breed || animal?.species}
-                      {animal?.age ? ` · ${ageLabel(animal.age)}` : ''}
+                      {animal?.age ? ` · ${ageLabel(animal.age, t)}` : ''}
                     </p>
 
                     {shelter && (
@@ -130,7 +132,7 @@ export default function MatchHistory() {
                           onClick={() => !match.contacted && markContacted(match.id)}
                           className="inline-flex items-center gap-1 text-xs font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors"
                         >
-                          📞 Appeler
+                          {t('match_call')}
                         </a>
                       )}
                       {shelter?.email && (
@@ -139,7 +141,7 @@ export default function MatchHistory() {
                           onClick={() => !match.contacted && markContacted(match.id)}
                           className="inline-flex items-center gap-1 text-xs font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors"
                         >
-                          ✉️ E-mail
+                          {t('match_email_btn')}
                         </a>
                       )}
                       {shelter?.address && (
@@ -149,7 +151,7 @@ export default function MatchHistory() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 text-xs font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-2.5 py-1.5 rounded-lg transition-colors"
                         >
-                          📍 Carte
+                          {t('match_map')}
                         </a>
                       )}
                     </div>

@@ -2,191 +2,195 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/api';
+import { useLanguage } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
-const questions = [
-  {
-    id: 'has_children',
-    text: 'Avez-vous des enfants à la maison ?',
-    hint: 'Cela nous aide à trouver des animaux adaptés aux enfants',
-    type: 'choice',
-    options: [
-      { value: true, label: 'Oui', emoji: '👶' },
-      { value: false, label: 'Non', emoji: '🙅' },
-    ],
-  },
-  {
-    id: 'children_age',
-    text: 'Quel âge ont vos enfants ?',
-    hint: 'Certains animaux s\'adaptent mieux aux enfants plus âgés',
-    type: 'choice',
-    showIf: (a) => a.has_children === true,
-    options: [
-      { value: '<6', label: 'Moins de 6 ans', emoji: '🍼' },
-      { value: '6-12', label: '6–12 ans', emoji: '🎒' },
-      { value: '12+', label: '12 ans et plus', emoji: '🎓' },
-    ],
-  },
-  {
-    id: 'existing_pets',
-    text: 'Avez-vous déjà des animaux à la maison ?',
-    hint: 'Cela nous aide à trouver des animaux compatibles avec les vôtres',
-    type: 'choice',
-    options: [
-      { value: 'none',  label: 'Aucun',         emoji: '🏠' },
-      { value: 'dog',   label: 'Un chien',       emoji: '🐕' },
-      { value: 'cat',   label: 'Un chat',        emoji: '🐈' },
-      { value: 'both',  label: 'Chien et chat',  emoji: '🐾' },
-      { value: 'other', label: 'Autre animal',   emoji: '🐹' },
-    ],
-  },
-  {
-    id: 'has_garden',
-    text: 'Quel espace extérieur avez-vous ?',
-    hint: 'Les chiens adorent avoir de l\'espace pour courir',
-    type: 'choice',
-    options: [
-      { value: 'yes', label: 'Jardin', emoji: '🌳' },
-      { value: 'balcony', label: 'Balcon', emoji: '🪴' },
-      { value: 'no', label: 'Aucun', emoji: '🏢' },
-    ],
-  },
-  {
-    id: 'housing_size',
-    text: 'Quelle est la superficie de votre logement ?',
-    hint: 'La taille compte plus que le type — un grand appart vaut une petite maison !',
-    type: 'choice',
-    options: [
-      { value: 'small',  label: '< 40 m²',      emoji: '📦' },
-      { value: 'medium', label: '40 – 80 m²',   emoji: '🏠' },
-      { value: 'large',  label: '80 – 150 m²',  emoji: '🏡' },
-      { value: 'xlarge', label: '> 150 m²',     emoji: '🏘️' },
-    ],
-  },
-  {
-    id: 'works_outdoor',
-    text: 'Quel est votre niveau d\'activité ?',
-    hint: "Cela nous aide à aligner votre énergie avec les besoins de votre animal",
-    type: 'choice',
-    options: [
-      { value: 'yes', label: 'Très actif(ve)', emoji: '🏃' },
-      { value: 'flexible', label: 'Flexible', emoji: '🚶' },
-      { value: 'no', label: 'Casanier(ère)', emoji: '🛋️' },
-    ],
-  },
-  {
-    id: 'allergies',
-    text: 'Des allergies aux animaux ?',
-    hint: "Nous nous assurerons que votre match est compatible",
-    type: 'choice',
-    options: [
-      { value: 'none', label: 'Aucune', emoji: '✅' },
-      { value: 'cats', label: 'Chats', emoji: '🐈' },
-      { value: 'dogs', label: 'Chiens', emoji: '🐕' },
-      { value: 'other', label: 'Autre', emoji: '🤧' },
-    ],
-  },
-  {
-    id: 'monthly_budget',
-    text: 'Quel est votre budget mensuel pour un animal ?',
-    hint: 'Inclut la nourriture, les visites vétérinaires et les soins',
-    type: 'choice',
-    options: [
-      { value: '50-100', label: '50–100 €', emoji: '💰' },
-      { value: '100-200', label: '100–200 €', emoji: '💵' },
-      { value: '200+', label: '200 € et plus', emoji: '💎' },
-    ],
-  },
-  {
-    id: 'preferred_animal',
-    text: 'Quel type d\'animal recherchez-vous ?',
-    hint: "Nous afficherons uniquement les espèces correspondantes",
-    type: 'choice',
-    options: [
-      { value: 'dog', label: 'Chien', emoji: '🐕' },
-      { value: 'cat', label: 'Chat', emoji: '🐈' },
-      { value: 'both', label: 'Chien ou chat', emoji: '🐾' },
-      { value: 'small_animal', label: 'Petit animal', emoji: '🐹' },
-    ],
-  },
-  {
-    id: 'size_preference',
-    text: 'Taille préférée ?',
-    hint: 'Choisissez selon votre espace de vie et votre style de vie',
-    type: 'choice',
-    options: [
-      { value: 'small', label: 'Petit', emoji: '🐭' },
-      { value: 'medium', label: 'Moyen', emoji: '🐕' },
-      { value: 'large', label: 'Grand', emoji: '🦮' },
-      { value: 'no_preference', label: 'Peu importe', emoji: '🤷' },
-    ],
-  },
-  {
-    id: 'age_preference',
-    text: 'Âge préféré ?',
-    hint: 'Chaque étape de vie a son propre charme',
-    type: 'choice',
-    options: [
-      { value: 'baby', label: 'Bébé', emoji: '🍼' },
-      { value: 'young', label: 'Jeune adulte', emoji: '⚡' },
-      { value: 'adult', label: 'Adulte', emoji: '🐾' },
-      { value: 'senior', label: 'Senior', emoji: '🧡' },
-      { value: 'no_preference', label: 'Peu importe', emoji: '🤷' },
-    ],
-  },
-  {
-    id: 'energy_level',
-    text: 'Quel niveau d\'énergie vous convient le mieux ?',
-    hint: 'Votre quotidien influe sur la relation avec votre animal',
-    type: 'choice',
-    options: [
-      { value: 'calm', label: 'Calme et tranquille', emoji: '😌' },
-      { value: 'balanced', label: 'Équilibré(e)', emoji: '🙂' },
-      { value: 'very_energetic', label: 'Très énergique', emoji: '🤸' },
-    ],
-  },
-  {
-    id: 'search_radius',
-    text: 'Jusqu\'où êtes-vous prêt(e) à vous déplacer ?',
-    hint: "Nous rechercherons des refuges dans ce rayon",
-    type: 'radius',
-  },
-];
+function getQuestions(t) {
+  return [
+    {
+      id: 'has_children',
+      text: t('q1_text'),
+      hint: t('q1_hint'),
+      type: 'choice',
+      options: [
+        { value: true,  label: t('val_yes'), emoji: '👶' },
+        { value: false, label: t('val_no'),  emoji: '🙅' },
+      ],
+    },
+    {
+      id: 'children_age',
+      text: t('q2_text'),
+      hint: t('q2_hint'),
+      type: 'choice',
+      showIf: (a) => a.has_children === true,
+      options: [
+        { value: '<6',  label: t('qopt_child_lt6'),    emoji: '🍼' },
+        { value: '6-12',label: t('qopt_child_6to12'),  emoji: '🎒' },
+        { value: '12+', label: t('qopt_child_12plus'), emoji: '🎓' },
+      ],
+    },
+    {
+      id: 'existing_pets',
+      text: t('q3_text'),
+      hint: t('q3_hint'),
+      type: 'choice',
+      options: [
+        { value: 'none',  label: t('qopt_pets_none'),  emoji: '🏠' },
+        { value: 'dog',   label: t('qopt_pets_dog'),   emoji: '🐕' },
+        { value: 'cat',   label: t('qopt_pets_cat'),   emoji: '🐈' },
+        { value: 'both',  label: t('qopt_pets_both'),  emoji: '🐾' },
+        { value: 'other', label: t('qopt_pets_other'), emoji: '🐹' },
+      ],
+    },
+    {
+      id: 'has_garden',
+      text: t('q4_text'),
+      hint: t('q4_hint'),
+      type: 'choice',
+      options: [
+        { value: 'yes',     label: t('qopt_garden_yes'), emoji: '🌳' },
+        { value: 'balcony', label: t('qopt_garden_bal'), emoji: '🪴' },
+        { value: 'no',      label: t('qopt_garden_no'),  emoji: '🏢' },
+      ],
+    },
+    {
+      id: 'housing_size',
+      text: t('q5_text'),
+      hint: t('q5_hint'),
+      type: 'choice',
+      options: [
+        { value: 'small',  label: t('qopt_house_sm'), emoji: '📦' },
+        { value: 'medium', label: t('qopt_house_md'), emoji: '🏠' },
+        { value: 'large',  label: t('qopt_house_lg'), emoji: '🏡' },
+        { value: 'xlarge', label: t('qopt_house_xl'), emoji: '🏘️' },
+      ],
+    },
+    {
+      id: 'works_outdoor',
+      text: t('q6_text'),
+      hint: t('q6_hint'),
+      type: 'choice',
+      options: [
+        { value: 'yes',      label: t('qopt_activity_yes'), emoji: '🏃' },
+        { value: 'flexible', label: t('qopt_activity_fl'),  emoji: '🚶' },
+        { value: 'no',       label: t('qopt_activity_no'),  emoji: '🛋️' },
+      ],
+    },
+    {
+      id: 'allergies',
+      text: t('q7_text'),
+      hint: t('q7_hint'),
+      type: 'choice',
+      options: [
+        { value: 'none',  label: t('qopt_allergy_none'), emoji: '✅' },
+        { value: 'cats',  label: t('qopt_allergy_cats'), emoji: '🐈' },
+        { value: 'dogs',  label: t('qopt_allergy_dogs'), emoji: '🐕' },
+        { value: 'other', label: t('qopt_allergy_oth'),  emoji: '🤧' },
+      ],
+    },
+    {
+      id: 'monthly_budget',
+      text: t('q8_text'),
+      hint: t('q8_hint'),
+      type: 'choice',
+      options: [
+        { value: '50-100',  label: t('qopt_budget_sm'), emoji: '💰' },
+        { value: '100-200', label: t('qopt_budget_md'), emoji: '💵' },
+        { value: '200+',    label: t('qopt_budget_lg'), emoji: '💎' },
+      ],
+    },
+    {
+      id: 'preferred_animal',
+      text: t('q9_text'),
+      hint: t('q9_hint'),
+      type: 'choice',
+      options: [
+        { value: 'dog',          label: t('qopt_pref_dog'),   emoji: '🐕' },
+        { value: 'cat',          label: t('qopt_pref_cat'),   emoji: '🐈' },
+        { value: 'both',         label: t('qopt_pref_both'),  emoji: '🐾' },
+        { value: 'small_animal', label: t('qopt_pref_small'), emoji: '🐹' },
+      ],
+    },
+    {
+      id: 'size_preference',
+      text: t('q10_text'),
+      hint: t('q10_hint'),
+      type: 'choice',
+      options: [
+        { value: 'small',         label: t('sz_small'),          emoji: '🐭' },
+        { value: 'medium',        label: t('sz_medium'),         emoji: '🐕' },
+        { value: 'large',         label: t('sz_large'),          emoji: '🦮' },
+        { value: 'no_preference', label: t('qopt_size_no_pref'), emoji: '🤷' },
+      ],
+    },
+    {
+      id: 'age_preference',
+      text: t('q11_text'),
+      hint: t('q11_hint'),
+      type: 'choice',
+      options: [
+        { value: 'baby',          label: t('qopt_age_baby'),    emoji: '🍼' },
+        { value: 'young',         label: t('qopt_age_young'),   emoji: '⚡' },
+        { value: 'adult',         label: t('qopt_age_adult'),   emoji: '🐾' },
+        { value: 'senior',        label: t('qopt_age_senior'),  emoji: '🧡' },
+        { value: 'no_preference', label: t('qopt_age_no_pref'), emoji: '🤷' },
+      ],
+    },
+    {
+      id: 'energy_level',
+      text: t('q12_text'),
+      hint: t('q12_hint'),
+      type: 'choice',
+      options: [
+        { value: 'calm',         label: t('qopt_energy_calm'), emoji: '😌' },
+        { value: 'balanced',     label: t('qopt_energy_bal'),  emoji: '🙂' },
+        { value: 'very_energetic',label: t('qopt_energy_high'),emoji: '🤸' },
+      ],
+    },
+    {
+      id: 'search_radius',
+      text: t('q13_text'),
+      hint: t('q13_hint'),
+      type: 'radius',
+    },
+  ];
+}
 
 const variants = {
-  enter: (dir) => ({ x: dir > 0 ? 120 : -120, opacity: 0 }),
+  enter:  (dir) => ({ x: dir > 0 ?  120 : -120, opacity: 0 }),
   center: { x: 0, opacity: 1 },
-  exit: (dir) => ({ x: dir > 0 ? -120 : 120, opacity: 0 }),
+  exit:   (dir) => ({ x: dir > 0 ? -120 :  120, opacity: 0 }),
 };
 
 const DEFAULTS = {
-  has_children: false,
-  children_age: 'n/a',
-  existing_pets: 'none',
-  has_garden: 'no',
-  housing_size: 'medium',
-  works_outdoor: 'flexible',
-  allergies: 'none',
-  monthly_budget: '100-200',
+  has_children:     false,
+  children_age:     'n/a',
+  existing_pets:    'none',
+  has_garden:       'no',
+  housing_size:     'medium',
+  works_outdoor:    'flexible',
+  allergies:        'none',
+  monthly_budget:   '100-200',
   preferred_animal: 'both',
-  size_preference: 'no_preference',
-  age_preference: 'adult',
-  energy_level: 'balanced',
+  size_preference:  'no_preference',
+  age_preference:   'adult',
+  energy_level:     'balanced',
   search_radius_km: 25,
-  latitude: null,
-  longitude: null,
+  latitude:         null,
+  longitude:        null,
 };
 
 export default function Questionnaire() {
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState(DEFAULTS);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [dir, setDir] = useState(1);
-  const [geoLoading, setGeoLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const { t, lang, setLang } = useLanguage();
+  const [answers, setAnswers]             = useState(DEFAULTS);
+  const [stepIndex, setStepIndex]         = useState(0);
+  const [dir, setDir]                     = useState(1);
+  const [geoLoading, setGeoLoading]       = useState(false);
+  const [saving, setSaving]               = useState(false);
+  const [error, setError]                 = useState('');
   const [loadingExisting, setLoadingExisting] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing]         = useState(false);
 
   // Charger les réponses existantes pour pré-remplir le formulaire
   useEffect(() => {
@@ -197,12 +201,13 @@ export default function Questionnaire() {
           setIsEditing(true);
         }
       })
-      .catch(() => {}) // silently ignore — on utilise les defaults
+      .catch(() => {})
       .finally(() => setLoadingExisting(false));
   }, []);
 
+  const questions        = getQuestions(t);
   const visibleQuestions = questions.filter((q) => !q.showIf || q.showIf(answers));
-  const current = visibleQuestions[stepIndex];
+  const current          = visibleQuestions[stepIndex];
 
   // Auto-détecter la position quand on arrive sur l'étape rayon de recherche
   useEffect(() => {
@@ -211,8 +216,9 @@ export default function Questionnaire() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.type]);
+
   const progress = ((stepIndex + 1) / visibleQuestions.length) * 100;
-  const isLast = stepIndex === visibleQuestions.length - 1;
+  const isLast   = stepIndex === visibleQuestions.length - 1;
 
   function selectOption(value) {
     setAnswers((a) => ({ ...a, [current.id]: value }));
@@ -237,7 +243,7 @@ export default function Questionnaire() {
       (pos) => {
         setAnswers((a) => ({
           ...a,
-          latitude: pos.coords.latitude,
+          latitude:  pos.coords.latitude,
           longitude: pos.coords.longitude,
         }));
         setGeoLoading(false);
@@ -251,20 +257,18 @@ export default function Questionnaire() {
     setError('');
     try {
       await api.post('/adoptant/questionnaire', answers);
-      // GA4 tracking
       if (typeof window.gtag === 'function') {
         window.gtag('event', isEditing ? 'questionnaire_updated' : 'questionnaire_complete');
       }
-      // Si c'est une modification → retour au profil, sinon → découvrir les animaux
       navigate(isEditing ? '/adoptant/profile' : '/adoptant/swipe');
     } catch (err) {
-      setError(err.response?.data?.error || 'Échec de la sauvegarde. Veuillez réessayer.');
+      setError(err.response?.data?.error || t('q_save_error'));
       setSaving(false);
     }
   }
 
   const currentAnswer = answers[current?.id];
-  const hasAnswer = currentAnswer !== undefined && currentAnswer !== null && currentAnswer !== '';
+  const hasAnswer     = currentAnswer !== undefined && currentAnswer !== null && currentAnswer !== '';
 
   if (loadingExisting) {
     return (
@@ -288,12 +292,20 @@ export default function Questionnaire() {
           <div className="flex items-center gap-3">
             {isEditing && (
               <span className="text-xs text-secondary font-medium bg-secondary/10 px-2 py-1 rounded-full">
-                ✏️ Modification
+                {t('q_editing')}
               </span>
             )}
             <span className="text-gray-400 text-sm">
               {stepIndex + 1} / {visibleQuestions.length}
             </span>
+            {/* Toggle FR / NL */}
+            <button
+              onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
+              className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200
+                         text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
+            >
+              {lang === 'fr' ? 'NL' : 'FR'}
+            </button>
           </div>
         </div>
 
@@ -311,7 +323,7 @@ export default function Questionnaire() {
       <div className="flex-1 flex flex-col justify-center px-6 max-w-lg mx-auto w-full overflow-hidden">
         <AnimatePresence mode="wait" custom={dir}>
           <motion.div
-            key={current?.id}
+            key={`${current?.id}-${lang}`}
             custom={dir}
             variants={variants}
             initial="enter"
@@ -391,23 +403,21 @@ export default function Questionnaire() {
                   {geoLoading ? (
                     <>
                       <LoadingSpinner size="sm" />
-                      <span>Détection en cours…</span>
+                      <span>{t('q_detecting')}</span>
                     </>
                   ) : answers.latitude ? (
-                    <>📍 Position enregistrée ✓</>
+                    <>{t('q_loc_saved')}</>
                   ) : (
                     <>
-                      📍 Détecter ma position
+                      {t('q_detect_loc')}
                       <span className="ml-1 text-xs bg-secondary text-white px-1.5 py-0.5 rounded-full">
-                        Recommandé
+                        {t('q_recommended')}
                       </span>
                     </>
                   )}
                 </button>
                 {!answers.latitude && !geoLoading && (
-                  <p className="text-center text-xs text-gray-400">
-                    Sans position, nous ne pouvons pas filtrer par distance
-                  </p>
+                  <p className="text-center text-xs text-gray-400">{t('q_no_loc')}</p>
                 )}
               </div>
             )}
@@ -437,9 +447,9 @@ export default function Questionnaire() {
             {saving ? (
               <LoadingSpinner size="sm" className="text-white" />
             ) : isLast ? (
-              isEditing ? 'Sauvegarder les modifications ✓' : 'Trouver mes animaux ✨'
+              isEditing ? t('q_save_edit') : t('q_find_animals')
             ) : (
-              'Suivant →'
+              t('q_next')
             )}
           </button>
         </div>
