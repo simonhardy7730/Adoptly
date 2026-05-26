@@ -18,6 +18,7 @@ import ShelterProfile from './pages/shelter/ShelterProfile';
 import CGU            from './pages/legal/CGU';
 import PrivacyPolicy  from './pages/legal/PrivacyPolicy';
 import AnimalPublic   from './pages/AnimalPublic';
+import ShelterList    from './pages/ShelterList';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -91,6 +92,9 @@ function AppRoutes() {
 
       {/* Page publique animal — accessible sans compte */}
       <Route path="/animal/:id" element={<AnimalPublic />} />
+
+      {/* Page publique refuges partenaires */}
+      <Route path="/refuges" element={<ShelterList />} />
 
       {/* Pages légales */}
       <Route path="/legal/cgu"     element={<CGU />} />
