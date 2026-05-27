@@ -195,9 +195,6 @@ function AnimalPhotoStrip() {
               alt={photo.alt}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-2 py-1.5">
-              <span className="text-white text-xs font-medium">{photo.label}</span>
-            </div>
           </div>
         ))}
       </motion.div>
