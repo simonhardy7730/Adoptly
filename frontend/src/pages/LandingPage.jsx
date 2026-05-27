@@ -76,7 +76,7 @@ const heroPhotos = [
   { src: 'photo-1587300003388-59208cc962cb', alt: 'Labrador',        label: 'Chien' },
   { src: 'photo-1543466835-00a7907e9de1',    alt: 'Hamster',         label: 'Hamster' },
   { src: 'photo-1495360010541-f48722b34f7d', alt: 'Chat roux',       label: 'Chat' },
-  { src: 'photo-1425082661705-1834bfd09dca', alt: 'Golden Retriever 2', label: 'Chien' },
+  { src: 'photo-1561037404-61cd46aa615b',    alt: 'Jack Russell',      label: 'Chien' },
   { src: 'photo-1573865526739-10659fec78a5', alt: 'Chaton',          label: 'Chat' },
 ];
 
