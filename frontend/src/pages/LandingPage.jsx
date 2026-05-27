@@ -74,7 +74,7 @@ const heroPhotos = [
   { src: 'photo-1514888286974-6c03e2ca1dba', alt: 'Chat mignon',    label: 'Chat' },
   { src: 'photo-1585110396000-c9ffd4e4b308', alt: 'Lapin nain',     label: 'Lapin' },
   { src: 'photo-1587300003388-59208cc962cb', alt: 'Labrador',        label: 'Chien' },
-  { src: 'photo-1543466835-00a7907e9de1',    alt: 'Chihuahua',       label: 'Chien' },
+  { src: 'photo-1543466835-00a7907e9de1',    alt: 'Hamster',         label: 'Hamster' },
   { src: 'photo-1495360010541-f48722b34f7d', alt: 'Chat roux',       label: 'Chat' },
   { src: 'photo-1425082661705-1834bfd09dca', alt: 'Golden Retriever 2', label: 'Chien' },
   { src: 'photo-1573865526739-10659fec78a5', alt: 'Chaton',          label: 'Chat' },
