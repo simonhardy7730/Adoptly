@@ -24,8 +24,12 @@ import CookieBanner   from './components/CookieBanner';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
-  if (!token) return <Navigate to="/" replace />;
-  if (requiredRole && role !== requiredRole) return <Navigate to="/" replace />;
+  // Fallback localStorage — évite le bug de timing où login() met à jour
+  // le contexte de manière asynchrone mais navigate() est déjà appelé.
+  const effectiveToken = token || localStorage.getItem('token');
+  const effectiveRole  = role  || localStorage.getItem('role');
+  if (!effectiveToken) return <Navigate to="/" replace />;
+  if (requiredRole && effectiveRole !== requiredRole) return <Navigate to="/" replace />;
   return children;
 }
 
