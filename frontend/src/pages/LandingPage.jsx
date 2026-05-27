@@ -69,6 +69,17 @@ const faqs = [
 
 const animaux = ['🐕', '🐈', '🐇', '🐹', '🦜', '🐕‍🦺'];
 
+const heroPhotos = [
+  { src: 'photo-1552053831-71594a27632d', alt: 'Golden Retriever', label: 'Chien' },
+  { src: 'photo-1514888286974-6c03e2ca1dba', alt: 'Chat mignon',    label: 'Chat' },
+  { src: 'photo-1585110396000-c9ffd4e4b308', alt: 'Lapin nain',     label: 'Lapin' },
+  { src: 'photo-1587300003388-59208cc962cb', alt: 'Labrador',        label: 'Chien' },
+  { src: 'photo-1543466835-00a7907e9de1',    alt: 'Chihuahua',       label: 'Chien' },
+  { src: 'photo-1495360010541-f48722b34f7d', alt: 'Chat roux',       label: 'Chat' },
+  { src: 'photo-1425082661705-1834bfd09dca', alt: 'Golden Retriever 2', label: 'Chien' },
+  { src: 'photo-1573865526739-10659fec78a5', alt: 'Chaton',          label: 'Chat' },
+];
+
 // ── Variants d'animation ──────────────────────────────────────────────────────
 
 const fadeUp = (delay = 0) => ({
@@ -94,8 +105,12 @@ function PreviewCard() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.6, duration: 0.6, ease: 'easeOut' }}
     >
-      <div className="bg-gradient-to-br from-blue-200 to-indigo-100 h-40 flex items-center justify-center">
-        <span className="text-7xl">🐕</span>
+      <div className="h-40 overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=300&q=80"
+          alt="Chien adorable"
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="p-4 space-y-2">
         <div className="flex items-center justify-between">
@@ -156,6 +171,36 @@ function FaqItem({ q, a }) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function AnimalPhotoStrip() {
+  return (
+    <div className="relative overflow-hidden py-8 bg-white border-b border-gray-100">
+      <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+      <motion.div
+        className="flex gap-3 w-max"
+        animate={{ x: ['0%', '-50%'] }}
+        transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
+      >
+        {[...heroPhotos, ...heroPhotos].map((photo, i) => (
+          <div
+            key={i}
+            className="flex-shrink-0 w-36 h-36 rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative group"
+          >
+            <img
+              src={`https://images.unsplash.com/${photo.src}?auto=format&fit=crop&w=160&q=75`}
+              alt={photo.alt}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent px-2 py-1.5">
+              <span className="text-white text-xs font-medium">{photo.label}</span>
+            </div>
+          </div>
+        ))}
+      </motion.div>
     </div>
   );
 }
@@ -289,6 +334,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Bande photos animaux ──────────────────────────────── */}
+      <AnimalPhotoStrip />
 
       {/* ── Chiffres clés ─────────────────────────────────────── */}
       <section className="bg-white border-b border-gray-100">
@@ -438,8 +486,12 @@ export default function LandingPage() {
           >
             <div className="card p-5 w-full max-w-sm space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-200 to-blue-100 rounded-2xl flex items-center justify-center text-3xl">
-                  🐈
+                <div className="w-14 h-14 rounded-2xl overflow-hidden flex-shrink-0">
+                  <img
+                    src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=80&q=80"
+                    alt="Chat"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
                   <p className="font-bold text-gray-800">Milo</p>
