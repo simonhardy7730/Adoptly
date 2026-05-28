@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "seed": "node src/scripts/seed-demo.js",
+    "seed:reset": "node src/scripts/seed-demo.js --reset"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
