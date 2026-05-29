@@ -1,26 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
-import LandingPage    from './pages/LandingPage';
-import AdoptantAuth   from './pages/auth/AdoptantAuth';
-import ShelterAuth    from './pages/auth/ShelterAuth';
-import AuthCallback   from './pages/auth/AuthCallback';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword  from './pages/auth/ResetPassword';
-import Questionnaire  from './pages/adoptant/Questionnaire';
-import Swiper         from './pages/adoptant/Swiper';
-import MatchHistory   from './pages/adoptant/MatchHistory';
-import AnimalDetail   from './pages/adoptant/AnimalDetail';
-import Profile        from './pages/adoptant/Profile';
-import Dashboard      from './pages/shelter/Dashboard';
-import AnimalForm     from './pages/shelter/AnimalForm';
-import ShelterProfile from './pages/shelter/ShelterProfile';
-import CGU            from './pages/legal/CGU';
-import PrivacyPolicy  from './pages/legal/PrivacyPolicy';
-import AnimalPublic   from './pages/AnimalPublic';
-import ShelterList    from './pages/ShelterList';
-import ForRefuges     from './pages/ForRefuges';
-import CookieBanner   from './components/CookieBanner';
+import LandingPage          from './pages/LandingPage';
+import AdoptantAuth         from './pages/auth/AdoptantAuth';
+import ShelterAuth          from './pages/auth/ShelterAuth';
+import FosterAuth           from './pages/auth/FosterAuth';
+import AuthCallback         from './pages/auth/AuthCallback';
+import ForgotPassword       from './pages/auth/ForgotPassword';
+import ResetPassword        from './pages/auth/ResetPassword';
+import Questionnaire        from './pages/adoptant/Questionnaire';
+import Swiper               from './pages/adoptant/Swiper';
+import MatchHistory         from './pages/adoptant/MatchHistory';
+import AnimalDetail         from './pages/adoptant/AnimalDetail';
+import Profile              from './pages/adoptant/Profile';
+import Dashboard            from './pages/shelter/Dashboard';
+import AnimalForm           from './pages/shelter/AnimalForm';
+import ShelterProfile       from './pages/shelter/ShelterProfile';
+import FosterQuestionnaire  from './pages/foster/FosterQuestionnaire';
+import FosterSwipe          from './pages/foster/FosterSwipe';
+import FosterMatches        from './pages/foster/FosterMatches';
+import CGU                  from './pages/legal/CGU';
+import PrivacyPolicy        from './pages/legal/PrivacyPolicy';
+import AnimalPublic         from './pages/AnimalPublic';
+import ShelterList          from './pages/ShelterList';
+import ForRefuges           from './pages/ForRefuges';
+import CookieBanner         from './components/CookieBanner';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -45,7 +49,9 @@ function AppRoutes() {
           token
             ? role === 'adoptant'
               ? <Navigate to="/adoptant/swipe" replace />
-              : <Navigate to="/shelter/dashboard" replace />
+              : role === 'foster'
+                ? <Navigate to="/famille-accueil/swipe" replace />
+                : <Navigate to="/shelter/dashboard" replace />
             : <LandingPage />
         }
       />
@@ -65,6 +71,10 @@ function AppRoutes() {
       <Route path="/shelter/login"    element={<ShelterAuth mode="login"    />} />
       <Route path="/shelter/register" element={<ShelterAuth mode="register" />} />
 
+      {/* Auth famille d'accueil */}
+      <Route path="/famille-accueil/login"    element={<FosterAuth mode="login"    />} />
+      <Route path="/famille-accueil/register" element={<FosterAuth mode="register" />} />
+
       {/* Pages protégées — adoptant */}
       <Route path="/adoptant/questionnaire" element={
         <PrivateRoute requiredRole="adoptant"><Questionnaire /></PrivateRoute>
@@ -80,6 +90,17 @@ function AppRoutes() {
       }/>
       <Route path="/adoptant/animal" element={
         <PrivateRoute requiredRole="adoptant"><AnimalDetail /></PrivateRoute>
+      }/>
+
+      {/* Pages protégées — famille d'accueil */}
+      <Route path="/famille-accueil/questionnaire" element={
+        <PrivateRoute requiredRole="foster"><FosterQuestionnaire /></PrivateRoute>
+      }/>
+      <Route path="/famille-accueil/swipe" element={
+        <PrivateRoute requiredRole="foster"><FosterSwipe /></PrivateRoute>
+      }/>
+      <Route path="/famille-accueil/matches" element={
+        <PrivateRoute requiredRole="foster"><FosterMatches /></PrivateRoute>
       }/>
 
       {/* Pages protégées — refuge */}

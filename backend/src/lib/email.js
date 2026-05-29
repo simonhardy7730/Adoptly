@@ -364,6 +364,118 @@ export async function sendPasswordResetEmail({ email, resetUrl, role }) {
 }
 
 /**
+ * Notifie un refuge qu'une famille d'accueil est intéressée par l'un de ses animaux.
+ * @param {{ shelterEmail: string, shelterName: string, animalName: string,
+ *           fosterEmail: string, fosterFirstName?: string, fosterLastName?: string }} params
+ */
+export async function sendFosterMatchNotificationEmail({
+  shelterEmail, shelterName, animalName,
+  fosterEmail, fosterFirstName, fosterLastName,
+}) {
+  const fosterDisplay = [fosterFirstName, fosterLastName].filter(Boolean).join(' ') || 'Une famille d\'accueil';
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nouvelle demande d'accueil sur Adoptly</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+      <!-- En-tête gradient -->
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:40px 32px;text-align:center;">
+        <div style="display:inline-block;text-align:center;margin-bottom:4px;">
+          <div style="display:inline-flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;vertical-align:middle;">
+              <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
+            </div>
+            <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;vertical-align:middle;">Adoptly</span>
+          </div>
+        </div>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:8px 0 0;">La plateforme des refuges engagés</p>
+      </div>
+
+      <!-- Corps -->
+      <div style="padding:40px 32px;">
+        <!-- Badge -->
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="display:inline-block;background:#FFF3E0;border-radius:50px;padding:12px 24px;">
+            <span style="font-size:28px;">🏠</span>
+            <span style="color:#F07A2A;font-weight:800;font-size:18px;margin-left:8px;vertical-align:middle;">Nouvelle famille d'accueil !</span>
+          </div>
+        </div>
+
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 12px;letter-spacing:-0.3px;text-align:center;">
+          ${fosterDisplay} souhaite accueillir <strong>${animalName}</strong>
+        </h1>
+        <p style="color:#6B7280;font-size:15px;line-height:1.7;margin:0 0 28px;text-align:center;">
+          Une famille d'accueil compatible a exprimé son intérêt pour <strong>${animalName}</strong>.<br>
+          Vous pouvez la contacter directement.
+        </p>
+
+        <!-- Infos famille d'accueil -->
+        <div style="background:#F4F7FF;border-radius:16px;padding:24px;margin-bottom:28px;">
+          <p style="color:#374151;font-size:13px;font-weight:700;margin:0 0 16px;text-transform:uppercase;letter-spacing:0.05em;">
+            Coordonnées de la famille d'accueil
+          </p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding-bottom:10px;">
+                <span style="font-size:16px;">👤</span>
+                <span style="color:#4B5563;font-size:14px;margin-left:8px;">${fosterDisplay}</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span style="font-size:16px;">✉️</span>
+                <a href="mailto:${fosterEmail}" style="color:#1B4F8A;font-size:14px;margin-left:8px;text-decoration:none;font-weight:600;">${fosterEmail}</a>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- CTA -->
+        <div style="text-align:center;margin:32px 0 0;">
+          <a href="https://adoptly.fr/shelter/dashboard"
+             style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;
+                    letter-spacing:-0.2px;">
+            Voir mon tableau de bord →
+          </a>
+          <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">
+            Répondez à cet email ou contactez directement la famille d'accueil.
+          </p>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">
+          © ${new Date().getFullYear()} Adoptly ·
+          <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
+        </p>
+        <p style="color:#D1D5DB;font-size:11px;margin:8px 0 0;">
+          Notification envoyée à ${shelterName} pour l'animal ${animalName} (accueil temporaire).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to:      shelterEmail,
+    subject: `🏠 Nouvelle famille d'accueil — ${fosterDisplay} est disponible pour ${animalName}`,
+    html,
+  });
+}
+
+/**
  * Notifie un adoptant qu'un nouvel animal compatible vient d'être ajouté.
  * @param {{ adoptantEmail: string, adoptantFirstName?: string,
  *           animalName: string, animalSpecies: string, animalBreed?: string,

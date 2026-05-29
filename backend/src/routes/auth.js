@@ -190,10 +190,60 @@ router.post('/shelter/login', async (req, res) => {
   }
 });
 
+// ── Famille d'accueil — inscription ──────────────────────────────────────────
+
+router.post('/foster/register', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: 'Email et mot de passe requis' });
+
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    const { data, error } = await supabase
+      .from('fosters')
+      .insert({ email, password_hash: hash })
+      .select('id, email, created_at')
+      .single();
+
+    if (error) {
+      if (error.code === '23505')
+        return res.status(409).json({ error: 'Cet email est déjà utilisé' });
+      throw error;
+    }
+
+    const token = makeToken({ id: data.id, email: data.email, role: 'foster' });
+    res.json({ token, user: data, role: 'foster' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Famille d'accueil — connexion ─────────────────────────────────────────────
+
+router.post('/foster/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const { data: foster } = await supabase
+      .from('fosters')
+      .select('*')
+      .eq('email', email)
+      .single();
+
+    if (!foster || !(await bcrypt.compare(password, foster.password_hash)))
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
+
+    const { password_hash, ...user } = foster;
+    const token = makeToken({ id: user.id, email: user.email, role: 'foster' });
+    res.json({ token, user, role: 'foster' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Mot de passe oublié ───────────────────────────────────────────────────────
 
 router.post('/forgot-password', async (req, res) => {
-  const { email, role } = req.body; // role: 'adoptant' | 'shelter'
+  const { email, role } = req.body; // role: 'adoptant' | 'shelter' | 'foster'
   if (!email || !role)
     return res.status(400).json({ error: 'Email et rôle requis' });
 
@@ -201,7 +251,7 @@ router.post('/forgot-password', async (req, res) => {
   res.json({ success: true });
 
   try {
-    const table = role === 'shelter' ? 'shelters' : 'adoptants';
+    const table = role === 'shelter' ? 'shelters' : role === 'foster' ? 'fosters' : 'adoptants';
     const { data: account } = await supabase
       .from(table)
       .select('id, email, password_hash')
@@ -239,7 +289,7 @@ router.post('/reset-password', async (req, res) => {
     return res.status(400).json({ error: 'Mot de passe trop court (6 caractères minimum)' });
 
   try {
-    const table = role === 'shelter' ? 'shelters' : 'adoptants';
+    const table = role === 'shelter' ? 'shelters' : role === 'foster' ? 'fosters' : 'adoptants';
 
     const { data: account } = await supabase
       .from(table)

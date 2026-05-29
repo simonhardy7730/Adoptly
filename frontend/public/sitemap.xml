@@ -43,6 +43,18 @@
     <lastmod>2026-05-28</lastmod>
   </url>
   <url>
+    <loc>https://adoptly.fr/famille-accueil/register</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-05-29</lastmod>
+  </url>
+  <url>
+    <loc>https://adoptly.fr/famille-accueil/login</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>2026-05-29</lastmod>
+  </url>
+  <url>
     <loc>https://adoptly.fr/legal/cgu</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

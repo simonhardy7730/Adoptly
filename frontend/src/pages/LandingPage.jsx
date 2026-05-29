@@ -670,6 +670,64 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Section famille d'accueil ─────────────────────────── */}
+      <section className="bg-white py-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <motion.div {...fadeUpView()} className="text-center mb-10">
+            <span className="section-label">Accueil temporaire</span>
+            <h2 className="text-3xl font-extrabold text-primary mt-3">
+              Devenir famille d'accueil, c'est changer une vie.
+            </h2>
+            <p className="text-gray-400 mt-2 text-sm max-w-xl mx-auto">
+              Sans être prêt(e) pour l'adoption définitive, vous pouvez offrir un foyer temporaire
+              à un animal en attente — et faire une vraie différence.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-10">
+            {[
+              {
+                emoji: '🏠',
+                title: 'Un accueil temporaire',
+                desc: 'Quelques semaines ou quelques mois, selon vos disponibilités. Vous aidez un animal en attendant qu\'il trouve sa famille définitive.',
+              },
+              {
+                emoji: '💊',
+                title: 'Frais souvent couverts',
+                desc: 'La plupart des refuges prennent en charge les frais vétérinaires et la nourriture pendant la période d\'accueil.',
+              },
+              {
+                emoji: '💚',
+                title: 'Zéro engagement',
+                desc: 'Aucune obligation d\'adopter. Vous accueillez selon vos disponibilités et vos capacités — c\'est vous qui choisissez.',
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                className="p-6 rounded-3xl border-2 border-gray-100 hover:border-secondary/30 hover:shadow-card transition-all"
+                {...fadeUpView(i * 0.1)}
+              >
+                <div className="text-4xl mb-3">{item.emoji}</div>
+                <h3 className="font-bold text-gray-800 text-lg mb-2">{item.title}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div {...fadeUpView(0.2)} className="text-center">
+            <Link
+              to="/famille-accueil/register"
+              className="btn-primary inline-block px-8 py-4 text-base"
+            >
+              Devenir famille d'accueil →
+            </Link>
+            <p className="text-gray-400 text-xs mt-3">
+              Gratuit · Sans engagement · Belgique & Nord de la France
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── FAQ ───────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 py-16">
         <motion.div {...fadeUpView()} className="text-center mb-10">
