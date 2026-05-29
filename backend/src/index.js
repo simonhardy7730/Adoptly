@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import authRoutes    from './routes/auth.js';
 import adoptantRoutes from './routes/adoptant.js';
 import shelterRoutes from './routes/shelter.js';
+import fosterRoutes  from './routes/foster.js';
 import publicRoutes  from './routes/public.js';
 import adminRoutes   from './routes/admin.js';
 
@@ -50,6 +51,7 @@ const authLimiter = rateLimit({
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/adoptant', adoptantRoutes);
 app.use('/api/shelter', shelterRoutes);
+app.use('/api/foster', fosterRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/admin', adminRoutes);
 

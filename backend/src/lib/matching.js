@@ -85,6 +85,63 @@ export function passesHardFilters(animal, shelter, prefs) {
   return true;
 }
 
+export function passesHardFiltersFoster(animal, shelter, prefs) {
+  // Distance (same logic as passesHardFilters)
+  if (prefs.latitude && prefs.longitude && shelter?.latitude && shelter?.longitude) {
+    const dist = haversineKm(prefs.latitude, prefs.longitude, shelter.latitude, shelter.longitude);
+    if (dist > (prefs.search_radius_km || 50)) return false;
+  }
+
+  // Species
+  if (prefs.preferred_animal && prefs.preferred_animal !== 'all') {
+    if (prefs.preferred_animal === 'small_animal' && !['rabbit', 'guinea_pig', 'other'].includes(animal.species)) return false;
+    if (prefs.preferred_animal !== 'small_animal' && animal.species !== prefs.preferred_animal) return false;
+  }
+
+  // Can handle special needs
+  if (animal.special_needs && prefs.can_handle_special_needs === 'no') return false;
+
+  // Can handle babies (biberon)
+  if (animal.age < 2 && prefs.can_handle_babies === 'no') return false;
+
+  // Existing pets
+  const existing = prefs.existing_pets || 'none';
+  const req = animal.requirements || {};
+  if ((existing === 'cat' || existing === 'both') && req.cats_compatible === 'no') return false;
+  if ((existing === 'dog' || existing === 'both') && req.dogs_compatible === 'no') return false;
+
+  // Garden
+  if (req.needs_garden === 'yes' && prefs.has_garden === 'no') return false;
+
+  return true;
+}
+
+export function scoreAnimalFoster(animal, prefs) {
+  let score = 0;
+
+  // Species match
+  if (prefs.preferred_animal !== 'all') {
+    const isSmall = ['rabbit', 'guinea_pig', 'other'].includes(animal.species);
+    if (prefs.preferred_animal === 'small_animal' && isSmall) score += 30;
+    else if (animal.species === prefs.preferred_animal) score += 30;
+  }
+
+  // Duration compatibility
+  const maxDays = { '1-2_weeks': 14, '1_month': 30, '3_months': 90, unlimited: 9999 };
+  const available = maxDays[prefs.max_duration] || 9999;
+  if (animal.foster_duration_days && animal.foster_duration_days <= available) score += 25;
+  else if (!animal.foster_duration_days) score += 10;
+
+  // Experience match
+  if (animal.special_needs && prefs.experience === 'experienced') score += 20;
+  if (!animal.special_needs) score += 15;
+
+  // Expenses covered bonus
+  if (animal.foster_expenses_covered) score += 10;
+
+  return score;
+}
+
 export function scoreAnimal(animal, prefs) {
   let score = 0;
   const energyTemperMap = { calm: 'calm', balanced: 'playful', very_energetic: 'energetic' };
