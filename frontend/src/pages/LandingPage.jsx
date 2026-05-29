@@ -293,7 +293,7 @@ export default function LandingPage() {
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-6"
+                className="flex flex-col sm:flex-row flex-wrap gap-3 justify-center md:justify-start mb-6"
                 {...fadeUp(0.32)}
               >
                 <Link
@@ -309,6 +309,13 @@ export default function LandingPage() {
                              text-base border border-white/25 backdrop-blur-sm active:scale-95 transition-all"
                 >
                   Je représente un refuge
+                </Link>
+                <Link
+                  to="/famille-accueil/register"
+                  className="bg-white/10 hover:bg-white/18 text-white font-semibold px-7 py-4 rounded-2xl
+                             text-base border border-white/25 backdrop-blur-sm active:scale-95 transition-all"
+                >
+                  🏠 Famille d'accueil
                 </Link>
               </motion.div>
 
