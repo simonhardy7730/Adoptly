@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 
 const SPECIES_EMOJI = {
@@ -31,20 +31,46 @@ function ageLabel(months) {
   return m > 0 ? `${y} an${y > 1 ? 's' : ''} ${m} mois` : `${y} an${y > 1 ? 's' : ''}`;
 }
 
+const STORY_THRESHOLD = 90; // nb de caractères avant le "Lire plus"
+
 export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
-  const x = useMotionValue(0);
-  const rotate = useTransform(x, [-250, 250], [-18, 18]);
+  const x         = useMotionValue(0);
+  const rotate    = useTransform(x, [-250, 250], [-18, 18]);
   const loveOpacity = useTransform(x, [20, 100], [0, 1]);
   const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
   const cardOpacity = useTransform(x, [-350, -200, 0, 200, 350], [0, 1, 1, 1, 0]);
-  const dragging = useRef(false);
+  const dragging  = useRef(false);
 
+  // ── Photo carousel ────────────────────────────────────────────────────────
+  const photos    = animal.photos?.length > 0 ? animal.photos : [null];
+  const [photoIdx, setPhotoIdx] = useState(0);
+
+  function goNext(e) {
+    e.stopPropagation();
+    if (dragging.current) return;
+    setPhotoIdx((i) => Math.min(i + 1, photos.length - 1));
+  }
+  function goPrev(e) {
+    e.stopPropagation();
+    if (dragging.current) return;
+    setPhotoIdx((i) => Math.max(i - 1, 0));
+  }
+
+  // ── Description ──────────────────────────────────────────────────────────
+  const [expanded, setExpanded] = useState(false);
+  const story       = animal.story || '';
+  const isLong      = story.length > STORY_THRESHOLD;
+  const displayedStory = expanded || !isLong
+    ? story
+    : story.slice(0, STORY_THRESHOLD).trimEnd() + '…';
+
+  // ── Swipe drag ───────────────────────────────────────────────────────────
   async function handleDragEnd(_, info) {
     dragging.current = false;
-    const threshold = 100;
+    const threshold    = 100;
     const velThreshold = 600;
-    const goRight = info.offset.x > threshold || info.velocity.x > velThreshold;
-    const goLeft = info.offset.x < -threshold || info.velocity.x < -velThreshold;
+    const goRight = info.offset.x > threshold  || info.velocity.x > velThreshold;
+    const goLeft  = info.offset.x < -threshold || info.velocity.x < -velThreshold;
 
     if (goRight) {
       await animate(x, 1400, { duration: 0.25, ease: 'easeOut' });
@@ -57,20 +83,20 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
     }
   }
 
-  const photo = animal.photos?.[0];
+  const photo       = photos[photoIdx];
   const scaleOffset = 1 - stackIndex * 0.04;
-  const yOffset = stackIndex * 10;
+  const yOffset     = stackIndex * 10;
 
   return (
     <motion.div
       className="absolute inset-0 no-select"
       style={{
-        x: isTop ? x : 0,
-        rotate: isTop ? rotate : 0,
+        x:       isTop ? x : 0,
+        rotate:  isTop ? rotate : 0,
         opacity: isTop ? cardOpacity : 1,
-        scale: scaleOffset,
-        y: yOffset,
-        zIndex: 10 - stackIndex,
+        scale:   scaleOffset,
+        y:       yOffset,
+        zIndex:  10 - stackIndex,
         touchAction: isTop ? 'none' : 'auto',
       }}
       drag={isTop ? 'x' : false}
@@ -81,7 +107,8 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
       whileTap={isTop ? { cursor: 'grabbing' } : {}}
     >
       <div className="w-full h-full bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col">
-        {/* Photo */}
+
+        {/* ── Zone photo ──────────────────────────────────────────────── */}
         <div className="relative flex-1 min-h-0 bg-gradient-to-br from-blue-100 to-blue-50">
           {photo ? (
             <img
@@ -96,17 +123,31 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             </div>
           )}
 
-          {/* Indicateurs de swipe */}
+          {/* Zones de navigation photos (gauche / droite) */}
+          {isTop && photos.length > 1 && (
+            <>
+              <div
+                className="absolute inset-y-0 left-0 w-1/3 z-20 cursor-pointer"
+                onClick={goPrev}
+              />
+              <div
+                className="absolute inset-y-0 right-0 w-1/3 z-20 cursor-pointer"
+                onClick={goNext}
+              />
+            </>
+          )}
+
+          {/* Indicateurs de swipe (love / nope) */}
           {isTop && (
             <>
               <motion.div
-                className="absolute top-6 left-6 text-5xl drop-shadow-lg"
+                className="absolute top-6 left-6 text-5xl drop-shadow-lg pointer-events-none"
                 style={{ opacity: loveOpacity }}
               >
                 💚
               </motion.div>
               <motion.div
-                className="absolute top-6 right-6 text-5xl drop-shadow-lg"
+                className="absolute top-6 right-6 text-5xl drop-shadow-lg pointer-events-none"
                 style={{ opacity: nopeOpacity }}
               >
                 👋
@@ -116,13 +157,30 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
 
           {/* Badge distance */}
           {animal.distance != null && (
-            <div className="absolute top-4 right-4 bg-black/40 text-white text-xs font-semibold px-2.5 py-1 rounded-full backdrop-blur-sm">
+            <div className="absolute top-4 right-4 bg-black/40 text-white text-xs font-semibold
+                            px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
               📍 {animal.distance} km
+            </div>
+          )}
+
+          {/* Dots indicateurs de photos */}
+          {photos.length > 1 && (
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+              {photos.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-200 ${
+                    i === photoIdx
+                      ? 'w-4 bg-white'
+                      : 'w-1.5 bg-white/50'
+                  }`}
+                />
+              ))}
             </div>
           )}
         </div>
 
-        {/* Infos */}
+        {/* ── Infos ───────────────────────────────────────────────────── */}
         <div className="p-5 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -138,13 +196,21 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             )}
           </div>
 
-          {animal.story && (
-            <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">{animal.story}</p>
+          {story && (
+            <div>
+              <p className="text-gray-600 text-sm leading-relaxed">{displayedStory}</p>
+              {isLong && (
+                <button
+                  className="text-secondary text-xs font-semibold mt-0.5 hover:underline"
+                  onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+                >
+                  {expanded ? 'Lire moins ↑' : 'Lire plus ↓'}
+                </button>
+              )}
+            </div>
           )}
 
-          <p className="text-gray-400 text-xs font-medium">
-            {animal.shelters?.name}
-          </p>
+          <p className="text-gray-400 text-xs font-medium">{animal.shelters?.name}</p>
         </div>
       </div>
     </motion.div>
