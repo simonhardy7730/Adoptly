@@ -92,10 +92,15 @@ export function passesHardFilters(animal, shelter, prefs) {
 }
 
 export function passesHardFiltersFoster(animal, shelter, prefs) {
-  // Distance (same logic as passesHardFilters)
-  if (prefs.latitude && prefs.longitude && shelter?.latitude && shelter?.longitude) {
-    const dist = haversineKm(prefs.latitude, prefs.longitude, shelter.latitude, shelter.longitude);
-    if (dist > (prefs.search_radius_km || 50)) return false;
+  // Animaux internationaux — distance ignorée, opt-in requis
+  if (animal.is_international) {
+    if (!prefs.accepts_international) return false;
+  } else {
+    // Distance (uniquement pour les animaux locaux)
+    if (prefs.latitude && prefs.longitude && shelter?.latitude && shelter?.longitude) {
+      const dist = haversineKm(prefs.latitude, prefs.longitude, shelter.latitude, shelter.longitude);
+      if (dist > (prefs.search_radius_km || 50)) return false;
+    }
   }
 
   // Species

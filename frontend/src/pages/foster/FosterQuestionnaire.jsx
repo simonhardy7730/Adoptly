@@ -94,6 +94,16 @@ const STEPS = [
     hint: 'Nous localisons les animaux proches de chez vous.',
     type: 'radius',
   },
+  {
+    id: 'accepts_international',
+    text: 'Êtes-vous ouvert(e) à accueillir un animal venant de l\'étranger ?',
+    hint: 'Roumanie, Espagne, Grèce… Des associations sauvent des animaux hors de nos frontières. La distance ne s\'applique pas pour ces animaux.',
+    type: 'choice',
+    options: [
+      { value: true,  label: 'Oui, pourquoi pas !', emoji: '🌍' },
+      { value: false, label: 'Non, merci',           emoji: '🏠' },
+    ],
+  },
 ];
 
 const DEFAULTS = {
