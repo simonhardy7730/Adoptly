@@ -735,6 +735,53 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── Section animaux internationaux ───────────────────── */}
+      <section className="bg-gradient-to-br from-blue-600 to-blue-800 py-16 text-white">
+        <div className="max-w-5xl mx-auto px-6">
+          <motion.div {...fadeUpView()} className="text-center mb-10">
+            <span className="inline-block bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-4">
+              🌍 Adoption internationale
+            </span>
+            <h2 className="text-3xl font-extrabold mt-1">
+              Des animaux sauvés à l'étranger cherchent aussi une famille.
+            </h2>
+            <p className="text-blue-100 mt-3 text-sm max-w-xl mx-auto leading-relaxed">
+              Roumanie, Espagne, Grèce… Des associations partenaires sauvent des animaux hors de nos frontières
+              et les proposent à l'adoption en Belgique et en France. Sans contrainte de distance.
+            </p>
+          </motion.div>
+
+          <motion.div {...fadeUpView(0.1)} className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/20">
+              <div className="text-4xl mb-3">🐕</div>
+              <h3 className="font-bold text-base mb-1">Animaux vérifiés</h3>
+              <p className="text-blue-100 text-sm">Chaque animal est pris en charge par une association sérieuse avant d'être proposé à l'adoption.</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/20">
+              <div className="text-4xl mb-3">📍</div>
+              <h3 className="font-bold text-base mb-1">Zéro contrainte de km</h3>
+              <p className="text-blue-100 text-sm">Ces animaux apparaissent dans votre swipe peu importe où vous habitez — le rayon de recherche ne s'applique pas.</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 text-center border border-white/20">
+              <div className="text-4xl mb-3">✅</div>
+              <h3 className="font-bold text-base mb-1">Votre choix</h3>
+              <p className="text-blue-100 text-sm">Vous cochez simplement "ouvert à l'adoption internationale" dans votre profil. Vous gardez le contrôle.</p>
+            </div>
+          </motion.div>
+
+          <motion.div {...fadeUpView(0.2)} className="text-center">
+            <Link
+              to="/adoptant/register"
+              className="inline-block bg-white text-blue-700 font-bold px-8 py-4 rounded-2xl
+                         hover:bg-blue-50 active:scale-95 transition-all shadow-lg"
+            >
+              Créer mon profil gratuitement →
+            </Link>
+            <p className="text-blue-200/60 text-xs mt-3">Badge 🌍 visible sur chaque animal concerné</p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── FAQ ───────────────────────────────────────────────── */}
       <section className="max-w-3xl mx-auto px-6 py-16">
         <motion.div {...fadeUpView()} className="text-center mb-10">
