@@ -16,20 +16,26 @@ export function haversineKm(lat1, lon1, lat2, lon2) {
 }
 
 export function passesHardFilters(animal, shelter, prefs) {
-  // Distance
-  if (
-    prefs.latitude &&
-    prefs.longitude &&
-    shelter?.latitude &&
-    shelter?.longitude
-  ) {
-    const dist = haversineKm(
-      prefs.latitude,
-      prefs.longitude,
-      shelter.latitude,
-      shelter.longitude
-    );
-    if (dist > (prefs.search_radius_km || 50)) return false;
+  // Animaux internationaux (hors Belgique/France)
+  // → distance ignorée, mais adoptant doit avoir coché "ok pour l'étranger"
+  if (animal.is_international) {
+    if (!prefs.accepts_international) return false;
+  } else {
+    // Distance — uniquement pour les animaux locaux
+    if (
+      prefs.latitude &&
+      prefs.longitude &&
+      shelter?.latitude &&
+      shelter?.longitude
+    ) {
+      const dist = haversineKm(
+        prefs.latitude,
+        prefs.longitude,
+        shelter.latitude,
+        shelter.longitude
+      );
+      if (dist > (prefs.search_radius_km || 50)) return false;
+    }
   }
 
   // Species

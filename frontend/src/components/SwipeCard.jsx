@@ -155,8 +155,13 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             </>
           )}
 
-          {/* Badge distance */}
-          {animal.distance != null && (
+          {/* Badge distance ou international */}
+          {animal.is_international ? (
+            <div className="absolute top-4 right-4 bg-blue-600/80 text-white text-xs font-semibold
+                            px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
+              🌍 {animal.origin_country || 'Étranger'}
+            </div>
+          ) : animal.distance != null && (
             <div className="absolute top-4 right-4 bg-black/40 text-white text-xs font-semibold
                             px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
               📍 {animal.distance} km

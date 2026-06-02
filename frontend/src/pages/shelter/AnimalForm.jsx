@@ -63,6 +63,8 @@ export default function AnimalForm() {
     story: existing?.story || '',
     status: existing?.status || 'active',
     requirements: existing?.requirements || { ...EMPTY_REQUIREMENTS },
+    is_international: existing?.is_international || false,
+    origin_country: existing?.origin_country || '',
   });
 
   const [existingPhotos, setExistingPhotos] = useState(existing?.photos || []);
@@ -122,6 +124,9 @@ export default function AnimalForm() {
       formData.append('special_needs', form.special_needs);
       formData.append('story', form.story);
       formData.append('requirements', JSON.stringify(form.requirements));
+      formData.append('is_international', form.is_international);
+      if (form.is_international && form.origin_country)
+        formData.append('origin_country', form.origin_country);
       if (isEdit) formData.append('status', form.status);
       if (isEdit) formData.append('existing_photos', JSON.stringify(existingPhotos));
 
@@ -330,6 +335,31 @@ export default function AnimalForm() {
                 value={form.story}
                 onChange={(e) => setField('story', e.target.value)}
               />
+            </div>
+
+            {/* ── Animal international ──────────────────────────────── */}
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded accent-primary"
+                  checked={form.is_international}
+                  onChange={(e) => setField('is_international', e.target.checked)}
+                />
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">🌍 Cet animal vient de l'étranger</p>
+                  <p className="text-xs text-gray-500">Hors Belgique / France — la distance ne s'applique pas</p>
+                </div>
+              </label>
+              {form.is_international && (
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Pays d'origine (ex : Roumanie, Espagne…)"
+                  value={form.origin_country}
+                  onChange={(e) => setField('origin_country', e.target.value)}
+                />
+              )}
             </div>
 
             {isEdit && (

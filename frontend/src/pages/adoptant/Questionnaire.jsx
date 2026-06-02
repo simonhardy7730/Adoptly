@@ -153,6 +153,16 @@ function getQuestions(t) {
       hint: t('q13_hint'),
       type: 'radius',
     },
+    {
+      id: 'accepts_international',
+      text: 'Êtes-vous ouvert à adopter un animal venant de l\'étranger ?',
+      hint: 'Des associations sauvent des animaux en Roumanie, Espagne, etc. Ces animaux correspondent quand même à vos critères, sans contrainte de distance.',
+      type: 'choice',
+      options: [
+        { value: true,  label: 'Oui, pourquoi pas !', emoji: '🌍' },
+        { value: false, label: 'Non, merci',           emoji: '🏠' },
+      ],
+    },
   ];
 }
 

@@ -211,8 +211,8 @@ router.post('/animals', authenticate, upload.array('photos', 3), async (req, res
     return res.status(403).json({ error: 'Forbidden' });
   try {
     const photoUrls = await uploadPhotos(req.files || [], req.user.id);
-    const { name, species, breed, age, size, temperament, special_needs, story, requirements } =
-      req.body;
+    const { name, species, breed, age, size, temperament, special_needs, story, requirements,
+            is_international, origin_country } = req.body;
 
     const { data, error } = await supabase
       .from('animals')
@@ -228,6 +228,8 @@ router.post('/animals', authenticate, upload.array('photos', 3), async (req, res
         story: story || null,
         photos: photoUrls,
         requirements: safeJson(requirements),
+        is_international: is_international === 'true' || is_international === true || false,
+        origin_country: origin_country || null,
       })
       .select()
       .single();
@@ -259,8 +261,8 @@ router.put('/animals/:id', authenticate, upload.array('photos', 3), async (req, 
     const existingPhotos = safeJson(req.body.existing_photos, []);
     const photoUrls = [...existingPhotos, ...newPhotoUrls];
 
-    const { name, species, breed, age, size, temperament, special_needs, story, requirements, status } =
-      req.body;
+    const { name, species, breed, age, size, temperament, special_needs, story, requirements, status,
+            is_international, origin_country } = req.body;
 
     const { data, error } = await supabase
       .from('animals')
@@ -276,6 +278,8 @@ router.put('/animals/:id', authenticate, upload.array('photos', 3), async (req, 
         photos: photoUrls,
         requirements: safeJson(requirements),
         status: status || 'active',
+        is_international: is_international === 'true' || is_international === true || false,
+        origin_country: origin_country || null,
       })
       .eq('id', req.params.id)
       .eq('shelter_id', req.user.id)
