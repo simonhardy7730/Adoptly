@@ -6,7 +6,10 @@ import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail } from '../lib/e
 import { passesHardFilters } from '../lib/matching.js';
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 80 * 1024 * 1024 }, // 80 MB max (vidéos)
+});
 
 // ── Dashboard ─────────────────────────────────────────────
 
@@ -206,11 +209,12 @@ router.patch('/animals/:id/adopted', authenticate, async (req, res) => {
 
 // ── Animals CRUD ──────────────────────────────────────────
 
-router.post('/animals', authenticate, upload.array('photos', 3), async (req, res) => {
+router.post('/animals', authenticate, upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   try {
-    const photoUrls = await uploadPhotos(req.files || [], req.user.id);
+    const photoUrls = await uploadPhotos(req.files?.photos || [], req.user.id);
+    const videoUrl  = await uploadVideo(req.files?.video?.[0] || null, req.user.id);
     const { name, species, breed, age, size, temperament, special_needs, story, requirements,
             is_international, origin_country } = req.body;
 
@@ -227,6 +231,7 @@ router.post('/animals', authenticate, upload.array('photos', 3), async (req, res
         special_needs: special_needs || null,
         story: story || null,
         photos: photoUrls,
+        video_url: videoUrl,
         requirements: safeJson(requirements),
         is_international: is_international === 'true' || is_international === true || false,
         origin_country: origin_country || null,
@@ -253,13 +258,15 @@ router.post('/animals', authenticate, upload.array('photos', 3), async (req, res
   }
 });
 
-router.put('/animals/:id', authenticate, upload.array('photos', 3), async (req, res) => {
+router.put('/animals/:id', authenticate, upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   try {
-    const newPhotoUrls = await uploadPhotos(req.files || [], req.user.id);
+    const newPhotoUrls   = await uploadPhotos(req.files?.photos || [], req.user.id);
     const existingPhotos = safeJson(req.body.existing_photos, []);
-    const photoUrls = [...existingPhotos, ...newPhotoUrls];
+    const photoUrls      = [...existingPhotos, ...newPhotoUrls];
+    const newVideoUrl    = await uploadVideo(req.files?.video?.[0] || null, req.user.id);
+    const videoUrl       = newVideoUrl || req.body.existing_video_url || null;
 
     const { name, species, breed, age, size, temperament, special_needs, story, requirements, status,
             is_international, origin_country } = req.body;
@@ -276,6 +283,7 @@ router.put('/animals/:id', authenticate, upload.array('photos', 3), async (req, 
         special_needs: special_needs || null,
         story: story || null,
         photos: photoUrls,
+        video_url: videoUrl,
         requirements: safeJson(requirements),
         status: status || 'active',
         is_international: is_international === 'true' || is_international === true || false,
@@ -428,6 +436,21 @@ async function uploadPhotos(files, shelterId) {
     }
   }
   return urls;
+}
+
+async function uploadVideo(file, shelterId) {
+  if (!file) return null;
+  const ext  = file.originalname.split('.').pop().toLowerCase();
+  const path = `${shelterId}/${Date.now()}_video.${ext}`;
+  const { error } = await supabase.storage
+    .from('animal-photos') // même bucket, dossier shelter
+    .upload(path, file.buffer, { contentType: file.mimetype });
+  if (error) {
+    console.error('[uploadVideo]', error.message);
+    return null;
+  }
+  const { data } = supabase.storage.from('animal-photos').getPublicUrl(path);
+  return data.publicUrl;
 }
 
 function safeJson(value, fallback = {}) {

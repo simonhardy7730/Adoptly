@@ -56,6 +56,9 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
     setPhotoIdx((i) => Math.max(i - 1, 0));
   }
 
+  // ── Vidéo ────────────────────────────────────────────────────────────────
+  const [showVideo, setShowVideo] = useState(false);
+
   // ── Description ──────────────────────────────────────────────────────────
   const [expanded, setExpanded] = useState(false);
   const story       = animal.story || '';
@@ -108,9 +111,17 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
     >
       <div className="w-full h-full bg-white rounded-3xl shadow-xl overflow-hidden flex flex-col">
 
-        {/* ── Zone photo ──────────────────────────────────────────────── */}
+        {/* ── Zone photo / vidéo ──────────────────────────────────────── */}
         <div className="relative flex-1 min-h-0 bg-gradient-to-br from-blue-100 to-blue-50">
-          {photo ? (
+          {showVideo && animal.video_url ? (
+            <video
+              src={animal.video_url}
+              controls
+              autoPlay
+              className="w-full h-full object-contain bg-black"
+              onEnded={() => setShowVideo(false)}
+            />
+          ) : photo ? (
             <img
               src={photo}
               alt={animal.name}
@@ -121,6 +132,18 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             <div className="w-full h-full flex items-center justify-center">
               <span className="text-8xl">{SPECIES_EMOJI[animal.species] || '🐾'}</span>
             </div>
+          )}
+
+          {/* Bouton vidéo */}
+          {animal.video_url && isTop && (
+            <button
+              className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 bg-black/60
+                         text-white text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm
+                         hover:bg-black/80 transition-colors"
+              onClick={(e) => { e.stopPropagation(); setShowVideo((v) => !v); }}
+            >
+              {showVideo ? '📷 Photos' : '▶ Vidéo'}
+            </button>
           )}
 
           {/* Zones de navigation photos (gauche / droite) */}

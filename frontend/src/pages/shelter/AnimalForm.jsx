@@ -70,10 +70,13 @@ export default function AnimalForm() {
   const [existingPhotos, setExistingPhotos] = useState(existing?.photos || []);
   const [newFiles, setNewFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(existing?.video_url || null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const fileRef = useRef();
+  const videoRef = useRef();
 
   function setField(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
@@ -129,8 +132,10 @@ export default function AnimalForm() {
         formData.append('origin_country', form.origin_country);
       if (isEdit) formData.append('status', form.status);
       if (isEdit) formData.append('existing_photos', JSON.stringify(existingPhotos));
+      if (isEdit && !videoFile && videoPreview) formData.append('existing_video_url', videoPreview);
 
       newFiles.forEach((f) => formData.append('photos', f));
+      if (videoFile) formData.append('video', videoFile);
 
       if (isEdit) {
         await api.put(`/shelter/animals/${id}`, formData, {
@@ -242,6 +247,53 @@ export default function AnimalForm() {
               multiple
               className="hidden"
               onChange={(e) => handleFiles(e.target.files)}
+            />
+          </div>
+
+          {/* ── Vidéo (optionnelle) ───────────────────────────────── */}
+          <div className="card p-5 space-y-3">
+            <label className="block text-sm font-semibold text-gray-700">
+              🎥 Vidéo de l'animal <span className="text-gray-400 font-normal">(optionnel)</span>
+            </label>
+            <p className="text-xs text-gray-400">MP4, MOV ou WEBM · 80 Mo max</p>
+
+            {videoPreview ? (
+              <div className="relative">
+                <video
+                  src={videoPreview}
+                  controls
+                  className="w-full rounded-2xl max-h-52 object-cover bg-black"
+                />
+                <button
+                  type="button"
+                  onClick={() => { setVideoFile(null); setVideoPreview(null); }}
+                  className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full hover:bg-red-600 transition"
+                >
+                  Supprimer
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => videoRef.current?.click()}
+                className="w-full h-24 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-secondary hover:text-secondary transition-colors"
+              >
+                <span className="text-2xl">▶</span>
+                <span className="text-xs">Ajouter une vidéo</span>
+              </button>
+            )}
+
+            <input
+              ref={videoRef}
+              type="file"
+              accept="video/mp4,video/mov,video/quicktime,video/webm"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setVideoFile(file);
+                setVideoPreview(URL.createObjectURL(file));
+              }}
             />
           </div>
 
