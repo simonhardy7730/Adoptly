@@ -27,6 +27,8 @@ import ForRefuges           from './pages/ForRefuges';
 import AdminDashboard       from './pages/admin/AdminDashboard';
 import AdoptionSuccess      from './pages/AdoptionSuccess';
 import CookieBanner         from './components/CookieBanner';
+import Chat                 from './pages/Chat';
+import ShelterChat          from './pages/ShelterChat';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -93,6 +95,9 @@ function AppRoutes() {
       <Route path="/adoptant/animal" element={
         <PrivateRoute requiredRole="adoptant"><AnimalDetail /></PrivateRoute>
       }/>
+      <Route path="/chat/:match_id" element={
+        <PrivateRoute requiredRole="adoptant"><Chat /></PrivateRoute>
+      }/>
 
       {/* Pages protégées — famille d'accueil */}
       <Route path="/famille-accueil/questionnaire" element={
@@ -117,6 +122,9 @@ function AppRoutes() {
       }/>
       <Route path="/shelter/profile" element={
         <PrivateRoute requiredRole="shelter"><ShelterProfile /></PrivateRoute>
+      }/>
+      <Route path="/shelter/chat/:match_id" element={
+        <PrivateRoute requiredRole="shelter"><ShelterChat /></PrivateRoute>
       }/>
 
       {/* Page publique animal — accessible sans compte */}

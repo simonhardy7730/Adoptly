@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -8,6 +8,7 @@ import api from '../../lib/api';
 
 // ── Modal : liste des adoptants intéressés ────────────────
 function InterestedModal({ animal, onClose, t }) {
+  const navigate = useNavigate();
   const [loading, setLoading]       = useState(true);
   const [interested, setInterested] = useState([]);
 
@@ -73,11 +74,20 @@ function InterestedModal({ animal, onClose, t }) {
                       {person.email}
                     </a>
                   </div>
-                  <div className="flex-shrink-0 text-right">
+                  <div className="flex-shrink-0 text-right space-y-1">
                     <p className="text-gray-300 text-xs">{date}</p>
                     {person.contacted && (
                       <p className="text-blue-400 text-xs">{t('interested_contacted')}</p>
                     )}
+                    <button
+                      onClick={() => {
+                        onClose();
+                        navigate(`/shelter/chat/${person.match_id}`);
+                      }}
+                      className="text-xs font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
+                    >
+                      💬
+                    </button>
                   </div>
                 </div>
               );
