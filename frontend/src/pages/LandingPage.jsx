@@ -872,6 +872,7 @@ export default function LandingPage() {
               <Link to="/shelter/login"    className="text-gray-400 hover:text-primary transition-colors">Espace refuge</Link>
               <Link to="/adoptant/login"   className="text-gray-400 hover:text-primary transition-colors">Espace adoptant</Link>
               <Link to="/pour-les-refuges" className="text-gray-400 hover:text-primary transition-colors">Devenir partenaire</Link>
+              <Link to="/adoptions"        className="text-gray-400 hover:text-primary transition-colors">💚 Adoptions réussies</Link>
             </div>
           </div>
 
@@ -880,6 +881,7 @@ export default function LandingPage() {
               © {new Date().getFullYear()} Adoptly · Belgique & Nord de la France · 100 % gratuit pour les associations
             </p>
             <div className="flex gap-4 text-xs">
+              <Link to="/adoptions"     className="text-gray-300 hover:text-gray-500 transition-colors">Adoptions réussies</Link>
               <Link to="/legal/cgu"     className="text-gray-300 hover:text-gray-500 transition-colors">CGU</Link>
               <Link to="/legal/privacy" className="text-gray-300 hover:text-gray-500 transition-colors">Confidentialité</Link>
               <a href="mailto:info@adoptly.fr" className="text-gray-300 hover:text-gray-500 transition-colors">Contact</a>
