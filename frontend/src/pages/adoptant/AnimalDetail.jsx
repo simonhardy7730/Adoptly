@@ -48,6 +48,7 @@ export default function AnimalDetail() {
     playful:  `🎾 ${t('tp_playful')}`,
     energetic:`⚡ ${t('tp_energetic')}`,
     mixed:    `🙂 ${t('tp_mixed')}`,
+    resilient:`💪 ${t('tp_resilient')}`,
   };
 
   const SIZE_LABEL = {
@@ -85,13 +86,32 @@ export default function AnimalDetail() {
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
 
-        {/* Bouton retour */}
-        <button
-          onClick={() => navigate('/adoptant/matches')}
-          className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors text-sm font-medium"
-        >
-          {t('detail_back')}
-        </button>
+        {/* Bouton retour + partager */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate('/adoptant/matches')}
+            className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors text-sm font-medium"
+          >
+            {t('detail_back')}
+          </button>
+          <button
+            onClick={() => {
+              const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+              const shareUrl = `${apiBase}/public/share/animal/${animal?.id}`;
+              const age = animal?.age < 12 ? `${animal.age} mois` : `${Math.floor(animal.age / 12)} an(s)`;
+              const text = `🐾 ${animal?.name} cherche une famille !\n${animal?.breed || animal?.species} · ${age} · ${shelter?.name || 'Refuge partenaire'}\n\nPeut-être votre futur compagnon ? 👉`;
+              if (navigator.share) {
+                navigator.share({ title: `${animal?.name} cherche une famille`, text, url: shareUrl }).catch(() => {});
+              } else {
+                navigator.clipboard?.writeText(text + ' ' + shareUrl)
+                  .then(() => alert('Lien copié ! Colle-le sur Facebook ou WhatsApp 👍'));
+              }
+            }}
+            className="flex items-center gap-1.5 text-sm font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-colors"
+          >
+            🔗 Partager
+          </button>
+        </div>
 
         {/* Galerie photos */}
         <div className="card overflow-hidden">
@@ -162,11 +182,11 @@ export default function AnimalDetail() {
                   {SIZE_LABEL[animal.size] || animal.size}
                 </span>
               )}
-              {animal?.temperament && (
-                <span className="badge bg-orange-50 text-orange-600 text-xs">
-                  {TEMPERAMENT[animal.temperament] || animal.temperament}
+              {animal?.temperament && animal.temperament.split(',').map(tp => tp.trim()).filter(Boolean).map(tp => (
+                <span key={tp} className="badge bg-orange-50 text-orange-600 text-xs">
+                  {TEMPERAMENT[tp] || tp}
                 </span>
-              )}
+              ))}
             </div>
           </div>
 
@@ -287,6 +307,17 @@ export default function AnimalDetail() {
                 </a>
               )}
             </div>
+
+            {/* Bouton messagerie */}
+            <button
+              onClick={() => {
+                markContacted();
+                navigate(`/chat/${match.id}`);
+              }}
+              className="w-full mt-3 bg-gradient-to-r from-primary to-blue-500 text-white font-semibold py-3 rounded-2xl text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            >
+              💬 Envoyer un message au refuge
+            </button>
           </div>
         )}
 
