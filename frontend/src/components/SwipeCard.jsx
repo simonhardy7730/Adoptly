@@ -33,6 +33,24 @@ function ageLabel(months) {
 
 const STORY_THRESHOLD = 90; // nb de caractères avant le "Lire plus"
 
+const FOSTER_REASON_LABEL = {
+  recovery: 'Convalescence', stress: 'Stress refuge',
+  young: 'Trop jeune', overflow: 'Surpopulation',
+};
+
+function shareAnimal(animal) {
+  const age   = animal.age < 12 ? `${animal.age} mois` : `${Math.floor(animal.age / 12)} an(s)`;
+  const story = animal.story ? `\n\n"${animal.story.slice(0, 120)}${animal.story.length > 120 ? '…' : ''}"` : '';
+  const text  = `🐾 ${animal.name} cherche une famille !\n${animal.breed || animal.species} · ${age} · ${animal.shelters?.name || 'Refuge partenaire'}${story}\n\nEst-ce que tu pourrais matcher avec lui ? 👉 adoptly.fr`;
+
+  if (navigator.share) {
+    navigator.share({ title: `${animal.name} cherche une famille`, text, url: 'https://adoptly.fr' }).catch(() => {});
+  } else {
+    // Fallback : copier dans le presse-papiers
+    navigator.clipboard?.writeText(text + '\nhttps://adoptly.fr').then(() => alert('Texte copié ! Colle-le sur Facebook ou WhatsApp 👍'));
+  }
+}
+
 export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
   const x         = useMotionValue(0);
   const rotate    = useTransform(x, [-250, 250], [-18, 18]);
@@ -134,16 +152,26 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             </div>
           )}
 
-          {/* Bouton vidéo */}
-          {animal.video_url && isTop && (
-            <button
-              className="absolute bottom-4 left-4 z-20 flex items-center gap-1.5 bg-black/60
-                         text-white text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm
-                         hover:bg-black/80 transition-colors"
-              onClick={(e) => { e.stopPropagation(); setShowVideo((v) => !v); }}
-            >
-              {showVideo ? '📷 Photos' : '▶ Vidéo'}
-            </button>
+          {/* Boutons vidéo + partage */}
+          {isTop && (
+            <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between">
+              {animal.video_url ? (
+                <button
+                  className="flex items-center gap-1.5 bg-black/60 text-white text-xs font-semibold
+                             px-3 py-1.5 rounded-full backdrop-blur-sm hover:bg-black/80 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setShowVideo((v) => !v); }}
+                >
+                  {showVideo ? '📷 Photos' : '▶ Vidéo'}
+                </button>
+              ) : <div />}
+              <button
+                className="flex items-center gap-1.5 bg-black/60 text-white text-xs font-semibold
+                           px-3 py-1.5 rounded-full backdrop-blur-sm hover:bg-black/80 transition-colors"
+                onClick={(e) => { e.stopPropagation(); shareAnimal(animal); }}
+              >
+                🔗 Partager
+              </button>
+            </div>
           )}
 
           {/* Zones de navigation photos (gauche / droite) */}
