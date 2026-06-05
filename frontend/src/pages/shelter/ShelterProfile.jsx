@@ -174,11 +174,10 @@ export default function ShelterProfile() {
             <form onSubmit={handleSave} className="w-full space-y-3 text-left">
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">
-                  {t('profile_name_label')} <span className="text-red-400">*</span>
+                  {t('profile_name_label')}
                 </label>
                 <input className="input-field" placeholder={t('profile_name_ph')}
                   value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required autoFocus
                 />
               </div>
               <div>

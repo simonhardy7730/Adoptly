@@ -133,7 +133,6 @@ router.put('/profile', authenticate, uploadMiddleware([
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   const { name, phone, address, description } = req.body;
-  if (!name) return res.status(400).json({ error: 'Le nom est requis' });
   try {
     const logoUrl        = await uploadVideo(req.files?.logo?.[0]              || null, req.user.id)
                         || req.body.existing_logo_url              || null;
