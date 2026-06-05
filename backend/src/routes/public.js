@@ -129,14 +129,14 @@ router.get('/share/animal/:id', async (req, res) => {
       ? animal.story.slice(0, 160)
       : `${species} · ${age} · ${animal.shelters?.name || 'Refuge partenaire'} — Adoptez-le sur Adoptly !`;
     const photo = animal.photos?.[0] || 'https://adoptly.fr/pwa-512x512.png';
-    const url   = `https://adoptly.fr/animal/${animal.id}`;
+    const shareUrl = `https://adoptly.fr/share/animal/${animal.id}`;
 
     if (isCrawler) {
       return res.send(`<!DOCTYPE html><html><head>
         <meta charset="UTF-8"/>
         <title>${title}</title>
         <meta property="og:type" content="website"/>
-        <meta property="og:url" content="${url}"/>
+        <meta property="og:url" content="${shareUrl}"/>
         <meta property="og:title" content="${title}"/>
         <meta property="og:description" content="${desc}"/>
         <meta property="og:image" content="${photo}"/>
