@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
+import { sendNewMessageNotificationEmail } from '../lib/email.js';
 
 const router = express.Router();
 
@@ -153,6 +154,43 @@ router.post('/:match_id', authenticate, async (req, res) => {
       .single();
 
     if (error) throw error;
+
+    // Notifier le refuge par email quand un adoptant envoie un message (non-bloquant)
+    if (role === 'adoptant') {
+      (async () => {
+        try {
+          // Récupérer l'animal et le refuge via le match
+          const { data: animal } = await supabase
+            .from('animals')
+            .select('name, shelter_id, shelters(email, name)')
+            .eq('id', match.animal_id)
+            .single();
+
+          // Récupérer le nom de l'adoptant
+          const { data: adoptant } = await supabase
+            .from('adoptants')
+            .select('first_name, last_name, email')
+            .eq('id', userId)
+            .single();
+
+          const adoptantName = [adoptant?.first_name, adoptant?.last_name].filter(Boolean).join(' ') || adoptant?.email || 'Un adoptant';
+          const preview = content.trim().length > 150 ? content.trim().slice(0, 150) + '…' : content.trim();
+
+          if (animal?.shelters?.email) {
+            await sendNewMessageNotificationEmail({
+              shelterEmail:   animal.shelters.email,
+              shelterName:    animal.shelters.name || 'Refuge',
+              adoptantName,
+              animalName:     animal.name,
+              messagePreview: preview,
+            });
+          }
+        } catch (emailErr) {
+          console.error('[Messages] Erreur notification email:', emailErr.message);
+        }
+      })();
+    }
+
     res.status(201).json(message);
   } catch (err) {
     res.status(500).json({ error: err.message });
