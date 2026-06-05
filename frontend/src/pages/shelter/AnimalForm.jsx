@@ -86,15 +86,45 @@ export default function AnimalForm() {
     setForm((f) => ({ ...f, requirements: { ...f.requirements, [key]: value } }));
   }
 
-  function handleFiles(files) {
+  // Compresse une image côté client (max 1200px, qualité 0.75 → ~200-400 Ko)
+  function compressImage(file, maxWidth = 1200, quality = 0.75) {
+    return new Promise((resolve) => {
+      // Si c'est déjà petit (< 300 Ko) ou pas une image, on ne compresse pas
+      if (file.size < 300 * 1024 || !file.type.startsWith('image/')) {
+        return resolve(file);
+      }
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = (maxWidth / w) * h; w = maxWidth; }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+          } else {
+            resolve(file); // Si la compression augmente la taille, garder l'original
+          }
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
+  async function handleFiles(files) {
     const arr = Array.from(files);
     const total = existingPhotos.length + newFiles.length + arr.length;
-    if (total > 3) {
+    if (total > 5) {
       setError(t('form_photos_max_err'));
       return;
     }
-    setNewFiles((prev) => [...prev, ...arr]);
-    arr.forEach((file) => {
+    // Compresser toutes les images en parallèle
+    const compressed = await Promise.all(arr.map((f) => compressImage(f)));
+    setNewFiles((prev) => [...prev, ...compressed]);
+    compressed.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => setPreviews((p) => [...p, e.target.result]);
       reader.readAsDataURL(file);

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import PhotoLightbox from './PhotoLightbox';
 
 const SPECIES_EMOJI = {
   dog: '🐕',
@@ -76,6 +77,9 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
     setPhotoIdx((i) => Math.max(i - 1, 0));
   }
 
+  // ── Lightbox plein écran ─────────────────────────────────────────────────
+  const [lightbox, setLightbox] = useState(false);
+
   // ── Vidéo ────────────────────────────────────────────────────────────────
   const [showVideo, setShowVideo] = useState(false);
 
@@ -145,8 +149,13 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             <img
               src={photo}
               alt={animal.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover cursor-zoom-in"
               draggable={false}
+              onClick={(e) => {
+                if (dragging.current) return;
+                e.stopPropagation();
+                setLightbox(true);
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -285,5 +294,14 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
         </div>
       </div>
     </motion.div>
+
+    {/* Lightbox plein écran */}
+    {lightbox && photos.filter(Boolean).length > 0 && (
+      <PhotoLightbox
+        photos={photos.filter(Boolean)}
+        initialIndex={photoIdx}
+        onClose={() => setLightbox(false)}
+      />
+    )}
   );
 }

@@ -245,6 +245,14 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   try {
+    // Vérifier la limite de stockage (200 Mo par refuge)
+    const allFiles = [...(req.files?.photos || []), ...(req.files?.video || [])];
+    const newSize  = allFiles.reduce((s, f) => s + f.size, 0);
+    if (newSize > 0) {
+      const ok = await checkStorageLimit(req.user.id, newSize);
+      if (!ok) return res.status(400).json({ error: 'Limite de stockage atteinte (200 Mo). Supprimez des animaux ou contactez-nous.' });
+    }
+
     const photoUrls = await uploadPhotos(req.files?.photos || [], req.user.id);
     const videoUrl  = await uploadVideo(req.files?.video?.[0] || null, req.user.id);
     const { name, species, breed, age, size, temperament, special_needs, story, requirements,
@@ -467,6 +475,14 @@ async function notifyCompatibleAdoptants(animal, shelter) {
   } catch (err) {
     console.error('[Notif] Erreur notification nouvel animal :', err.message);
   }
+}
+
+const MAX_STORAGE_PER_SHELTER = 200 * 1024 * 1024; // 200 Mo par refuge
+
+async function checkStorageLimit(shelterId, newFilesSize) {
+  const { data: files } = await supabase.storage.from('animal-photos').list(shelterId, { limit: 500 });
+  const currentSize = (files || []).reduce((sum, f) => sum + (f.metadata?.size || 0), 0);
+  return (currentSize + newFilesSize) <= MAX_STORAGE_PER_SHELTER;
 }
 
 async function uploadPhotos(files, shelterId) {

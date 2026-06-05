@@ -17,11 +17,15 @@ export default function AnimalPublic() {
 
   useEffect(() => {
     api.get(`/public/animals/${id}`)
-      .then(({ data }) => setAnimal(data))
+      .then(({ data }) => {
+        setAnimal(data);
+        document.title = `${data.name} cherche une famille | Adoptly`;
+      })
       .catch((err) => {
         if (err.response?.status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
+    return () => { document.title = 'Adoptly · Adopter un animal en refuge'; };
   }, [id]);
 
   if (loading) return (

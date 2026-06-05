@@ -18,10 +18,12 @@ export default function AdoptionSuccess() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = 'Adoptions réussies | Adoptly';
     api.get('/public/adopted')
       .then(({ data }) => setAnimals(data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
+    return () => { document.title = 'Adoptly · Adopter un animal en refuge'; };
   }, []);
 
   return (

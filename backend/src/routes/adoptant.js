@@ -195,6 +195,31 @@ router.get('/matches', authenticate, async (req, res) => {
   }
 });
 
+// ── Reset swipe history — revoir tous les animaux ────────
+router.post('/reset-swipes', authenticate, async (req, res) => {
+  if (req.user.role !== 'adoptant')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    // Vider la liste swiped_animals (garder les matchs 'right' intacts)
+    const { error } = await supabase
+      .from('adoptants')
+      .update({ swiped_animals: [] })
+      .eq('id', req.user.id);
+    if (error) throw error;
+
+    // Supprimer uniquement les swipes 'left' (non intéressé) pour qu'ils réapparaissent
+    await supabase
+      .from('matches')
+      .delete()
+      .eq('adoptant_id', req.user.id)
+      .eq('swipe_direction', 'left');
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.patch('/matches/:id/contacted', authenticate, async (req, res) => {
   if (req.user.role !== 'adoptant')
     return res.status(403).json({ error: 'Forbidden' });

@@ -47,6 +47,8 @@ export default function Profile() {
   const [lastName, setLastName]       = useState('');
   const [saving, setSaving]           = useState(false);
   const [saved, setSaved]             = useState(false);
+  const [resetting, setResetting]    = useState(false);
+  const [resetDone, setResetDone]    = useState(false);
 
   useEffect(() => {
     api.get('/adoptant/profile')
@@ -177,6 +179,39 @@ export default function Profile() {
               {t('prof_discover')}
             </Link>
           </div>
+        </div>
+
+        {/* Réinitialiser le swipe */}
+        <div className="card p-5 space-y-3">
+          <h2 className="font-bold text-gray-700">🔄 Revoir les animaux</h2>
+          <p className="text-gray-400 text-sm">
+            Vous avez swipé tous les animaux ? Réinitialisez pour les revoir (vos matchs existants sont conservés).
+          </p>
+          {resetDone ? (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-green-500 text-sm font-medium text-center"
+            >
+              ✅ C'est fait ! Retournez swiper →
+            </motion.p>
+          ) : (
+            <button
+              onClick={async () => {
+                if (!confirm('Réinitialiser votre historique de swipe ? Vos matchs actuels seront conservés.')) return;
+                setResetting(true);
+                try {
+                  await api.post('/adoptant/reset-swipes');
+                  setResetDone(true);
+                } catch { /* silent */ }
+                setResetting(false);
+              }}
+              disabled={resetting}
+              className="btn-secondary w-full py-3 text-sm flex items-center justify-center gap-2"
+            >
+              {resetting ? <LoadingSpinner size="sm" /> : '🔄 Réinitialiser mon historique de swipe'}
+            </button>
+          )}
         </div>
 
         {/* Préférences */}
