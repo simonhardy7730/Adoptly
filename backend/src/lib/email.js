@@ -1075,3 +1075,45 @@ export async function sendAdminNewShelterEmail({ shelterEmail, shelterName, shel
     html,
   });
 }
+
+/**
+ * Notifie l'admin (Simon) qu'un refuge vient d'ajouter un animal.
+ */
+export async function sendAdminNewAnimalEmail({ shelterName, shelterEmail, animalName, animalSpecies, animalBreed, photoUrl }) {
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  const species = { dog:'Chien', cat:'Chat', rabbit:'Lapin', guinea_pig:'Cobaye', other:'Autre' }[animalSpecies] || animalSpecies;
+  const addedAt = new Date().toLocaleString('fr-BE', { timeZone:'Europe/Brussels', dateStyle:'full', timeStyle:'short' });
+
+  const html = `
+<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,sans-serif;">
+  <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+    <div style="background:linear-gradient(135deg,#1B4F8A,#2E86AB);padding:28px 32px;display:flex;align-items:center;gap:12px;">
+      <div style="width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+        <span style="color:#fff;font-weight:900;font-size:18px;">A</span>
+      </div>
+      <div>
+        <span style="color:#fff;font-weight:900;font-size:20px;">Adoptly</span>
+        <p style="color:rgba(255,255,255,.6);font-size:11px;margin:0;">Notification admin — Nouvel animal</p>
+      </div>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="color:#1B4F8A;margin:0 0 16px;">🐾 Nouvel animal publié</h2>
+      ${photoUrl ? `<img src="${photoUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;" />` : ''}
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr><td style="padding:8px 0;color:#888;width:40%;">Animal</td><td style="padding:8px 0;font-weight:700;color:#1B4F8A;">${animalName}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Espèce</td><td style="padding:8px 0;">${species}${animalBreed ? ` — ${animalBreed}` : ''}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Refuge</td><td style="padding:8px 0;font-weight:600;">${shelterName}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Contact</td><td style="padding:8px 0;">${shelterEmail}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Ajouté le</td><td style="padding:8px 0;">${addedAt}</td></tr>
+      </table>
+    </div>
+  </div>
+</body></html>`.trim();
+
+  await sendEmail({
+    to:      ADMIN_EMAIL,
+    subject: `🐾 Nouvel animal : ${animalName} (${species}) ajouté par ${shelterName}`,
+    html,
+  });
+}

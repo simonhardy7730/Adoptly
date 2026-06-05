@@ -116,6 +116,9 @@ export default function AnimalForm() {
     setSuccess('');
     setSaving(true);
 
+    // Scroll en haut pour voir le résultat
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     try {
       const formData = new FormData();
       formData.append('name', form.name);
@@ -140,11 +143,13 @@ export default function AnimalForm() {
       if (isEdit) {
         await api.put(`/shelter/animals/${id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000, // 60s pour les vidéos
         });
         setSuccess(t('form_success_edit'));
       } else {
         await api.post('/shelter/animals', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000, // 60s pour les vidéos
         });
         setSuccess(t('form_success_add'));
         setForm({
@@ -164,7 +169,12 @@ export default function AnimalForm() {
         setExistingPhotos([]);
       }
     } catch (err) {
-      setError(err.response?.data?.error || t('form_error'));
+      const msg = err.response?.data?.error
+        || (err.code === 'ECONNABORTED' ? 'Délai dépassé — la vidéo est peut-être trop lourde. Réessayez sans vidéo ou avec une vidéo plus courte.' : null)
+        || (err.message?.includes('Network') ? 'Erreur réseau — vérifiez votre connexion et réessayez.' : null)
+        || t('form_error');
+      setError(msg);
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll en haut pour voir l'erreur
     } finally {
       setSaving(false);
     }
@@ -195,6 +205,17 @@ export default function AnimalForm() {
             {isEdit ? t('form_title_edit') : t('form_title_add')}
           </h1>
         </div>
+
+        {/* Bandeau erreur visible en haut */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-300 text-red-700 text-sm px-4 py-4 rounded-2xl flex items-start gap-3">
+            <span className="text-xl flex-shrink-0">⚠️</span>
+            <div>
+              <p className="font-semibold mb-0.5">Une erreur est survenue</p>
+              <p>{error}</p>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Photos */}

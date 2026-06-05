@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail } from '../lib/email.js';
+import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail } from '../lib/email.js';
 import { passesHardFilters } from '../lib/matching.js';
 
 const router = express.Router();
@@ -264,6 +264,20 @@ router.post('/animals', authenticate, upload.fields([{ name: 'photos', maxCount:
       .single()
       .then(({ data: shelter }) => {
         notifyCompatibleAdoptants(data, shelter).catch(() => {});
+      })
+      .catch(() => {});
+
+    // Notifier Simon qu'un nouvel animal a été ajouté (non-bloquant)
+    supabase.from('shelters').select('name, email').eq('id', req.user.id).single()
+      .then(({ data: shelter }) => {
+        sendAdminNewAnimalEmail({
+          shelterName:   shelter?.name  || 'Refuge inconnu',
+          shelterEmail:  shelter?.email || '',
+          animalName:    data.name,
+          animalSpecies: data.species,
+          animalBreed:   data.breed,
+          photoUrl:      data.photos?.[0] || null,
+        }).catch(() => {});
       })
       .catch(() => {});
 
