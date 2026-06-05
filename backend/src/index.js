@@ -8,6 +8,7 @@ import shelterRoutes from './routes/shelter.js';
 import fosterRoutes  from './routes/foster.js';
 import publicRoutes  from './routes/public.js';
 import adminRoutes   from './routes/admin.js';
+import messagesRouter from './routes/messages.js';
 
 dotenv.config();
 
@@ -64,6 +65,7 @@ app.use('/api/shelter', shelterRoutes);
 app.use('/api/foster', fosterRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/messages', messagesRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
