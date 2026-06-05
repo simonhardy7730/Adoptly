@@ -412,6 +412,10 @@ export const translations = {
     sw_share:      '🔗 Partager',
     sw_video:      '▶ Vidéo',
     sw_photos:     '📷 Photos',
+
+    // ── Questionnaire extras ──────────────────────────────
+    qopt_energy_no_pref: 'Peu importe',
+    q_see_all:           'Voir tous les animaux (sans limite de distance)',
   },
 
   nl: {
@@ -822,5 +826,9 @@ export const translations = {
     sw_share:      '🔗 Delen',
     sw_video:      '▶ Video',
     sw_photos:     '📷 Foto\'s',
+
+    // ── Questionnaire extras ──────────────────────────────
+    qopt_energy_no_pref: 'Maakt niet uit',
+    q_see_all:           'Alle dieren zien (zonder afstandslimiet)',
   },
 };

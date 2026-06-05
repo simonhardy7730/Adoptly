@@ -142,9 +142,10 @@ function getQuestions(t) {
       hint: t('q12_hint'),
       type: 'choice',
       options: [
-        { value: 'calm',         label: t('qopt_energy_calm'), emoji: '😌' },
-        { value: 'balanced',     label: t('qopt_energy_bal'),  emoji: '🙂' },
-        { value: 'very_energetic',label: t('qopt_energy_high'),emoji: '🤸' },
+        { value: 'calm',          label: t('qopt_energy_calm'),    emoji: '😌' },
+        { value: 'balanced',      label: t('qopt_energy_bal'),     emoji: '🙂' },
+        { value: 'very_energetic',label: t('qopt_energy_high'),    emoji: '🤸' },
+        { value: 'no_preference', label: t('qopt_energy_no_pref'), emoji: '🤷' },
       ],
     },
     {
@@ -380,25 +381,45 @@ export default function Questionnaire() {
               <div className="space-y-4">
                 <div className="text-center">
                   <span className="text-4xl font-extrabold text-primary">
-                    {answers.search_radius_km}
+                    {answers.search_radius_km >= 500 ? '∞' : answers.search_radius_km}
                   </span>
-                  <span className="text-gray-500 ml-1">km</span>
+                  {answers.search_radius_km < 500 && (
+                    <span className="text-gray-500 ml-1">km</span>
+                  )}
                 </div>
                 <input
                   type="range"
                   min={5}
                   max={200}
                   step={5}
-                  value={answers.search_radius_km}
+                  value={Math.min(answers.search_radius_km, 200)}
+                  disabled={answers.search_radius_km >= 500}
                   onChange={(e) =>
                     setAnswers((a) => ({ ...a, search_radius_km: parseInt(e.target.value) }))
                   }
-                  className="w-full accent-secondary"
+                  className={`w-full accent-secondary ${answers.search_radius_km >= 500 ? 'opacity-30' : ''}`}
                 />
                 <div className="flex justify-between text-xs text-gray-400">
                   <span>5 km</span>
                   <span>200 km</span>
                 </div>
+
+                {/* Checkbox voir tous les animaux */}
+                <button
+                  type="button"
+                  onClick={() => setAnswers((a) => ({
+                    ...a,
+                    search_radius_km: a.search_radius_km >= 500 ? 50 : 9999,
+                  }))}
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 font-medium text-sm transition-colors
+                    ${answers.search_radius_km >= 500
+                      ? 'border-secondary bg-secondary/10 text-secondary'
+                      : 'border-gray-200 bg-white text-gray-500 hover:border-secondary/40'
+                    }`}
+                >
+                  <span>{answers.search_radius_km >= 500 ? '✅' : '🌍'}</span>
+                  <span>{t('q_see_all')}</span>
+                </button>
 
                 <button
                   type="button"

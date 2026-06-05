@@ -160,20 +160,24 @@ export function scoreAnimal(animal, prefs) {
   const energyTemperMap = { calm: 'calm', balanced: 'playful', very_energetic: 'energetic' };
   const ageBrackets = { baby: [0, 6], young: [6, 24], adult: [24, 84], senior: [84, 9999] };
 
-  if (animal.temperament === energyTemperMap[prefs.energy_level]) score += 25;
+  // Énergie — "no_preference" = bonus pour tout le monde
+  if (prefs.energy_level === 'no_preference') {
+    score += 25;
+  } else {
+    if (animal.temperament === energyTemperMap[prefs.energy_level]) score += 25;
+    const broadEnergyMatch = {
+      calm: ['calm'],
+      balanced: ['calm', 'playful', 'mixed'],
+      very_energetic: ['energetic', 'playful', 'mixed'],
+    };
+    if (broadEnergyMatch[prefs.energy_level]?.includes(animal.temperament)) score += 20;
+  }
 
   if (prefs.size_preference !== 'no_preference' && animal.size === prefs.size_preference)
     score += 20;
 
   const [minA, maxA] = ageBrackets[prefs.age_preference] || [0, 9999];
   if ((animal.age || 0) >= minA && (animal.age || 0) < maxA) score += 15;
-
-  const broadEnergyMatch = {
-    calm: ['calm'],
-    balanced: ['calm', 'playful', 'mixed'],
-    very_energetic: ['energetic', 'playful', 'mixed'],
-  };
-  if (broadEnergyMatch[prefs.energy_level]?.includes(animal.temperament)) score += 20;
 
   if (!animal.special_needs) score += 10;
 
