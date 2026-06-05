@@ -278,7 +278,10 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[POST /animals] Supabase insert error:', JSON.stringify(error));
+      throw error;
+    }
 
     // Notifier les adoptants compatibles en arrière-plan (non-bloquant)
     supabase
@@ -307,7 +310,8 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
 
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[POST /animals] Error:', err.message, err.details || '', err.hint || '');
+    res.status(500).json({ error: err.message || 'Erreur inconnue lors de la sauvegarde' });
   }
 });
 
@@ -347,10 +351,14 @@ router.put('/animals/:id', authenticate, uploadMiddleware([{ name: 'photos', max
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('[PUT /animals] Supabase update error:', JSON.stringify(error));
+      throw error;
+    }
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[PUT /animals] Error:', err.message, err.details || '', err.hint || '');
+    res.status(500).json({ error: err.message || 'Erreur inconnue lors de la mise à jour' });
   }
 });
 

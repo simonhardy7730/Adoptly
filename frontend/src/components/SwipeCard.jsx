@@ -15,6 +15,7 @@ const TEMPERAMENT_LABEL = {
   playful: 'Joueur',
   energetic: 'Énergique',
   mixed: 'Mixte',
+  resilient: 'Résilient',
 };
 
 const TEMPERAMENT_COLOR = {
@@ -22,6 +23,7 @@ const TEMPERAMENT_COLOR = {
   playful: 'bg-yellow-100 text-yellow-700',
   energetic: 'bg-orange-100 text-orange-700',
   mixed: 'bg-purple-100 text-purple-700',
+  resilient: 'bg-green-100 text-green-700',
 };
 
 function ageLabel(months) {
@@ -258,9 +260,13 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
               </p>
             </div>
             {animal.temperament && (
-              <span className={`badge text-xs mt-1 ${TEMPERAMENT_COLOR[animal.temperament]}`}>
-                {TEMPERAMENT_LABEL[animal.temperament] || animal.temperament}
-              </span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {animal.temperament.split(',').map(t => t.trim()).filter(Boolean).map(tp => (
+                  <span key={tp} className={`badge text-xs ${TEMPERAMENT_COLOR[tp] || 'bg-gray-100 text-gray-600'}`}>
+                    {TEMPERAMENT_LABEL[tp] || tp}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
 

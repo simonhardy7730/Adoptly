@@ -205,13 +205,13 @@ export default function AnimalForm() {
       if (isEdit) {
         await api.put(`/shelter/animals/${id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 60000, // 60s pour les vidéos
+          timeout: 120000, // 2 min pour les vidéos + serveur qui se réveille
         });
         setSuccess(t('form_success_edit'));
       } else {
         await api.post('/shelter/animals', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
-          timeout: 60000, // 60s pour les vidéos
+          timeout: 120000, // 2 min pour les vidéos + serveur qui se réveille
         });
         setSuccess(t('form_success_add'));
         setForm({
@@ -231,12 +231,23 @@ export default function AnimalForm() {
         setExistingPhotos([]);
       }
     } catch (err) {
-      const msg = err.response?.data?.error
-        || (err.code === 'ECONNABORTED' ? 'Délai dépassé — la vidéo est peut-être trop lourde. Réessayez sans vidéo ou avec une vidéo plus courte.' : null)
-        || (err.message?.includes('Network') ? 'Erreur réseau — vérifiez votre connexion et réessayez.' : null)
-        || t('form_error');
+      console.error('[AnimalForm] Erreur sauvegarde:', err);
+      const status = err.response?.status;
+      const serverMsg = err.response?.data?.error;
+      let msg;
+      if (serverMsg) {
+        msg = serverMsg;
+      } else if (err.code === 'ECONNABORTED') {
+        msg = 'Délai dépassé (2 min) — le serveur met du temps à répondre. Réessayez dans 1 minute (le serveur gratuit se réveille).';
+      } else if (err.message?.includes('Network') || !err.response) {
+        msg = 'Erreur réseau — le serveur est peut-être en train de se réveiller (ça prend ~1 min). Réessayez dans un moment.';
+      } else if (status) {
+        msg = `Erreur serveur (${status}). Réessayez dans 1 minute.`;
+      } else {
+        msg = t('form_error');
+      }
       setError(msg);
-      window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll en haut pour voir l'erreur
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
     }
