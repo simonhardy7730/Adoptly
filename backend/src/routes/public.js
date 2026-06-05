@@ -92,4 +92,51 @@ router.get('/shelters', async (_req, res) => {
   }
 });
 
+router.get('/share/animal/:id', async (req, res) => {
+  try {
+    const { data: animal } = await supabase
+      .from('animals')
+      .select('id, name, species, breed, age, story, photos, shelters(name)')
+      .eq('id', req.params.id)
+      .single();
+
+    if (!animal) return res.redirect('https://adoptly.fr');
+
+    const ua = req.headers['user-agent'] || '';
+    const isCrawler = /facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot/i.test(ua);
+
+    const species = { dog: 'Chien', cat: 'Chat', rabbit: 'Lapin', guinea_pig: 'Cobaye', other: 'Animal' }[animal.species] || 'Animal';
+    const age = animal.age < 12 ? `${animal.age} mois` : `${Math.floor(animal.age / 12)} an(s)`;
+    const title = `${animal.name} cherche une famille 🐾`;
+    const desc = animal.story
+      ? animal.story.slice(0, 160)
+      : `${species} · ${age} · ${animal.shelters?.name || 'Refuge partenaire'} — Adoptez-le sur Adoptly !`;
+    const photo = animal.photos?.[0] || 'https://adoptly.fr/pwa-512x512.png';
+    const url   = `https://adoptly.fr/animal/${animal.id}`;
+
+    if (isCrawler) {
+      return res.send(`<!DOCTYPE html><html><head>
+        <meta charset="UTF-8"/>
+        <title>${title}</title>
+        <meta property="og:type" content="website"/>
+        <meta property="og:url" content="${url}"/>
+        <meta property="og:title" content="${title}"/>
+        <meta property="og:description" content="${desc}"/>
+        <meta property="og:image" content="${photo}"/>
+        <meta property="og:image:width" content="800"/>
+        <meta property="og:image:height" content="600"/>
+        <meta property="og:site_name" content="Adoptly"/>
+        <meta name="twitter:card" content="summary_large_image"/>
+        <meta name="twitter:title" content="${title}"/>
+        <meta name="twitter:description" content="${desc}"/>
+        <meta name="twitter:image" content="${photo}"/>
+      </head><body><p>Redirection...</p></body></html>`);
+    }
+
+    res.redirect(`https://adoptly.fr/animal/${animal.id}`);
+  } catch {
+    res.redirect('https://adoptly.fr');
+  }
+});
+
 export default router;

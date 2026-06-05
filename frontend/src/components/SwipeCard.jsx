@@ -41,13 +41,15 @@ const FOSTER_REASON_LABEL = {
 function shareAnimal(animal) {
   const age   = animal.age < 12 ? `${animal.age} mois` : `${Math.floor(animal.age / 12)} an(s)`;
   const story = animal.story ? `\n\n"${animal.story.slice(0, 120)}${animal.story.length > 120 ? '…' : ''}"` : '';
-  const text  = `🐾 ${animal.name} cherche une famille !\n${animal.breed || animal.species} · ${age} · ${animal.shelters?.name || 'Refuge partenaire'}${story}\n\nEst-ce que tu pourrais matcher avec lui ? 👉 adoptly.fr`;
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const shareUrl = `${apiBase}/public/share/animal/${animal.id}`;
+  const text  = `🐾 ${animal.name} cherche une famille !\n${animal.breed || animal.species} · ${age} · ${animal.shelters?.name || 'Refuge partenaire'}${story}\n\nPeut-être votre futur compagnon ? 👉`;
 
   if (navigator.share) {
-    navigator.share({ title: `${animal.name} cherche une famille`, text, url: 'https://adoptly.fr' }).catch(() => {});
+    navigator.share({ title: `${animal.name} cherche une famille`, text, url: shareUrl }).catch(() => {});
   } else {
-    // Fallback : copier dans le presse-papiers
-    navigator.clipboard?.writeText(text + '\nhttps://adoptly.fr').then(() => alert('Texte copié ! Colle-le sur Facebook ou WhatsApp 👍'));
+    navigator.clipboard?.writeText(text + ' ' + shareUrl)
+      .then(() => alert('Lien copié ! Colle-le sur Facebook ou WhatsApp 👍'));
   }
 }
 

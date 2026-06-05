@@ -9,7 +9,24 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 80 * 1024 * 1024 }, // 80 MB max (vidéos)
+  fileFilter: (req, file, cb) => {
+    const allowedImages = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const allowedVideos = ['video/mp4', 'video/quicktime', 'video/webm', 'video/mov'];
+    const allowed = [...allowedImages, ...allowedVideos];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error(`Type de fichier non autorisé : ${file.mimetype}`), false);
+  },
 });
+
+// Wrap the upload middleware to catch multer errors
+function uploadMiddleware(fields) {
+  return (req, res, next) => {
+    upload.fields(fields)(req, res, (err) => {
+      if (err) return res.status(400).json({ error: err.message });
+      next();
+    });
+  };
+}
 
 // ── Dashboard ─────────────────────────────────────────────
 
@@ -109,7 +126,7 @@ router.get('/profile', authenticate, async (req, res) => {
   }
 });
 
-router.put('/profile', authenticate, upload.fields([
+router.put('/profile', authenticate, uploadMiddleware([
   { name: 'logo',              maxCount: 1 },
   { name: 'description_photo', maxCount: 1 },
 ]), async (req, res) => {
@@ -224,7 +241,7 @@ router.patch('/animals/:id/adopted', authenticate, async (req, res) => {
 
 // ── Animals CRUD ──────────────────────────────────────────
 
-router.post('/animals', authenticate, upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
+router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   try {
@@ -287,7 +304,7 @@ router.post('/animals', authenticate, upload.fields([{ name: 'photos', maxCount:
   }
 });
 
-router.put('/animals/:id', authenticate, upload.fields([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
+router.put('/animals/:id', authenticate, uploadMiddleware([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   try {

@@ -48,6 +48,16 @@ const authLimiter = rateLimit({
   skip: (req) => req.method !== 'POST', // ne limiter que les POST (login/register)
 });
 
+const swipeLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de swipes. Veuillez patienter.' },
+});
+app.use('/api/adoptant/swipe', swipeLimiter);
+app.use('/api/foster/swipe', swipeLimiter);
+
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/adoptant', adoptantRoutes);
 app.use('/api/shelter', shelterRoutes);
