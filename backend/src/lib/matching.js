@@ -17,9 +17,10 @@ export function haversineKm(lat1, lon1, lat2, lon2) {
 
 export function passesHardFilters(animal, shelter, prefs) {
   // Animaux internationaux (hors Belgique/France)
-  // → distance ignorée, mais adoptant doit avoir coché "ok pour l'étranger"
+  // → distance ignorée. Seuls les "non" explicites sont bloqués.
+  // undefined = ancien compte avant la question → on affiche par défaut.
   if (animal.is_international) {
-    if (!prefs.accepts_international) return false;
+    if (prefs.accepts_international === false) return false;
   } else {
     // Distance — uniquement pour les animaux locaux
     if (
@@ -92,9 +93,10 @@ export function passesHardFilters(animal, shelter, prefs) {
 }
 
 export function passesHardFiltersFoster(animal, shelter, prefs) {
-  // Animaux internationaux — distance ignorée, opt-in requis
+  // Animaux internationaux — distance ignorée.
+  // undefined = ancien compte → on affiche par défaut.
   if (animal.is_international) {
-    if (!prefs.accepts_international) return false;
+    if (prefs.accepts_international === false) return false;
   } else {
     // Distance (uniquement pour les animaux locaux)
     if (prefs.latitude && prefs.longitude && shelter?.latitude && shelter?.longitude) {

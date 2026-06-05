@@ -376,13 +376,13 @@ export default function AnimalForm() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-700">{t('form_story')}</label>
-                <span className={`text-xs ${storyLength > 180 ? 'text-orange-500' : 'text-gray-400'}`}>
-                  {storyLength}/200
+                <span className={`text-xs ${storyLength > 550 ? 'text-orange-500' : 'text-gray-400'}`}>
+                  {storyLength}/600
                 </span>
               </div>
               <textarea
-                className="input-field resize-none h-24"
-                maxLength={200}
+                className="input-field resize-none h-36"
+                maxLength={600}
                 placeholder={t('form_story_ph')}
                 value={form.story}
                 onChange={(e) => setField('story', e.target.value)}

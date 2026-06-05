@@ -238,7 +238,20 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             </div>
           )}
 
-          <p className="text-gray-400 text-xs font-medium">{animal.shelters?.name}</p>
+          <div className="flex items-center gap-1.5">
+            {animal.shelters?.logo_url ? (
+              <img src={animal.shelters.logo_url} alt=""
+                className="w-5 h-5 rounded-full object-cover border border-gray-100" />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-secondary
+                              flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-black text-[8px]">
+                  {animal.shelters?.name?.[0]?.toUpperCase() || '?'}
+                </span>
+              </div>
+            )}
+            <p className="text-gray-400 text-xs font-medium">{animal.shelters?.name}</p>
+          </div>
         </div>
       </div>
     </motion.div>

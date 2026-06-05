@@ -18,14 +18,17 @@ router.get('/animals/:id', async (req, res) => {
     // Récupérer les infos publiques du refuge (nom + ville extraite de l'adresse)
     const { data: shelter } = await supabase
       .from('shelters')
-      .select('name, address')
+      .select('name, address, logo_url, description, description_photo_url')
       .eq('id', animal.shelter_id)
       .single();
 
     res.json({
       ...animal,
-      shelter_name:    shelter?.name    || null,
-      shelter_address: shelter?.address || null,
+      shelter_name:                 shelter?.name                 || null,
+      shelter_address:              shelter?.address              || null,
+      shelter_logo_url:             shelter?.logo_url             || null,
+      shelter_description:          shelter?.description          || null,
+      shelter_description_photo_url:shelter?.description_photo_url|| null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
