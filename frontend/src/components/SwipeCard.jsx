@@ -115,6 +115,7 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
   const yOffset     = stackIndex * 10;
 
   return (
+    <>
     <motion.div
       className="absolute inset-0 no-select"
       style={{
@@ -303,5 +304,6 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
         onClose={() => setLightbox(false)}
       />
     )}
+    </>
   );
 }
