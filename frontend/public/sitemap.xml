@@ -55,6 +55,12 @@
     <lastmod>2026-05-29</lastmod>
   </url>
   <url>
+    <loc>https://adoptly.fr/adoptions</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-06-05</lastmod>
+  </url>
+  <url>
     <loc>https://adoptly.fr/legal/cgu</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

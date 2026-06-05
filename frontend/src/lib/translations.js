@@ -133,6 +133,7 @@ export const translations = {
     val_flexible:  'Flexible',
     val_unknown:   'Inconnu',
     val_active:    'Actif',
+    val_reserved:  'Réservé 🤞',
     val_adopted:   'Adopté',
 
     // ── Espèces ───────────────────────────────────────────
@@ -520,6 +521,7 @@ export const translations = {
     val_flexible:  'Flexibel',
     val_unknown:   'Onbekend',
     val_active:    'Actief',
+    val_reserved:  'Gereserveerd 🤞',
     val_adopted:   'Geadopteerd',
 
     // ── Espèces ───────────────────────────────────────────

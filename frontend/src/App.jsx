@@ -25,6 +25,7 @@ import AnimalPublic         from './pages/AnimalPublic';
 import ShelterList          from './pages/ShelterList';
 import ForRefuges           from './pages/ForRefuges';
 import AdminDashboard       from './pages/admin/AdminDashboard';
+import AdoptionSuccess      from './pages/AdoptionSuccess';
 import CookieBanner         from './components/CookieBanner';
 
 function PrivateRoute({ children, requiredRole }) {
@@ -122,7 +123,8 @@ function AppRoutes() {
       <Route path="/animal/:id" element={<AnimalPublic />} />
 
       {/* Dashboard admin — protégé par mot de passe interne */}
-      <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin"      element={<AdminDashboard />} />
+      <Route path="/adoptions" element={<AdoptionSuccess />} />
 
       {/* Page publique refuges partenaires */}
       <Route path="/refuges" element={<ShelterList />} />

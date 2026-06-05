@@ -440,8 +440,9 @@ export default function AnimalForm() {
                 label={t('form_status')}
                 name="status"
                 options={[
-                  { value: 'active',  label: t('val_active') },
-                  { value: 'adopted', label: t('val_adopted') },
+                  { value: 'active',   label: t('val_active')   },
+                  { value: 'reserved', label: t('val_reserved') },
+                  { value: 'adopted',  label: t('val_adopted')  },
                 ]}
                 value={form.status}
                 onChange={(v) => setField('status', v)}

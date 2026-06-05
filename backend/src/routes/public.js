@@ -92,6 +92,23 @@ router.get('/shelters', async (_req, res) => {
   }
 });
 
+// ── Animaux adoptés (succès d'adoption) ──────────────────
+router.get('/adopted', async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('animals')
+      .select('id, name, species, breed, age, photos, shelters(name, logo_url)')
+      .eq('status', 'adopted')
+      .not('photos', 'is', null)
+      .order('updated_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/share/animal/:id', async (req, res) => {
   try {
     const { data: animal } = await supabase
