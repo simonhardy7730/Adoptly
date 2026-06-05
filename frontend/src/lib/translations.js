@@ -152,7 +152,8 @@ export const translations = {
     tp_calm:     'Calme',
     tp_playful:  'Joueur',
     tp_energetic:'Énergique',
-    tp_mixed:    'Mixte',
+    tp_mixed:      'Mixte',
+    tp_resilient:  'Résilient',
 
     // ── Navbar adoptant ───────────────────────────────────
     nav_discover:  'Découvrir',
@@ -566,7 +567,8 @@ export const translations = {
     tp_calm:     'Rustig',
     tp_playful:  'Speels',
     tp_energetic:'Energiek',
-    tp_mixed:    'Gemengd',
+    tp_mixed:      'Gemengd',
+    tp_resilient:  'Veerkrachtig',
 
     // ── Navbar adoptant ───────────────────────────────────
     nav_discover:  'Ontdekken',

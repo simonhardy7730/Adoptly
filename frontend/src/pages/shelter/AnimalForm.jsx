@@ -7,7 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
 const SPECIES = ['dog', 'cat', 'rabbit', 'guinea_pig', 'other'];
-const TEMPERAMENTS = ['calm', 'playful', 'energetic', 'mixed'];
+const TEMPERAMENTS = ['calm', 'playful', 'energetic', 'mixed', 'resilient'];
 const SIZES = ['small', 'medium', 'large'];
 
 const EMPTY_REQUIREMENTS = {
@@ -17,6 +17,7 @@ const EMPTY_REQUIREMENTS = {
   dogs_compatible: 'unknown',
   daily_outdoor_time: 'no',
   spacious_home: 'flexible',
+  needs_education: 'no',
   special_notes: '',
 };
 
@@ -32,6 +33,37 @@ function RadioGroup({ label, name, options, value, onChange }) {
             onClick={() => onChange(opt.value)}
             className={`px-3 py-1.5 rounded-xl text-sm font-medium border-2 transition-all active:scale-95
               ${value === opt.value
+                ? 'border-secondary bg-secondary/10 text-secondary'
+                : 'border-gray-200 bg-white text-gray-600 hover:border-secondary/40'
+              }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MultiSelect({ label, options, values, onChange }) {
+  const selected = Array.isArray(values) ? values : values ? values.split(',').map(s => s.trim()) : [];
+  function toggle(val) {
+    const newValues = selected.includes(val)
+      ? selected.filter(v => v !== val)
+      : [...selected, val];
+    onChange(newValues.join(','));
+  }
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => toggle(opt.value)}
+            className={`px-3 py-1.5 rounded-xl text-sm font-medium border-2 transition-all active:scale-95
+              ${selected.includes(opt.value)
                 ? 'border-secondary bg-secondary/10 text-secondary'
                 : 'border-gray-200 bg-white text-gray-600 hover:border-secondary/40'
               }`}
@@ -406,11 +438,10 @@ export default function AnimalForm() {
               onChange={(v) => setField('size', v)}
             />
 
-            <RadioGroup
+            <MultiSelect
               label={t('form_temperament')}
-              name="temperament"
               options={tempOptions}
-              value={form.temperament}
+              values={form.temperament}
               onChange={(v) => setField('temperament', v)}
             />
 
@@ -557,6 +588,18 @@ export default function AnimalForm() {
               ]}
               value={form.requirements.spacious_home}
               onChange={(v) => setReq('spacious_home', v)}
+            />
+
+            <RadioGroup
+              label="🎓 Besoin éducatif ?"
+              name="needs_education"
+              options={[
+                { value: 'yes',      label: t('val_yes') },
+                { value: 'no',       label: t('val_no') },
+                { value: 'flexible', label: t('val_flexible') },
+              ]}
+              value={form.requirements.needs_education}
+              onChange={(v) => setReq('needs_education', v)}
             />
 
             <div>
