@@ -559,7 +559,7 @@ export default function LandingPage() {
                 Ils font déjà confiance à Adoptly
               </p>
               <p className="text-gray-500 text-sm">
-                {partnerShelters.length} refuge{partnerShelters.length > 1 ? 's' : ''} partenaire{partnerShelters.length > 1 ? 's' : ''} en Belgique et Nord de la France
+                {partnerShelters.length} refuge{partnerShelters.length > 1 ? 's' : ''} et association{partnerShelters.length > 1 ? 's' : ''} partenaire{partnerShelters.length > 1 ? 's' : ''}
               </p>
             </motion.div>
 

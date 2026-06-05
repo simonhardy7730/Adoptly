@@ -83,8 +83,8 @@ router.get('/shelters', async (_req, res) => {
           cover,
         };
       })
-      // Ne montrer que les refuges avec au moins 1 animal actif
-      .filter((s) => s.animal_count > 0);
+      // Montrer tous les refuges inscrits (partenaires même sans animaux actifs)
+      .filter((s) => s.animal_count >= 0);
 
     res.json(enriched);
   } catch (err) {
