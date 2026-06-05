@@ -19,6 +19,23 @@ function GoogleIcon() {
   );
 }
 
+function getPasswordStrength(password) {
+  if (!password || password.length < 6) return { score: 0, label: 'Trop court', color: 'bg-red-400' };
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  const levels = [
+    { score: 0, label: 'Faible',    color: 'bg-red-400'    },
+    { score: 1, label: 'Faible',    color: 'bg-red-400'    },
+    { score: 2, label: 'Moyen',     color: 'bg-orange-400' },
+    { score: 3, label: 'Bien',      color: 'bg-yellow-400' },
+    { score: 4, label: 'Excellent', color: 'bg-green-400'  },
+  ];
+  return levels[score];
+}
+
 export default function AdoptantAuth({ mode = 'login' }) {
   const navigate  = useNavigate();
   const { login } = useAuth();
@@ -155,6 +172,24 @@ export default function AdoptantAuth({ mode = 'login' }) {
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
               />
+              {mode === 'register' && form.password && (() => {
+                const strength = getPasswordStrength(form.password);
+                return (
+                  <div className="mt-2 space-y-1">
+                    <div className="flex gap-1 h-1.5">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`flex-1 rounded-full transition-all duration-300 ${
+                            i < strength.score + 1 ? strength.color : 'bg-gray-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400">{strength.label}</p>
+                  </div>
+                );
+              })()}
             </div>
 
             {error && (
