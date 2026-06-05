@@ -390,6 +390,28 @@ export const translations = {
     compat_required:  'Nécessaire',
     compat_not_req:   'Non requis',
     compat_yes_req:   'Oui requis',
+
+    // ── Chat / Messagerie ─────────────────────────────────
+    chat_no_messages:  'Aucun message',
+    chat_start_hint:   'Envoyez un message pour entrer en contact !',
+    chat_placeholder:  'Votre message…',
+    chat_send:         'Envoyer',
+    chat_back:         '← Retour',
+    chat_message_btn:  '💬 Message',
+
+    // ── Profil — reset swipe ──────────────────────────────
+    prof_reset_title:   '🔄 Revoir les animaux',
+    prof_reset_desc:    'Vous avez swipé tous les animaux ? Réinitialisez pour les revoir (vos matchs existants sont conservés).',
+    prof_reset_done:    '✅ C\'est fait ! Retournez swiper →',
+    prof_reset_confirm: 'Réinitialiser votre historique de swipe ? Vos matchs actuels seront conservés.',
+    prof_reset_btn:     '🔄 Réinitialiser mon historique de swipe',
+
+    // ── SwipeCard ─────────────────────────────────────────
+    sw_read_more:  'Lire plus ↓',
+    sw_read_less:  'Lire moins ↑',
+    sw_share:      '🔗 Partager',
+    sw_video:      '▶ Vidéo',
+    sw_photos:     '📷 Photos',
   },
 
   nl: {
@@ -778,5 +800,27 @@ export const translations = {
     compat_required:  'Vereist',
     compat_not_req:   'Niet vereist',
     compat_yes_req:   'Vereist',
+
+    // ── Chat / Messagerie ─────────────────────────────────
+    chat_no_messages:  'Geen berichten',
+    chat_start_hint:   'Stuur een bericht om contact op te nemen!',
+    chat_placeholder:  'Uw bericht…',
+    chat_send:         'Versturen',
+    chat_back:         '← Terug',
+    chat_message_btn:  '💬 Bericht',
+
+    // ── Profil — reset swipe ──────────────────────────────
+    prof_reset_title:   '🔄 Dieren opnieuw bekijken',
+    prof_reset_desc:    'Alle dieren geswiped? Reset om ze opnieuw te zien (uw bestaande matches blijven behouden).',
+    prof_reset_done:    '✅ Klaar! Ga terug naar swipen →',
+    prof_reset_confirm: 'Uw swipe-geschiedenis resetten? Uw huidige matches blijven behouden.',
+    prof_reset_btn:     '🔄 Mijn swipe-geschiedenis resetten',
+
+    // ── SwipeCard ─────────────────────────────────────────
+    sw_read_more:  'Meer lezen ↓',
+    sw_read_less:  'Minder lezen ↑',
+    sw_share:      '🔗 Delen',
+    sw_video:      '▶ Video',
+    sw_photos:     '📷 Foto\'s',
   },
 };

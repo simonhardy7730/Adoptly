@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage          from './pages/LandingPage';
 import AdoptantAuth         from './pages/auth/AdoptantAuth';
 import ShelterAuth          from './pages/auth/ShelterAuth';
@@ -151,13 +152,15 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        <BrowserRouter>
-          <AppRoutes />
-          <CookieBanner />
-        </BrowserRouter>
-      </LanguageProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <LanguageProvider>
+          <BrowserRouter>
+            <AppRoutes />
+            <CookieBanner />
+          </BrowserRouter>
+        </LanguageProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
