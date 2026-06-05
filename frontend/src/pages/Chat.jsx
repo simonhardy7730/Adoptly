@@ -81,7 +81,10 @@ export default function Chat() {
       setMessages((prev) => [...prev, newMsg]);
       setContent('');
       setTimeout(scrollToBottom, 50);
-    } catch {}
+    } catch (err) {
+      console.error('[Chat] Erreur envoi:', err.response?.data || err.message);
+      alert(err.response?.data?.error || 'Erreur lors de l\'envoi. Le serveur redémarre peut-être — réessayez dans 1 minute.');
+    }
     setSending(false);
   }
 

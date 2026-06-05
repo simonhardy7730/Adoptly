@@ -96,7 +96,10 @@ export default function ShelterChat() {
       setMessages((prev) => [...prev, newMsg]);
       setContent('');
       setTimeout(scrollToBottom, 50);
-    } catch {}
+    } catch (err) {
+      console.error('[ShelterChat] Erreur envoi:', err.response?.data || err.message);
+      alert(err.response?.data?.error || 'Erreur lors de l\'envoi. Réessayez dans 1 minute.');
+    }
     setSending(false);
   }
 
