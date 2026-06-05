@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/share/animal/:id", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/share/animal/:id" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

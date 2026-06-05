@@ -96,8 +96,7 @@ export default function AnimalDetail() {
           </button>
           <button
             onClick={() => {
-              const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-              const shareUrl = `${apiBase}/public/share/animal/${animal?.id}`;
+              const shareUrl = `https://adoptly.fr/share/animal/${animal?.id}`;
               const age = animal?.age < 12 ? `${animal.age} mois` : `${Math.floor(animal.age / 12)} an(s)`;
               const text = `🐾 ${animal?.name} cherche une famille !\n${animal?.breed || animal?.species} · ${age} · ${shelter?.name || 'Refuge partenaire'}\n\nPeut-être votre futur compagnon ? 👉`;
               if (navigator.share) {
