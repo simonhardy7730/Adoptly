@@ -167,7 +167,7 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
 
           {/* Boutons vidéo + partage */}
           {isTop && (
-            <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between">
+            <div className="absolute bottom-4 left-4 right-4 z-30 flex items-center justify-between">
               {animal.video_url ? (
                 <button
                   className="flex items-center gap-1.5 bg-black/60 text-white text-xs font-semibold
