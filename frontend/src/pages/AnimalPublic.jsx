@@ -21,6 +21,7 @@ export default function AnimalPublic() {
   const [animal,  setAnimal]  = useState(null);
   const [loading, setLoading] = useState(true);
   const [imgIdx,  setImgIdx]  = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -79,28 +80,53 @@ export default function AnimalPublic() {
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
 
-        {/* Galerie photos */}
-        {photos.length > 0 ? (
+        {/* Galerie photos / vidéo */}
+        {photos.length > 0 || animal.video_url ? (
           <div className="relative rounded-3xl overflow-hidden bg-gray-100" style={{ aspectRatio: '4/3' }}>
-            <motion.img
-              key={imgIdx}
-              src={photos[imgIdx]}
-              alt={animal.name}
-              className="w-full h-full object-cover"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            />
+            {showVideo && animal.video_url ? (
+              <video
+                src={animal.video_url}
+                controls
+                autoPlay
+                className="w-full h-full object-contain bg-black"
+                onEnded={() => setShowVideo(false)}
+              />
+            ) : photos.length > 0 ? (
+              <motion.img
+                key={imgIdx}
+                src={photos[imgIdx]}
+                alt={animal.name}
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-7xl bg-blue-50">
+                {emoji}
+              </div>
+            )}
 
             {/* Badge adopté */}
             {adopted && (
-              <div className="absolute top-3 left-3 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+              <div className="absolute top-3 left-3 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full z-10">
                 🎉 Déjà adopté
               </div>
             )}
 
+            {/* Bouton vidéo */}
+            {animal.video_url && (
+              <button
+                onClick={() => setShowVideo((v) => !v)}
+                className="absolute bottom-3 left-3 z-20 flex items-center gap-1.5 bg-black/60 text-white text-xs font-semibold
+                           px-3 py-1.5 rounded-full backdrop-blur-sm hover:bg-black/80 transition-colors"
+              >
+                {showVideo ? '📷 Photos' : '▶ Vidéo'}
+              </button>
+            )}
+
             {/* Navigation photos */}
-            {photos.length > 1 && (
+            {!showVideo && photos.length > 1 && (
               <>
                 <button
                   onClick={() => setImgIdx((i) => (i - 1 + photos.length) % photos.length)}
