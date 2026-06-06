@@ -4,9 +4,17 @@ import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../lib/api';
 
-const SPECIES_EMOJI = { Chien: '🐕', Chat: '🐈', Lapin: '🐇', Oiseau: '🐦', Rongeur: '🐹' };
+const SPECIES_EMOJI = { dog: '🐕', cat: '🐈', rabbit: '🐇', bird: '🐦', guinea_pig: '🐹', other: '🐾' };
+const SPECIES_LABEL = { dog: 'Chien', cat: 'Chat', rabbit: 'Lapin', bird: 'Oiseau', guinea_pig: 'Cobaye', other: 'Animal' };
 const SIZE_LABEL    = { small: 'Petit', medium: 'Moyen', large: 'Grand', xlarge: 'Très grand' };
-const AGE_SUFFIX    = (n) => n <= 1 ? 'an' : 'ans';
+
+function ageLabel(months) {
+  if (!months && months !== 0) return 'Âge inconnu';
+  if (months < 12) return `${months} mois`;
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return m > 0 ? `${y} an${y > 1 ? 's' : ''} ${m} mois` : `${y} an${y > 1 ? 's' : ''}`;
+}
 
 export default function AnimalPublic() {
   const { id } = useParams();
@@ -44,7 +52,8 @@ export default function AnimalPublic() {
   );
 
   const photos  = animal.photos?.length ? animal.photos : [];
-  const emoji   = SPECIES_EMOJI[animal.species] || '🐾';
+  const emoji       = SPECIES_EMOJI[animal.species] || '🐾';
+  const speciesName = SPECIES_LABEL[animal.species] || animal.species;
   const adopted = animal.status === 'adopted';
 
   // Extraire la ville depuis l'adresse "Rue X, 5000 Namur" → "Namur"
@@ -132,9 +141,9 @@ export default function AnimalPublic() {
                 {emoji} {animal.name}
               </h1>
               <p className="text-gray-500 text-sm mt-0.5">
-                {animal.species}
+                {speciesName}
                 {animal.breed ? ` · ${animal.breed}` : ''}
-                {animal.age != null ? ` · ${animal.age} ${AGE_SUFFIX(animal.age)}` : ''}
+                {animal.age != null ? ` · ${ageLabel(animal.age)}` : ''}
                 {animal.size ? ` · ${SIZE_LABEL[animal.size] || animal.size}` : ''}
               </p>
             </div>
@@ -149,11 +158,16 @@ export default function AnimalPublic() {
 
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
-            {animal.temperament && animal.temperament.split(',').map((t) => (
-              <span key={t} className="bg-blue-50 text-primary text-xs font-medium px-3 py-1 rounded-full">
-                {t.trim()}
-              </span>
-            ))}
+            {animal.temperament && animal.temperament.split(',').map((tp) => {
+              const key = tp.trim();
+              const TEMP_LABEL = { calm: 'Calme', playful: 'Joueur', energetic: 'Énergique', mixed: 'Mixte', resilient: 'Résilient' };
+              const TEMP_COLOR = { calm: 'bg-blue-50 text-blue-700', playful: 'bg-yellow-50 text-yellow-700', energetic: 'bg-orange-50 text-orange-700', mixed: 'bg-purple-50 text-purple-700', resilient: 'bg-green-50 text-green-700' };
+              return (
+                <span key={key} className={`text-xs font-medium px-3 py-1 rounded-full ${TEMP_COLOR[key] || 'bg-blue-50 text-primary'}`}>
+                  {TEMP_LABEL[key] || key}
+                </span>
+              );
+            })}
             {animal.special_needs && (
               <span className="bg-orange-50 text-accent text-xs font-medium px-3 py-1 rounded-full">
                 ⚕️ Besoins spéciaux
@@ -219,7 +233,7 @@ export default function AnimalPublic() {
 
         {/* Footer léger */}
         <p className="text-center text-gray-300 text-xs pb-4">
-          Adoptly — Adoption responsable en Belgique & Nord de la France
+          Adoptly — Adoption animale responsable
         </p>
 
       </div>
