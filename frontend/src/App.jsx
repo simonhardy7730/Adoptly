@@ -30,6 +30,7 @@ import AdoptionSuccess      from './pages/AdoptionSuccess';
 import CookieBanner         from './components/CookieBanner';
 import Chat                 from './pages/Chat';
 import ShelterChat          from './pages/ShelterChat';
+import ShelterMessages      from './pages/shelter/ShelterMessages';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -123,6 +124,9 @@ function AppRoutes() {
       }/>
       <Route path="/shelter/profile" element={
         <PrivateRoute requiredRole="shelter"><ShelterProfile /></PrivateRoute>
+      }/>
+      <Route path="/shelter/messages" element={
+        <PrivateRoute requiredRole="shelter"><ShelterMessages /></PrivateRoute>
       }/>
       <Route path="/shelter/chat/:match_id" element={
         <PrivateRoute requiredRole="shelter"><ShelterChat /></PrivateRoute>

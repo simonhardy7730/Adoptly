@@ -196,7 +196,7 @@ export default function AnimalPublic() {
             })}
             {animal.special_needs && (
               <span className="bg-orange-50 text-accent text-xs font-medium px-3 py-1 rounded-full">
-                ⚕️ Besoins spéciaux
+                ℹ️ Informations importantes
               </span>
             )}
           </div>
@@ -213,7 +213,7 @@ export default function AnimalPublic() {
         {/* Besoins spéciaux */}
         {animal.special_needs && (
           <div className="card p-5">
-            <h2 className="font-bold text-gray-700 mb-2">⚕️ Besoins particuliers</h2>
+            <h2 className="font-bold text-gray-700 mb-2">ℹ️ Informations importantes</h2>
             <p className="text-gray-600 text-sm leading-relaxed">{animal.special_needs}</p>
           </div>
         )}

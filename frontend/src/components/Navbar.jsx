@@ -76,12 +76,15 @@ export default function Navbar() {
 
           {role === 'shelter' && (
             <>
-              <Link to="/shelter/dashboard" className="relative btn-ghost text-sm py-1.5 px-3">
+              <Link to="/shelter/dashboard" className="btn-ghost text-sm py-1.5 px-3">
                 {t('nav_dashboard')}
+              </Link>
+              <Link to="/shelter/messages" className="relative btn-ghost text-sm py-1.5 px-3">
+                💬
                 <UnreadBadge />
               </Link>
               <Link to="/shelter/animals/add" className="btn-ghost text-sm py-1.5 px-3">
-                {t('nav_add')}
+                +
               </Link>
               <Link to="/shelter/profile" className="btn-ghost text-sm py-1.5 px-3">
                 {t('nav_profile')}

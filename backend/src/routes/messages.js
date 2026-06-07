@@ -77,6 +77,92 @@ router.get('/unread/count', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/messages/conversations (shelter) ────────────
+router.get('/conversations', authenticate, async (req, res) => {
+  try {
+    const { role, id } = req.user;
+    if (role !== 'shelter') return res.status(403).json({ error: 'Réservé aux refuges' });
+
+    // Get all animals for this shelter
+    const { data: animals, error: animalErr } = await supabase
+      .from('animals')
+      .select('id, name, photos')
+      .eq('shelter_id', id);
+
+    if (animalErr) throw animalErr;
+    if (!animals?.length) return res.json([]);
+
+    const animalIds = animals.map((a) => a.id);
+    const animalMap = Object.fromEntries(animals.map((a) => [a.id, a]));
+
+    // Get all matches for these animals that have messages
+    const { data: matches, error: matchErr } = await supabase
+      .from('matches')
+      .select('id, adoptant_id, animal_id')
+      .in('animal_id', animalIds);
+
+    if (matchErr) throw matchErr;
+    if (!matches?.length) return res.json([]);
+
+    const matchIds = matches.map((m) => m.id);
+
+    // Get the last message and unread count per match
+    const { data: messages, error: msgErr } = await supabase
+      .from('messages')
+      .select('id, match_id, content, sender_role, read, created_at')
+      .in('match_id', matchIds)
+      .order('created_at', { ascending: false });
+
+    if (msgErr) throw msgErr;
+    if (!messages?.length) return res.json([]);
+
+    // Get adoptant info
+    const adoptantIds = [...new Set(matches.map((m) => m.adoptant_id))];
+    const { data: adoptants } = await supabase
+      .from('adoptants')
+      .select('id, first_name, last_name, email')
+      .in('id', adoptantIds);
+
+    const adoptantMap = Object.fromEntries((adoptants || []).map((a) => [a.id, a]));
+
+    // Group by match
+    const convMap = {};
+    for (const msg of messages) {
+      if (!convMap[msg.match_id]) {
+        convMap[msg.match_id] = { lastMessage: msg, unread: 0 };
+      }
+      if (msg.sender_role === 'adoptant' && !msg.read) {
+        convMap[msg.match_id].unread++;
+      }
+    }
+
+    // Build conversations array
+    const conversations = matches
+      .filter((m) => convMap[m.id])
+      .map((m) => {
+        const conv = convMap[m.id];
+        const animal = animalMap[m.animal_id];
+        const adoptant = adoptantMap[m.adoptant_id];
+        const name = [adoptant?.first_name, adoptant?.last_name].filter(Boolean).join(' ') || adoptant?.email || 'Adoptant';
+        return {
+          match_id:     m.id,
+          animal_name:  animal?.name || 'Animal',
+          animal_photo: animal?.photos?.[0] || null,
+          adoptant_name: name,
+          last_message:  conv.lastMessage.content,
+          last_sender:   conv.lastMessage.sender_role,
+          last_date:     conv.lastMessage.created_at,
+          unread:        conv.unread,
+        };
+      })
+      .sort((a, b) => new Date(b.last_date) - new Date(a.last_date));
+
+    res.json(conversations);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Helper: verify user belongs to match ─────────────────
 async function getMatchForUser(matchId, userId, userRole) {
   const { data: match, error } = await supabase

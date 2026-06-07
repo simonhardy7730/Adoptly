@@ -178,7 +178,7 @@ export default function Dashboard() {
   const [copiedId,  setCopiedId]  = useState(null);
 
   function shareAnimal(animal) {
-    const url = `https://adoptly.fr/animal/${animal.id}`;
+    const url = `https://adoptly.fr/share/animal/${animal.id}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedId(animal.id);
       setTimeout(() => setCopiedId(null), 2000);
