@@ -202,4 +202,49 @@ router.get('/share/animal/:id', async (req, res) => {
   }
 });
 
+// ── Share article (OG meta pour crawlers) ────────────────
+router.get('/share/article/:slug', async (req, res) => {
+  try {
+    const { data: article } = await supabase
+      .from('articles')
+      .select('title, slug, excerpt, cover_image')
+      .eq('slug', req.params.slug)
+      .eq('status', 'published')
+      .single();
+
+    if (!article) return res.redirect('https://adoptly.fr/actualites');
+
+    const ua = req.headers['user-agent'] || '';
+    const isCrawler = /facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot/i.test(ua);
+
+    const title = article.title;
+    const desc = article.excerpt || '';
+    const image = article.cover_image || 'https://adoptly.fr/pwa-512x512.png';
+    const shareUrl = `https://adoptly.fr/share/article/${article.slug}`;
+
+    if (isCrawler) {
+      return res.send(`<!DOCTYPE html><html><head>
+        <meta charset="UTF-8"/>
+        <title>${title}</title>
+        <meta property="og:type" content="article"/>
+        <meta property="og:url" content="${shareUrl}"/>
+        <meta property="og:title" content="${title}"/>
+        <meta property="og:description" content="${desc}"/>
+        <meta property="og:image" content="${image}"/>
+        <meta property="og:image:width" content="800"/>
+        <meta property="og:image:height" content="600"/>
+        <meta property="og:site_name" content="Adoptly"/>
+        <meta name="twitter:card" content="summary_large_image"/>
+        <meta name="twitter:title" content="${title}"/>
+        <meta name="twitter:description" content="${desc}"/>
+        <meta name="twitter:image" content="${image}"/>
+      </head><body><p>Redirection...</p></body></html>`);
+    }
+
+    res.redirect(`https://adoptly.fr/actualites/${article.slug}`);
+  } catch {
+    res.redirect('https://adoptly.fr/actualites');
+  }
+});
+
 export default router;

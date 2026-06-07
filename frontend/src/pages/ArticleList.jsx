@@ -111,9 +111,28 @@ export default function ArticleList() {
                       {article.excerpt}
                     </p>
 
-                    <span className="text-secondary text-sm font-medium inline-block mt-1">
-                      Lire la suite →
-                    </span>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-secondary text-sm font-medium">
+                        Lire la suite →
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const shareUrl = `https://adoptly.fr/share/article/${article.slug}`;
+                          const text = `📰 ${article.title}\n\n${article.excerpt}\n\n👉`;
+                          if (navigator.share) {
+                            navigator.share({ title: article.title, text, url: shareUrl }).catch(() => {});
+                          } else {
+                            navigator.clipboard?.writeText(text + ' ' + shareUrl)
+                              .then(() => alert('Lien copié !'));
+                          }
+                        }}
+                        className="text-xs font-medium text-gray-400 hover:text-secondary bg-gray-50 hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
+                      >
+                        🔗 Partager
+                      </button>
+                    </div>
                   </div>
                 </Link>
               </motion.div>

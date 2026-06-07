@@ -107,13 +107,30 @@ export default function ArticleDetail() {
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
 
-        {/* Retour */}
-        <Link
-          to="/actualites"
-          className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors text-sm font-medium"
-        >
-          ← Toutes les actualités
-        </Link>
+        {/* Retour + Partager */}
+        <div className="flex items-center justify-between">
+          <Link
+            to="/actualites"
+            className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors text-sm font-medium"
+          >
+            ← Toutes les actualités
+          </Link>
+          <button
+            onClick={() => {
+              const shareUrl = `https://adoptly.fr/share/article/${article.slug}`;
+              const text = `📰 ${article.title}\n\n${article.excerpt}\n\n👉`;
+              if (navigator.share) {
+                navigator.share({ title: article.title, text, url: shareUrl }).catch(() => {});
+              } else {
+                navigator.clipboard?.writeText(text + ' ' + shareUrl)
+                  .then(() => alert('Lien copié ! Colle-le sur Facebook ou WhatsApp 👍'));
+              }
+            }}
+            className="flex items-center gap-1.5 text-sm font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl transition-colors"
+          >
+            🔗 Partager
+          </button>
+        </div>
 
         {/* Image de couverture */}
         {article.cover_image && (

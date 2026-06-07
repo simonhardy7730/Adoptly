@@ -222,6 +222,12 @@ export default function LandingPage() {
           <AdoptlyLogo />
           <div className="flex items-center gap-1">
             <Link
+              to="/actualites"
+              className="hidden md:block btn-ghost text-sm py-1.5 px-4 text-gray-500"
+            >
+              Nos articles
+            </Link>
+            <Link
               to="/pour-les-refuges"
               className="hidden md:block btn-ghost text-sm py-1.5 px-4 text-gray-500"
             >
