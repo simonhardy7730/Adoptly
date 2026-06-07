@@ -872,6 +872,8 @@ export default function LandingPage() {
               <Link to="/shelter/login"    className="text-gray-400 hover:text-primary transition-colors">Espace refuge</Link>
               <Link to="/adoptant/login"   className="text-gray-400 hover:text-primary transition-colors">Espace adoptant</Link>
               <Link to="/pour-les-refuges" className="text-gray-400 hover:text-primary transition-colors">Devenir partenaire</Link>
+              <Link to="/actualites"       className="text-gray-400 hover:text-primary transition-colors">📰 Actualités</Link>
+              <Link to="/refuges"          className="text-gray-400 hover:text-primary transition-colors">🏠 Nos refuges</Link>
               <Link to="/adoptions"        className="text-gray-400 hover:text-primary transition-colors">💚 Adoptions réussies</Link>
             </div>
           </div>

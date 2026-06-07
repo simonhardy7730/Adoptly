@@ -25,6 +25,8 @@ import PrivacyPolicy        from './pages/legal/PrivacyPolicy';
 import AnimalPublic         from './pages/AnimalPublic';
 import ShelterList          from './pages/ShelterList';
 import ShelterPublic        from './pages/ShelterPublic';
+import ArticleList          from './pages/ArticleList';
+import ArticleDetail        from './pages/ArticleDetail';
 import ForRefuges           from './pages/ForRefuges';
 import AdminDashboard       from './pages/admin/AdminDashboard';
 import AdoptionSuccess      from './pages/AdoptionSuccess';
@@ -143,6 +145,10 @@ function AppRoutes() {
       {/* Pages publiques refuges partenaires */}
       <Route path="/refuges" element={<ShelterList />} />
       <Route path="/refuges/:id" element={<ShelterPublic />} />
+
+      {/* Blog / Actualités */}
+      <Route path="/actualites" element={<ArticleList />} />
+      <Route path="/actualites/:slug" element={<ArticleDetail />} />
 
       {/* Landing page pour les refuges */}
       <Route path="/pour-les-refuges" element={<ForRefuges />} />
