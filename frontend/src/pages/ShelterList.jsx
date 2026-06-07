@@ -79,7 +79,7 @@ export default function ShelterList() {
         {!loading && (
           <p className="text-gray-400 text-sm text-center">
             {filtered.length} refuge{filtered.length > 1 ? 's' : ''} ·{' '}
-            {filtered.reduce((acc, s) => acc + s.animal_count, 0)} animal{filtered.reduce((acc, s) => acc + s.animal_count, 0) > 1 ? 'aux' : ''} disponibles
+            {filtered.reduce((acc, s) => acc + s.animal_count, 0)} {filtered.reduce((acc, s) => acc + s.animal_count, 0) > 1 ? 'animaux disponibles' : 'animal disponible'}
           </p>
         )}
 
@@ -128,7 +128,7 @@ export default function ShelterList() {
                     <div className="flex items-start justify-between gap-2">
                       <h2 className="font-bold text-gray-800 leading-tight">{shelter.name}</h2>
                       <span className="badge bg-green-50 text-green-700 text-xs flex-shrink-0">
-                        {shelter.animal_count} animal{shelter.animal_count > 1 ? 'aux' : ''}
+                        {shelter.animal_count} {shelter.animal_count > 1 ? 'animaux' : 'animal'}
                       </span>
                     </div>
 

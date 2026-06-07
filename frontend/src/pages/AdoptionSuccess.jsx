@@ -51,7 +51,7 @@ export default function AdoptionSuccess() {
             Chaque animal ici a été adopté grâce à Adoptly et à ses refuges partenaires.
             {animals.length > 0 && (
               <span className="block mt-1 font-semibold text-white">
-                {animals.length} animal{animals.length > 1 ? 'aux' : ''} adopté{animals.length > 1 ? 's' : ''} 🎉
+                {animals.length} {animals.length > 1 ? 'animaux adoptés' : 'animal adopté'} 🎉
               </span>
             )}
           </p>

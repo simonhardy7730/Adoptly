@@ -105,7 +105,7 @@ export default function ShelterPublic() {
             <div className="text-center">
               <p className="text-2xl font-extrabold text-primary">{shelter.animal_count}</p>
               <p className="text-gray-500 text-xs">
-                animal{shelter.animal_count > 1 ? 'aux' : ''} disponible{shelter.animal_count > 1 ? 's' : ''}
+                {shelter.animal_count > 1 ? 'animaux disponibles' : 'animal disponible'}
               </p>
             </div>
             {shelter.species?.length > 0 && (

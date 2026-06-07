@@ -206,6 +206,7 @@ function AnimalPhotoStrip() {
 
 export default function LandingPage() {
   const [partnerShelters, setPartnerShelters] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     api.get('/public/shelters')
@@ -220,16 +221,18 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <AdoptlyLogo />
-          <div className="flex items-center gap-1">
+
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-1">
             <Link
               to="/actualites"
-              className="hidden md:block btn-ghost text-sm py-1.5 px-4 text-gray-500"
+              className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
             >
               Nos articles
             </Link>
             <Link
               to="/pour-les-refuges"
-              className="hidden md:block btn-ghost text-sm py-1.5 px-4 text-gray-500"
+              className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
             >
               Pour les refuges
             </Link>
@@ -240,7 +243,74 @@ export default function LandingPage() {
               Commencer →
             </Link>
           </div>
+
+          {/* Mobile: CTA + hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            <Link to="/adoptant/register" className="btn-primary text-sm py-1.5 px-3">
+              Commencer →
+            </Link>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl text-gray-600
+                         hover:bg-gray-100 transition-colors"
+              aria-label="Menu"
+            >
+              {mobileMenuOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden overflow-hidden bg-white border-t border-gray-100"
+            >
+              <div className="px-6 py-3 space-y-1">
+                <Link
+                  to="/actualites"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  📰 Nos articles
+                </Link>
+                <Link
+                  to="/refuges"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  🏠 Nos refuges
+                </Link>
+                <Link
+                  to="/pour-les-refuges"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  🤝 Pour les refuges
+                </Link>
+                <Link
+                  to="/adoptant/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  👤 Connexion
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* ── Hero ──────────────────────────────────────────────── */}
