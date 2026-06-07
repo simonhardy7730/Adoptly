@@ -24,6 +24,7 @@ import CGU                  from './pages/legal/CGU';
 import PrivacyPolicy        from './pages/legal/PrivacyPolicy';
 import AnimalPublic         from './pages/AnimalPublic';
 import ShelterList          from './pages/ShelterList';
+import ShelterPublic        from './pages/ShelterPublic';
 import ForRefuges           from './pages/ForRefuges';
 import AdminDashboard       from './pages/admin/AdminDashboard';
 import AdoptionSuccess      from './pages/AdoptionSuccess';
@@ -139,8 +140,9 @@ function AppRoutes() {
       <Route path="/admin"      element={<AdminDashboard />} />
       <Route path="/adoptions" element={<AdoptionSuccess />} />
 
-      {/* Page publique refuges partenaires */}
+      {/* Pages publiques refuges partenaires */}
       <Route path="/refuges" element={<ShelterList />} />
+      <Route path="/refuges/:id" element={<ShelterPublic />} />
 
       {/* Landing page pour les refuges */}
       <Route path="/pour-les-refuges" element={<ForRefuges />} />

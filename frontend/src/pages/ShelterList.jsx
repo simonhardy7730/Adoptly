@@ -151,11 +151,11 @@ export default function ShelterList() {
                     {/* Actions */}
                     <div className="flex gap-2 flex-wrap pt-1">
                       <Link
-                        to="/adoptant/login"
+                        to={`/refuges/${shelter.id}`}
                         className="text-xs font-semibold text-white bg-secondary hover:bg-primary
                                    px-3 py-1.5 rounded-lg transition-colors"
                       >
-                        Voir les animaux →
+                        En savoir plus →
                       </Link>
                       {shelter.phone && (
                         <a
@@ -164,15 +164,6 @@ export default function ShelterList() {
                                      px-3 py-1.5 rounded-lg transition-colors"
                         >
                           📞 Appeler
-                        </a>
-                      )}
-                      {shelter.email && (
-                        <a
-                          href={`mailto:${shelter.email}`}
-                          className="text-xs font-medium text-secondary bg-blue-50 hover:bg-blue-100
-                                     px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          ✉️ Email
                         </a>
                       )}
                     </div>

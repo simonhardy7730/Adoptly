@@ -42,7 +42,7 @@ router.get('/shelters', async (_req, res) => {
     // Récupérer tous les refuges avec leurs animaux actifs
     const { data: shelters, error } = await supabase
       .from('shelters')
-      .select('id, name, address, phone, email')
+      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at')
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -78,6 +78,10 @@ router.get('/shelters', async (_req, res) => {
           city,
           phone:         shelter.phone,
           email:         shelter.email,
+          logo_url:      shelter.logo_url || null,
+          description:   shelter.description || null,
+          description_photo_url: shelter.description_photo_url || null,
+          created_at:    shelter.created_at,
           animal_count:  shelterAnimals.length,
           species,
           cover,
@@ -87,6 +91,48 @@ router.get('/shelters', async (_req, res) => {
       .filter((s) => s.animal_count >= 0);
 
     res.json(enriched);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Page publique d'un refuge ─────────────────────────────
+router.get('/shelters/:id', async (req, res) => {
+  try {
+    const { data: shelter, error } = await supabase
+      .from('shelters')
+      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !shelter) return res.status(404).json({ error: 'Refuge introuvable' });
+
+    // Récupérer les animaux actifs (juste les photos et espèces, pas les détails)
+    const { data: animals } = await supabase
+      .from('animals')
+      .select('species, photos')
+      .eq('shelter_id', shelter.id)
+      .eq('status', 'active');
+
+    const species = [...new Set((animals || []).map((a) => a.species))];
+    // Collecter quelques photos pour la galerie (max 6)
+    const gallery = (animals || [])
+      .flatMap((a) => a.photos || [])
+      .slice(0, 6);
+
+    const city = shelter.address
+      ? (shelter.address.match(/\d{4,5}\s+([^,]+)$/)?.[1]?.trim()
+          || shelter.address.split(',').pop()?.trim()
+          || shelter.address)
+      : null;
+
+    res.json({
+      ...shelter,
+      city,
+      animal_count: (animals || []).length,
+      species,
+      gallery,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
