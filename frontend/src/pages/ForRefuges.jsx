@@ -188,7 +188,7 @@ export default function ForRefuges() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            🔒 Sans carte bancaire · Sans engagement · Belgique & Nord de la France
+            🔒 Sans carte bancaire · Sans engagement
           </motion.p>
         </div>
       </section>
@@ -441,7 +441,7 @@ export default function ForRefuges() {
           </div>
           <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-gray-300 text-xs">
-              © {new Date().getFullYear()} Adoptly · Belgique & Nord de la France · 100 % gratuit pour les associations
+              © {new Date().getFullYear()} Adoptly · 100 % gratuit pour les associations
             </p>
             <div className="flex gap-4 text-xs">
               <Link to="/legal/cgu"     className="text-gray-300 hover:text-gray-500 transition-colors">CGU</Link>

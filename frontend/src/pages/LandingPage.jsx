@@ -41,7 +41,7 @@ const stats = [
   { value: '14', label: 'critères analysés', emoji: '🧩' },
   { value: '< 3 min', label: 'pour s\'inscrire', emoji: '⚡' },
   { value: '100 %', label: 'gratuit refuges', emoji: '💚' },
-  { value: 'Belgique', label: '& Nord de France', emoji: '📍' },
+  { value: 'Pays', label: 'francophones', emoji: '🌍' },
 ];
 
 const faqs = [
@@ -401,7 +401,7 @@ export default function LandingPage() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                🔒 Gratuit · Sans carte bancaire · Belgique & Nord de la France
+                🔒 Gratuit · Sans carte bancaire
               </motion.p>
             </div>
 
@@ -805,7 +805,7 @@ export default function LandingPage() {
               Devenir famille d'accueil →
             </Link>
             <p className="text-gray-400 text-xs mt-3">
-              Gratuit · Sans engagement · Belgique & Nord de la France
+              Gratuit · Sans engagement
             </p>
           </motion.div>
         </div>
@@ -823,7 +823,7 @@ export default function LandingPage() {
             </h2>
             <p className="text-blue-100 mt-3 text-sm max-w-xl mx-auto leading-relaxed">
               Roumanie, Espagne, Grèce… Des associations partenaires sauvent des animaux hors de nos frontières
-              et les proposent à l'adoption en Belgique et en France. Sans contrainte de distance.
+              et les proposent à l'adoption dans les pays francophones. Sans contrainte de distance.
             </p>
           </motion.div>
 
@@ -956,7 +956,7 @@ export default function LandingPage() {
 
           <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-gray-300 text-xs">
-              © {new Date().getFullYear()} Adoptly · Belgique & Nord de la France · 100 % gratuit pour les associations
+              © {new Date().getFullYear()} Adoptly · 100 % gratuit pour les associations
             </p>
             <div className="flex gap-4 text-xs">
               <Link to="/adoptions"     className="text-gray-300 hover:text-gray-500 transition-colors">Adoptions réussies</Link>
