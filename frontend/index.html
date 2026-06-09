@@ -6,22 +6,19 @@
     <meta name="theme-color" content="#1B4F8A" />
 
     <!-- SEO primaire -->
-    <title>Adoptly — Adopter un animal en Belgique | Chiens, chats, lapins en refuge</title>
-    <meta name="description" content="Trouvez l'animal fait pour vous parmi les refuges belges et du Nord de la France. Adoptly analyse votre mode de vie et vous présente uniquement des animaux compatibles. Gratuit, sans engagement." />
-    <meta name="keywords" content="adoption animale Belgique, adopter un chien Belgique, adopter un chat Belgique, refuge animal Belgique, dierenasiel België, adoption responsable, adopter chien Bruxelles, adopter chat Wallonie, refuge Nord France, adopter animal Nord Pas-de-Calais, compatibilité animal, plateforme adoption animale" />
+    <title>Adoptly — Adopter un animal en refuge | Chiens, chats, lapins</title>
+    <meta name="description" content="Trouvez l'animal fait pour vous parmi nos refuges partenaires. Adoptly analyse votre mode de vie et vous présente uniquement des animaux compatibles. Gratuit, sans carte bancaire." />
+    <meta name="keywords" content="adoption animale, adopter un chien, adopter un chat, refuge animal, adoption responsable, compatibilité animal, plateforme adoption animale, adopter un animal, refuge chien chat, adoption gratuite" />
     <link rel="canonical" href="https://adoptly.fr/" />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="Adoptly" />
 
-    <!-- Géolocalisation Belgique -->
-    <meta name="geo.region" content="BE" />
-    <meta name="geo.placename" content="Belgique" />
-    <meta name="ICBM" content="50.8503, 4.3517" />
+    <!-- Géolocalisation -->
+    <meta name="geo.region" content="FR" />
+    <meta name="geo.placename" content="France" />
 
     <!-- Hreflang FR / NL -->
-    <link rel="alternate" hreflang="fr-BE" href="https://adoptly.fr/" />
-    <link rel="alternate" hreflang="fr-FR" href="https://adoptly.fr/" />
-    <link rel="alternate" hreflang="nl-BE" href="https://adoptly.fr/" />
+    <link rel="alternate" hreflang="fr" href="https://adoptly.fr/" />
     <link rel="alternate" hreflang="x-default" href="https://adoptly.fr/" />
 
     <!-- Open Graph -->
@@ -32,15 +29,14 @@
     <meta property="og:image" content="https://adoptly.fr/pwa-512x512.png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
-    <meta property="og:locale" content="fr_BE" />
-    <meta property="og:locale:alternate" content="fr_FR" />
-    <meta property="og:locale:alternate" content="nl_BE" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale:alternate" content="fr_BE" />
     <meta property="og:site_name" content="Adoptly" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Adoptly · Adopter un animal en refuge" />
-    <meta name="twitter:description" content="Trouvez l'animal fait pour vous parmi les refuges partenaires en Belgique et Nord de la France. Gratuit, sans engagement." />
+    <meta name="twitter:description" content="Trouvez l'animal fait pour vous parmi nos refuges partenaires. Gratuit, sans engagement." />
     <meta name="twitter:image" content="https://adoptly.fr/pwa-512x512.png" />
 
     <!-- Favicon -->
@@ -86,14 +82,15 @@
         "@type": "WebApplication",
         "name": "Adoptly",
         "url": "https://adoptly.fr",
-        "description": "Plateforme gratuite d'adoption animale responsable en Belgique et Nord de la France. Adoptly connecte les futurs adoptants avec des animaux de refuge compatibles avec leur mode de vie.",
+        "description": "Plateforme gratuite d'adoption animale responsable. Adoptly connecte les futurs adoptants avec des animaux de refuge compatibles avec leur mode de vie.",
         "applicationCategory": "LifestyleApplication",
         "operatingSystem": "Web",
-        "inLanguage": ["fr", "nl"],
-        "availableLanguage": ["French", "Dutch"],
+        "inLanguage": ["fr"],
+        "availableLanguage": ["French"],
         "areaServed": [
+          { "@type": "Country", "name": "France" },
           { "@type": "Country", "name": "Belgium" },
-          { "@type": "AdministrativeArea", "name": "Nord-Pas-de-Calais" }
+          { "@type": "Country", "name": "Switzerland" }
         ],
         "offers": {
           "@type": "Offer",
@@ -103,9 +100,9 @@
         },
         "featureList": [
           "Algorithme de compatibilité basé sur 14 critères",
-          "Connexion avec les refuges partenaires de Belgique",
+          "Connexion avec les refuges partenaires",
           "Gratuit pour les refuges et associations",
-          "Disponible en français et en néerlandais"
+          "Disponible dans tous les pays francophones"
         ]
       },
       {
@@ -114,17 +111,17 @@
         "name": "Adoptly",
         "url": "https://adoptly.fr",
         "logo": "https://adoptly.fr/pwa-512x512.png",
-        "description": "Adoptly est une plateforme belge d'adoption animale responsable qui connecte les futurs propriétaires avec des animaux de refuge compatibles avec leur mode de vie.",
+        "description": "Adoptly est une plateforme d'adoption animale responsable qui connecte les futurs propriétaires avec des animaux de refuge compatibles avec leur mode de vie.",
         "foundingLocation": {
           "@type": "Country",
-          "name": "Belgium"
+          "name": "France"
         },
-        "areaServed": ["Belgium", "Nord-Pas-de-Calais, France", "Romania", "Europe"],
+        "areaServed": ["France", "Belgium", "Switzerland", "Europe"],
         "contactPoint": {
           "@type": "ContactPoint",
           "email": "info@adoptly.fr",
           "contactType": "customer support",
-          "availableLanguage": ["French", "Dutch"]
+          "availableLanguage": ["French"]
         },
         "sameAs": ["https://www.adoptly.fr"]
       },
@@ -134,10 +131,10 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Comment adopter un animal en Belgique via Adoptly ?",
+            "name": "Comment adopter un animal via Adoptly ?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Créez un compte gratuit sur adoptly.fr, répondez à notre questionnaire de compatibilité en 3 minutes, et découvrez les animaux de refuge qui correspondent à votre mode de vie en Belgique et Nord de la France."
+              "text": "Créez un compte gratuit sur adoptly.fr, répondez à notre questionnaire de compatibilité en 3 minutes, et découvrez les animaux de refuge qui correspondent à votre mode de vie."
             }
           },
           {
@@ -150,10 +147,10 @@
           },
           {
             "@type": "Question",
-            "name": "Dans quelles régions Adoptly est-il disponible ?",
+            "name": "Dans quels pays Adoptly est-il disponible ?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Adoptly est disponible en Belgique (Bruxelles, Wallonie, Flandre) et dans le Nord de la France (Nord-Pas-de-Calais)."
+              "text": "Adoptly est disponible dans tous les pays francophones : France, Belgique, Suisse, et partout où des refuges souhaitent rejoindre la plateforme."
             }
           }
         ]
