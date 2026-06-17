@@ -77,6 +77,56 @@ router.get('/unread/count', authenticate, async (req, res) => {
   }
 });
 
+// ── GET /api/messages/unread/matches ─────────────────────
+// Returns match IDs that have unread messages (without marking them as read)
+router.get('/unread/matches', authenticate, async (req, res) => {
+  try {
+    const { role, id } = req.user;
+    const otherRole = role === 'adoptant' ? 'shelter' : 'adoptant';
+
+    let matchIds = [];
+
+    if (role === 'adoptant') {
+      const { data: matches } = await supabase
+        .from('matches')
+        .select('id')
+        .eq('adoptant_id', id)
+        .eq('swipe_direction', 'right');
+      matchIds = (matches || []).map((m) => m.id);
+    } else if (role === 'shelter') {
+      const { data: animals } = await supabase
+        .from('animals')
+        .select('id')
+        .eq('shelter_id', id);
+      if (animals?.length) {
+        const { data: matches } = await supabase
+          .from('matches')
+          .select('id')
+          .in('animal_id', animals.map((a) => a.id));
+        matchIds = (matches || []).map((m) => m.id);
+      }
+    } else {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    if (!matchIds.length) return res.json([]);
+
+    const { data: unreadMsgs, error } = await supabase
+      .from('messages')
+      .select('match_id')
+      .in('match_id', matchIds)
+      .eq('sender_role', otherRole)
+      .eq('read', false);
+
+    if (error) throw error;
+
+    const unreadMatchIds = [...new Set((unreadMsgs || []).map((m) => m.match_id))];
+    res.json(unreadMatchIds);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /api/messages/conversations (shelter) ────────────
 router.get('/conversations', authenticate, async (req, res) => {
   try {

@@ -29,45 +29,17 @@ export default function MatchHistory() {
   };
 
   useEffect(() => {
-    api
-      .get('/adoptant/matches')
-      .then(({ data }) => {
-        setMatches(data);
-        // Fetch unread status for each match without marking as read
-        // We use a HEAD-like approach: fetch messages list but only check read flag
-        // for shelter messages. The GET does mark them read, so we use the
-        // unread count endpoint as a proxy — if total unread > 0, highlight
-        // matches that have shelter messages at all (best effort for MVP).
-        const rightMatches = (data || []).filter((m) => m.swipe_direction === 'right');
-        if (rightMatches.length > 0) {
-          // Fetch unread count and mark all matches with messages as potentially unread
-          // More precise: for each match, check messages without a full read-mark.
-          // Since the GET marks read, we use the global count to decide whether to
-          // show any indicators, then let them disappear once the user opens chat.
-          Promise.allSettled(
-            rightMatches.map((m) =>
-              api.get(`/messages/${m.id}`).then(({ data: msgs }) => ({
-                id: m.id,
-                // After GET, unread shelter msgs are now read — but we caught
-                // the state before mark if the server processes async.
-                // Pragmatic: if there are ANY shelter messages, show the badge
-                // until the user opens the chat. We store in sessionStorage to
-                // clear after visit.
-                hasUnread: msgs.some((msg) => msg.sender_role === 'shelter'),
-              })).catch(() => ({ id: m.id, hasUnread: false }))
-            )
-          ).then((results) => {
-            const ids = new Set();
-            results.forEach((r) => {
-              if (r.status === 'fulfilled' && r.value.hasUnread) {
-                // Only mark unread if not already visited in this session
-                const visited = sessionStorage.getItem(`chat-visited-${r.value.id}`);
-                if (!visited) ids.add(r.value.id);
-              }
-            });
-            setUnreadIds(ids);
-          });
-        }
+    Promise.all([
+      api.get('/adoptant/matches'),
+      api.get('/messages/unread/matches').catch(() => ({ data: [] })),
+    ])
+      .then(([matchRes, unreadRes]) => {
+        setMatches(matchRes.data);
+        const ids = new Set();
+        (unreadRes.data || []).forEach((matchId) => {
+          if (!sessionStorage.getItem(`chat-visited-${matchId}`)) ids.add(matchId);
+        });
+        setUnreadIds(ids);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
