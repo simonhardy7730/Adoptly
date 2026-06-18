@@ -283,20 +283,19 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
       throw error;
     }
 
-    // Notifier les adoptants compatibles en arrière-plan (non-bloquant)
-    supabase
-      .from('shelters')
-      .select('id, name, latitude, longitude')
-      .eq('id', req.user.id)
-      .single()
-      .then(({ data: shelter }) => {
-        notifyCompatibleAdoptants(data, shelter).catch(() => {});
-      })
-      .catch(() => {});
+    // Répondre d'abord au refuge, puis envoyer les notifications
+    res.json(data);
 
-    // Notifier Simon qu'un nouvel animal a été ajouté (non-bloquant)
-    supabase.from('shelters').select('name, email').eq('id', req.user.id).single()
-      .then(({ data: shelter }) => {
+    // Notifications — awaited pour éviter que Render free tier coupe le process
+    try {
+      const { data: shelter } = await supabase
+        .from('shelters')
+        .select('id, name, email, latitude, longitude')
+        .eq('id', req.user.id)
+        .single();
+
+      await Promise.allSettled([
+        notifyCompatibleAdoptants(data, shelter),
         sendAdminNewAnimalEmail({
           shelterName:   shelter?.name  || 'Refuge inconnu',
           shelterEmail:  shelter?.email || '',
@@ -304,11 +303,11 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
           animalSpecies: data.species,
           animalBreed:   data.breed,
           photoUrl:      data.photos?.[0] || null,
-        }).catch(() => {});
-      })
-      .catch(() => {});
-
-    res.json(data);
+        }),
+      ]);
+    } catch (notifErr) {
+      console.error('[POST /animals] Notification error:', notifErr.message);
+    }
   } catch (err) {
     console.error('[POST /animals] Error:', err.message, err.details || '', err.hint || '');
     res.status(500).json({ error: err.message || 'Erreur inconnue lors de la sauvegarde' });
