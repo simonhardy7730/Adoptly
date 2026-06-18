@@ -7,7 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
 
 const SPECIES = ['dog', 'cat', 'rabbit', 'guinea_pig', 'other'];
-const TEMPERAMENTS = ['calm', 'playful', 'energetic', 'mixed', 'resilient'];
+const TEMPERAMENTS = ['calm', 'playful', 'energetic', 'cuddly', 'affectionate', 'mixed', 'resilient'];
 const SIZES = ['small', 'medium', 'large'];
 
 const EMPTY_REQUIREMENTS = {

@@ -152,6 +152,8 @@ export const translations = {
     tp_calm:     'Calme',
     tp_playful:  'Joueur',
     tp_energetic:'Énergique',
+    tp_cuddly:     'Câlin',
+    tp_affectionate:'Affectueux',
     tp_mixed:      'Mixte',
     tp_resilient:  'Résilient',
 
@@ -567,6 +569,8 @@ export const translations = {
     tp_calm:     'Rustig',
     tp_playful:  'Speels',
     tp_energetic:'Energiek',
+    tp_cuddly:     'Knuffelig',
+    tp_affectionate:'Aanhankelijk',
     tp_mixed:      'Gemengd',
     tp_resilient:  'Veerkrachtig',
 

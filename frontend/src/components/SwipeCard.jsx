@@ -14,6 +14,8 @@ const TEMPERAMENT_LABEL = {
   calm: 'Calme',
   playful: 'Joueur',
   energetic: 'Énergique',
+  cuddly: 'Câlin',
+  affectionate: 'Affectueux',
   mixed: 'Mixte',
   resilient: 'Résilient',
 };
@@ -22,6 +24,8 @@ const TEMPERAMENT_COLOR = {
   calm: 'bg-blue-100 text-blue-700',
   playful: 'bg-yellow-100 text-yellow-700',
   energetic: 'bg-orange-100 text-orange-700',
+  cuddly: 'bg-pink-100 text-pink-700',
+  affectionate: 'bg-rose-100 text-rose-700',
   mixed: 'bg-purple-100 text-purple-700',
   resilient: 'bg-green-100 text-green-700',
 };
