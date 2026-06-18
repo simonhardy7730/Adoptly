@@ -3,6 +3,26 @@ import { supabase } from '../lib/supabase.js';
 
 const router = express.Router();
 
+// ── Photos des animaux actifs (pour le carrousel landing) ──
+router.get('/animals/photos', async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('animals')
+      .select('id, name, species, photos')
+      .eq('status', 'active')
+      .not('photos', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    const result = (data || [])
+      .filter(a => a.photos?.length > 0)
+      .map(a => ({ id: a.id, name: a.name, species: a.species, photo: a.photos[0] }));
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Page publique d'un animal (sans authentification) ─────
 
 router.get('/animals/:id', async (req, res) => {

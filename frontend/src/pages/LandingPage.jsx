@@ -175,7 +175,12 @@ function FaqItem({ q, a }) {
   );
 }
 
-function AnimalPhotoStrip() {
+function AnimalPhotoStrip({ realPhotos = [] }) {
+  const photos = realPhotos.length >= 4
+    ? realPhotos
+    : heroPhotos.map(p => ({ id: p.src, name: p.alt, photo: `https://images.unsplash.com/${p.src}?auto=format&fit=crop&w=160&q=75` }));
+  const doubled = [...photos, ...photos];
+
   return (
     <div className="relative overflow-hidden py-8 bg-white border-b border-gray-100">
       <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
@@ -185,17 +190,18 @@ function AnimalPhotoStrip() {
         animate={{ x: ['0%', '-50%'] }}
         transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
       >
-        {[...heroPhotos, ...heroPhotos].map((photo, i) => (
-          <div
+        {doubled.map((item, i) => (
+          <Link
             key={i}
+            to={item.id ? `/animal/${item.id}` : '#'}
             className="flex-shrink-0 w-36 h-36 rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative group"
           >
             <img
-              src={`https://images.unsplash.com/${photo.src}?auto=format&fit=crop&w=160&q=75`}
-              alt={photo.alt}
+              src={item.photo}
+              alt={item.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-          </div>
+          </Link>
         ))}
       </motion.div>
     </div>
@@ -206,11 +212,15 @@ function AnimalPhotoStrip() {
 
 export default function LandingPage() {
   const [partnerShelters, setPartnerShelters] = useState([]);
+  const [animalPhotos, setAnimalPhotos] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     api.get('/public/shelters')
       .then(({ data }) => setPartnerShelters(data || []))
+      .catch(() => {});
+    api.get('/public/animals/photos')
+      .then(({ data }) => setAnimalPhotos(data || []))
       .catch(() => {});
   }, []);
 
@@ -236,6 +246,17 @@ export default function LandingPage() {
             >
               Pour les refuges
             </Link>
+            <a
+              href="https://www.facebook.com/profile.php?id=61590534638627"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost py-1.5 px-2 text-gray-400 hover:text-[#1877F2] transition-colors"
+              title="Notre page Facebook"
+            >
+              <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+              </svg>
+            </a>
             <Link to="/adoptant/login" className="btn-ghost text-sm py-1.5 px-4">
               Connexion
             </Link>
@@ -307,6 +328,17 @@ export default function LandingPage() {
                 >
                   👤 Connexion
                 </Link>
+                <a
+                  href="https://www.facebook.com/profile.php?id=61590534638627"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  <svg className="w-4 h-4 fill-[#1877F2]" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                  Suivez-nous sur Facebook
+                </a>
               </div>
             </motion.div>
           )}
@@ -416,7 +448,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Bande photos animaux ──────────────────────────────── */}
-      <AnimalPhotoStrip />
+      <AnimalPhotoStrip realPhotos={animalPhotos} />
 
       {/* ── Chiffres clés ─────────────────────────────────────── */}
       <section className="bg-white border-b border-gray-100">
