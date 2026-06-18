@@ -136,6 +136,12 @@ export default function ShelterList() {
                       <p className="text-gray-400 text-xs">📍 {shelter.city}</p>
                     )}
 
+                    {shelter.siret && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                        ✅ Vérifiée
+                      </span>
+                    )}
+
                     {/* Espèces */}
                     {shelter.species.length > 0 && (
                       <div className="flex flex-wrap gap-1">

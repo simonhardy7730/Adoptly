@@ -62,7 +62,7 @@ router.get('/shelters', async (_req, res) => {
     // Récupérer tous les refuges avec leurs animaux actifs
     const { data: shelters, error } = await supabase
       .from('shelters')
-      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at')
+      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at, siret')
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -101,6 +101,7 @@ router.get('/shelters', async (_req, res) => {
           logo_url:      shelter.logo_url || null,
           description:   shelter.description || null,
           description_photo_url: shelter.description_photo_url || null,
+          siret:         shelter.siret || null,
           created_at:    shelter.created_at,
           animal_count:  shelterAnimals.length,
           species,
@@ -121,7 +122,7 @@ router.get('/shelters/:id', async (req, res) => {
   try {
     const { data: shelter, error } = await supabase
       .from('shelters')
-      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at')
+      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at, siret')
       .eq('id', req.params.id)
       .single();
 

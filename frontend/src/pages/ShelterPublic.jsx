@@ -92,6 +92,11 @@ export default function ShelterPublic() {
 
           <div>
             <h1 className="text-2xl font-extrabold text-primary">{shelter.name}</h1>
+            {shelter.siret && (
+              <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1 rounded-full mt-2 border border-green-200">
+                <span>✅</span> Association vérifiée
+              </div>
+            )}
             {shelter.city && (
               <p className="text-gray-500 text-sm mt-1">📍 {shelter.address || shelter.city}</p>
             )}

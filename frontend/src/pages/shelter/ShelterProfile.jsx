@@ -20,7 +20,7 @@ export default function ShelterProfile() {
   const [error,   setError]   = useState('');
 
   const [form, setForm] = useState({
-    name: '', phone: '', address: '', description: '',
+    name: '', phone: '', address: '', description: '', siret: '',
   });
   const [logoFile,      setLogoFile]      = useState(null);
   const [logoPreview,   setLogoPreview]   = useState(null);
@@ -36,6 +36,7 @@ export default function ShelterProfile() {
           phone:       data.phone       || '',
           address:     data.address     || '',
           description: data.description || '',
+          siret:       data.siret       || '',
         });
         setLogoPreview(data.logo_url || null);
         setDescPhotoPreview(data.description_photo_url || null);
@@ -54,6 +55,7 @@ export default function ShelterProfile() {
       formData.append('phone',       form.phone);
       formData.append('address',     form.address);
       formData.append('description', form.description);
+      formData.append('siret',       form.siret);
       if (logoFile)      formData.append('logo',              logoFile);
       if (descPhotoFile) formData.append('description_photo', descPhotoFile);
       // Garder les URLs existantes si pas de nouveau fichier
@@ -86,6 +88,7 @@ export default function ShelterProfile() {
       phone:       profile?.phone       || '',
       address:     profile?.address     || '',
       description: profile?.description || '',
+      siret:       profile?.siret       || '',
     });
   }
 
@@ -146,6 +149,11 @@ export default function ShelterProfile() {
               <p className="font-bold text-primary text-xl">{profile?.name}</p>
               <p className="text-gray-400 text-sm mt-1">{profile?.email}</p>
               <p className="text-gray-300 text-xs mt-0.5">{t('profile_member_since')} {memberSince}</p>
+              {profile?.siret && (
+                <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1 rounded-full mt-2 border border-green-200">
+                  <span>✅</span> Association vérifiée · N° {profile.siret}
+                </div>
+              )}
               {profile?.phone   && <p className="text-gray-500 text-sm mt-2">📞 {profile.phone}</p>}
               {profile?.address && <p className="text-gray-500 text-sm mt-1">📍 {profile.address}</p>}
 
@@ -191,6 +199,20 @@ export default function ShelterProfile() {
                 <input className="input-field" placeholder={t('profile_address_ph')}
                   value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  🏛️ N° d'identification <span className="text-gray-400 font-normal">(optionnel)</span>
+                </label>
+                <input
+                  className="input-field"
+                  placeholder="SIRET, BCE, RNA…"
+                  maxLength={20}
+                  value={form.siret}
+                  onChange={(e) => setForm({ ...form, siret: e.target.value })}
+                />
+                <p className="text-xs text-gray-400 mt-0.5">SIRET (France), BCE (Belgique), ou autre — affiché comme badge de confiance</p>
               </div>
 
               {/* Histoire du refuge */}

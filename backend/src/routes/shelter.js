@@ -116,7 +116,7 @@ router.get('/profile', authenticate, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('shelters')
-      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url')
+      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url, siret')
       .eq('id', req.user.id)
       .single();
     if (error) throw error;
@@ -132,7 +132,7 @@ router.put('/profile', authenticate, uploadMiddleware([
 ]), async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
-  const { name, phone, address, description } = req.body;
+  const { name, phone, address, description, siret } = req.body;
   try {
     const logoUrl        = await uploadVideo(req.files?.logo?.[0]              || null, req.user.id)
                         || req.body.existing_logo_url              || null;
@@ -148,9 +148,10 @@ router.put('/profile', authenticate, uploadMiddleware([
         description:             description || null,
         logo_url:                logoUrl,
         description_photo_url:   descPhotoUrl,
+        siret:                   siret       || null,
       })
       .eq('id', req.user.id)
-      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url')
+      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url, siret')
       .single();
     if (error) throw error;
     res.json(data);

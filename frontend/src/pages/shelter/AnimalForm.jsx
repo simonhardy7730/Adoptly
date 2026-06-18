@@ -429,16 +429,43 @@ export default function AnimalForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('form_age')}</label>
-              <input
-                type="number"
-                min={0}
-                className="input-field"
-                placeholder="18"
-                value={form.age}
-                onChange={(e) => setField('age', e.target.value)}
-              />
-              <p className="text-gray-400 text-xs mt-1">{t('form_age_hint')}</p>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{t('form_age')}</label>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <select
+                    className="input-field"
+                    value={Math.floor((form.age || 0) / 12)}
+                    onChange={(e) => {
+                      const years = parseInt(e.target.value) || 0;
+                      const months = (form.age || 0) % 12;
+                      setField('age', years * 12 + months);
+                    }}
+                  >
+                    {Array.from({ length: 21 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {i === 0 ? '0 an' : i === 1 ? '1 an' : `${i} ans`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1">
+                  <select
+                    className="input-field"
+                    value={(form.age || 0) % 12}
+                    onChange={(e) => {
+                      const years = Math.floor((form.age || 0) / 12);
+                      const months = parseInt(e.target.value) || 0;
+                      setField('age', years * 12 + months);
+                    }}
+                  >
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i} value={i}>
+                        {i} mois
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
 
             <RadioGroup
