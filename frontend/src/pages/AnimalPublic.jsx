@@ -186,8 +186,8 @@ export default function AnimalPublic() {
           <div className="flex flex-wrap gap-2">
             {animal.temperament && animal.temperament.split(',').map((tp) => {
               const key = tp.trim();
-              const TEMP_LABEL = { calm: 'Calme', playful: 'Joueur', energetic: 'Énergique', mixed: 'Mixte', resilient: 'Résilient' };
-              const TEMP_COLOR = { calm: 'bg-blue-50 text-blue-700', playful: 'bg-yellow-50 text-yellow-700', energetic: 'bg-orange-50 text-orange-700', mixed: 'bg-purple-50 text-purple-700', resilient: 'bg-green-50 text-green-700' };
+              const TEMP_LABEL = { calm: 'Calme', playful: 'Joueur', energetic: 'Énergique', mixed: 'Mixte', resilient: 'Résilient', cuddly: 'Câlin', affectionate: 'Affectueux', shy: 'Timide', fearful: 'Craintif', very_fearful: 'Très apeuré' };
+              const TEMP_COLOR = { calm: 'bg-blue-50 text-blue-700', playful: 'bg-yellow-50 text-yellow-700', energetic: 'bg-orange-50 text-orange-700', mixed: 'bg-purple-50 text-purple-700', resilient: 'bg-green-50 text-green-700', cuddly: 'bg-pink-50 text-pink-700', affectionate: 'bg-rose-50 text-rose-700', shy: 'bg-indigo-50 text-indigo-700', fearful: 'bg-amber-50 text-amber-700', very_fearful: 'bg-red-50 text-red-700' };
               return (
                 <span key={key} className={`text-xs font-medium px-3 py-1 rounded-full ${TEMP_COLOR[key] || 'bg-blue-50 text-primary'}`}>
                   {TEMP_LABEL[key] || key}

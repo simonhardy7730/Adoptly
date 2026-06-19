@@ -166,8 +166,8 @@ export function scoreAnimal(animal, prefs) {
   } else {
     if (animal.temperament === energyTemperMap[prefs.energy_level]) score += 25;
     const broadEnergyMatch = {
-      calm: ['calm'],
-      balanced: ['calm', 'playful', 'mixed'],
+      calm: ['calm', 'shy', 'fearful', 'very_fearful'],
+      balanced: ['calm', 'playful', 'mixed', 'shy'],
       very_energetic: ['energetic', 'playful', 'mixed'],
     };
     if (broadEnergyMatch[prefs.energy_level]?.includes(animal.temperament)) score += 20;

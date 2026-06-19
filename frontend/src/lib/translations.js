@@ -156,6 +156,9 @@ export const translations = {
     tp_affectionate:'Affectueux',
     tp_mixed:      'Mixte',
     tp_resilient:  'Résilient',
+    tp_shy:        'Timide',
+    tp_fearful:    'Craintif',
+    tp_very_fearful:'Très apeuré',
 
     // ── Navbar adoptant ───────────────────────────────────
     nav_discover:  'Découvrir',
@@ -573,6 +576,9 @@ export const translations = {
     tp_affectionate:'Aanhankelijk',
     tp_mixed:      'Gemengd',
     tp_resilient:  'Veerkrachtig',
+    tp_shy:        'Verlegen',
+    tp_fearful:    'Angstig',
+    tp_very_fearful:'Erg bang',
 
     // ── Navbar adoptant ───────────────────────────────────
     nav_discover:  'Ontdekken',

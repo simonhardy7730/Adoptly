@@ -49,6 +49,11 @@ export default function AnimalDetail() {
     energetic:`⚡ ${t('tp_energetic')}`,
     mixed:    `🙂 ${t('tp_mixed')}`,
     resilient:`💪 ${t('tp_resilient')}`,
+    cuddly:   `🤗 ${t('tp_cuddly')}`,
+    affectionate:`💕 ${t('tp_affectionate')}`,
+    shy:      `🫣 ${t('tp_shy')}`,
+    fearful:  `😰 ${t('tp_fearful')}`,
+    very_fearful:`🥺 ${t('tp_very_fearful')}`,
   };
 
   const SIZE_LABEL = {

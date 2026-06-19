@@ -18,6 +18,9 @@ const TEMPERAMENT_LABEL = {
   affectionate: 'Affectueux',
   mixed: 'Mixte',
   resilient: 'Résilient',
+  shy: 'Timide',
+  fearful: 'Craintif',
+  very_fearful: 'Très apeuré',
 };
 
 const TEMPERAMENT_COLOR = {
@@ -28,6 +31,9 @@ const TEMPERAMENT_COLOR = {
   affectionate: 'bg-rose-100 text-rose-700',
   mixed: 'bg-purple-100 text-purple-700',
   resilient: 'bg-green-100 text-green-700',
+  shy: 'bg-indigo-100 text-indigo-700',
+  fearful: 'bg-amber-100 text-amber-700',
+  very_fearful: 'bg-red-100 text-red-700',
 };
 
 function ageLabel(months) {
