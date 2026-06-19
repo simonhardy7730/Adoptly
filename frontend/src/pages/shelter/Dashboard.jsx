@@ -327,19 +327,21 @@ export default function Dashboard() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
                       >
-                        {/* Photo */}
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-blue-50 flex-shrink-0">
-                          {photo ? (
-                            <img src={photo} alt={animal.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-2xl">🐾</div>
-                          )}
+                        {/* Photo + nom */}
+                        <div className="flex flex-col items-center flex-shrink-0">
+                          <div className="w-20 h-20 rounded-xl overflow-hidden bg-blue-50">
+                            {photo ? (
+                              <img src={photo} alt={animal.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-2xl">🐾</div>
+                            )}
+                          </div>
+                          <p className="text-sm font-bold text-primary mt-1.5 text-center max-w-[80px] truncate">{animal.name}</p>
                         </div>
 
                         {/* Infos */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-bold text-gray-800 truncate">{animal.name}</h3>
                             <span
                               className={`badge text-xs flex-shrink-0 ${STATUS_COLOR[animal.status] || STATUS_COLOR.active}`}
                             >
