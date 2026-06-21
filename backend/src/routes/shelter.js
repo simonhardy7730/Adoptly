@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendEmailsThrottled } from '../lib/email.js';
+import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendEmailsThrottled, sendShelterFeedbackEmail } from '../lib/email.js';
 import { passesHardFilters } from '../lib/matching.js';
 
 const router = express.Router();
@@ -531,5 +531,34 @@ function safeJson(value, fallback = {}) {
     return fallback;
   }
 }
+
+// ── Feedback refuge ──────────────────────────────────────────
+router.post('/feedback', authenticate, async (req, res) => {
+  try {
+    const { category, message } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'Message requis.' });
+    if (!['bug', 'suggestion', 'question'].includes(category)) return res.status(400).json({ error: 'Catégorie invalide.' });
+
+    const { data: shelter } = await supabase
+      .from('shelters')
+      .select('name, email')
+      .eq('id', req.user.id)
+      .single();
+
+    if (!shelter) return res.status(404).json({ error: 'Refuge introuvable.' });
+
+    await sendShelterFeedbackEmail({
+      shelterName: shelter.name,
+      shelterEmail: shelter.email,
+      category,
+      message: message.trim(),
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[Feedback] Erreur :', err.message);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
 
 export default router;

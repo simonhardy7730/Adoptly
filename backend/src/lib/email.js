@@ -1202,3 +1202,56 @@ export async function sendAdminNewAnimalEmail({ shelterName, shelterEmail, anima
     html,
   });
 }
+
+/**
+ * Envoie un feedback de refuge à l'admin.
+ */
+export async function sendShelterFeedbackEmail({ shelterName, shelterEmail, category, message }) {
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  const categoryLabels = { bug: 'Bug / Problème', suggestion: 'Suggestion', question: 'Question' };
+  const categoryLabel = categoryLabels[category] || category;
+  const sentAt = new Date().toLocaleString('fr-BE', { timeZone: 'Europe/Brussels', dateStyle: 'full', timeStyle: 'short' });
+
+  const html = `
+<!DOCTYPE html><html><head><meta charset="UTF-8"/></head>
+<body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,sans-serif;">
+  <div style="max-width:520px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
+    <div style="background:linear-gradient(135deg,#1B4F8A,#2E86AB);padding:28px 32px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;">
+          <span style="color:#fff;font-weight:900;font-size:18px;">A</span>
+        </div>
+        <div>
+          <span style="color:#fff;font-weight:900;font-size:20px;">Adoptly</span>
+          <p style="color:rgba(255,255,255,.6);font-size:11px;margin:0;">Feedback refuge</p>
+        </div>
+      </div>
+    </div>
+    <div style="padding:32px;">
+      <div style="display:inline-block;background:${category === 'bug' ? '#FEE2E2' : category === 'suggestion' ? '#FFF3E0' : '#EFF6FF'};border-radius:50px;padding:8px 20px;margin-bottom:20px;">
+        <span style="font-weight:800;font-size:14px;color:${category === 'bug' ? '#DC2626' : category === 'suggestion' ? '#F07A2A' : '#1B4F8A'};">${categoryLabel}</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:20px;">
+        <tr><td style="padding:8px 0;color:#888;width:30%;">Refuge</td><td style="padding:8px 0;font-weight:700;color:#1B4F8A;">${shelterName}</td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Email</td><td style="padding:8px 0;"><a href="mailto:${shelterEmail}" style="color:#1B4F8A;text-decoration:none;">${shelterEmail}</a></td></tr>
+        <tr><td style="padding:8px 0;color:#888;">Date</td><td style="padding:8px 0;">${sentAt}</td></tr>
+      </table>
+      <div style="background:#F4F7FF;border-radius:12px;padding:20px;border-left:4px solid #1B4F8A;">
+        <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap;">${message}</p>
+      </div>
+      <div style="text-align:center;margin-top:24px;">
+        <a href="mailto:${shelterEmail}?subject=Re: Votre feedback sur Adoptly"
+           style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 28px;border-radius:12px;display:inline-block;">
+          Répondre au refuge →
+        </a>
+      </div>
+    </div>
+  </div>
+</body></html>`.trim();
+
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject: `💬 Feedback refuge — ${categoryLabel} — ${shelterName}`,
+    html,
+  });
+}

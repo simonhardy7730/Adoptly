@@ -168,6 +168,110 @@ function ConfirmModal({ name, onConfirm, onCancel, t }) {
   );
 }
 
+function FeedbackModal({ onClose }) {
+  const [category, setCategory] = useState('suggestion');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!message.trim()) return;
+    setSending(true);
+    try {
+      await api.post('/shelter/feedback', { category, message });
+      setSent(true);
+    } catch {
+      alert('Erreur lors de l\'envoi. Réessayez.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <motion.div
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0"
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center"
+          initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-5xl mb-4">💚</div>
+          <h3 className="font-bold text-gray-800 text-lg mb-2">Merci pour votre retour !</h3>
+          <p className="text-gray-500 text-sm mb-6">Votre message a bien été envoyé. Nous reviendrons vers vous rapidement.</p>
+          <button onClick={onClose} className="btn-primary w-full py-3 text-sm">Fermer</button>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl"
+        initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-gray-800 text-lg">Votre avis compte</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2">Type de retour</label>
+            <div className="flex gap-2">
+              {[
+                { value: 'suggestion', label: '💡 Suggestion', bg: 'bg-orange-50 border-orange-200 text-orange-700' },
+                { value: 'bug', label: '🐛 Bug', bg: 'bg-red-50 border-red-200 text-red-700' },
+                { value: 'question', label: '❓ Question', bg: 'bg-blue-50 border-blue-200 text-blue-700' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setCategory(opt.value)}
+                  className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold border-2 transition-all
+                    ${category === opt.value ? opt.bg : 'bg-gray-50 border-transparent text-gray-400'}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2">Votre message</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={category === 'bug' ? 'Décrivez le problème rencontré...' : category === 'question' ? 'Posez votre question...' : 'Partagez votre idée...'}
+              rows={4}
+              className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={sending || !message.trim()}
+            className="btn-primary w-full py-3 text-sm disabled:opacity-50"
+          >
+            {sending ? 'Envoi en cours…' : 'Envoyer mon retour'}
+          </button>
+        </form>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function Dashboard() {
   const { t } = useLanguage();
   const [data,      setData]      = useState(null);
@@ -176,6 +280,7 @@ export default function Dashboard() {
   const [interested, setInterested] = useState(null);
   const [markingAdopted, setMarkingAdopted] = useState(null);
   const [copiedId,  setCopiedId]  = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   function shareAnimal(animal) {
     const url = `https://adoptly.fr/share/animal/${animal.id}`;
@@ -407,6 +512,15 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Bouton feedback flottant */}
+      <button
+        onClick={() => setShowFeedback(true)}
+        className="fixed bottom-6 right-6 z-40 bg-accent hover:bg-accent/90 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl transition-all active:scale-90 hover:shadow-xl"
+        title="Donner votre avis"
+      >
+        💬
+      </button>
+
       <AnimatePresence>
         {deleting && (
           <ConfirmModal
@@ -422,6 +536,9 @@ export default function Dashboard() {
             onClose={() => setInterested(null)}
             t={t}
           />
+        )}
+        {showFeedback && (
+          <FeedbackModal onClose={() => setShowFeedback(false)} />
         )}
       </AnimatePresence>
     </div>
