@@ -28,6 +28,7 @@ import ShelterPublic        from './pages/ShelterPublic';
 import ArticleList          from './pages/ArticleList';
 import ArticleDetail        from './pages/ArticleDetail';
 import ForRefuges           from './pages/ForRefuges';
+import PreparerAdoption     from './pages/PreparerAdoption';
 import AdminDashboard       from './pages/admin/AdminDashboard';
 import AdoptionSuccess      from './pages/AdoptionSuccess';
 import CookieBanner         from './components/CookieBanner';
@@ -152,6 +153,9 @@ function AppRoutes() {
 
       {/* Landing page pour les refuges */}
       <Route path="/pour-les-refuges" element={<ForRefuges />} />
+
+      {/* Guides adoption */}
+      <Route path="/preparer-adoption" element={<PreparerAdoption />} />
 
       {/* Pages légales */}
       <Route path="/legal/cgu"     element={<CGU />} />

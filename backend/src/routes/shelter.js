@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail } from '../lib/email.js';
+import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendEmailsThrottled } from '../lib/email.js';
 import { passesHardFilters } from '../lib/matching.js';
 
 const router = express.Router();
@@ -418,9 +418,9 @@ async function notifyAdoptedAnimal(animal, shelterId) {
 
     if (!adoptants?.length) return;
 
-    // Envoyer les notifications en parallèle
-    await Promise.allSettled(
-      adoptants.map((a) =>
+    // Envoyer les notifications avec throttle (max 4/seconde)
+    await sendEmailsThrottled(
+      adoptants.map((a) => () =>
         sendAnimalAdoptedEmail({
           adoptantEmail:    a.email,
           adoptantFirstName: a.first_name,
@@ -462,10 +462,10 @@ async function notifyCompatibleAdoptants(animal, shelter) {
       }
     });
 
-    // Envoyer les emails en parallèle (max 50 pour rester dans la limite Resend)
+    // Envoyer les emails avec throttle (max 4/seconde, max 50 adoptants)
     const targets = compatible.slice(0, 50);
-    await Promise.allSettled(
-      targets.map((a) =>
+    await sendEmailsThrottled(
+      targets.map((a) => () =>
         sendNewAnimalNotificationEmail({
           adoptantEmail:    a.email,
           adoptantFirstName: a.first_name,

@@ -10,6 +10,21 @@
 const RESEND_URL = 'https://api.resend.com/emails';
 const FROM       = 'Adoptly <info@adoptly.fr>';
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Envoie une liste d'emails en respectant le rate limit Resend (max 4/seconde).
+ * @param {Array<() => Promise>} fns - Fonctions async retournant chacune un appel sendEmail
+ */
+export async function sendEmailsThrottled(fns) {
+  const results = [];
+  for (const fn of fns) {
+    results.push(await fn().catch((e) => e));
+    await sleep(250);
+  }
+  return results;
+}
+
 /** Utilitaire interne : envoie un email via l'API Resend */
 async function sendEmail({ to, subject, html }) {
   if (!process.env.RESEND_API_KEY) {
