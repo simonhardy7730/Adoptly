@@ -67,6 +67,13 @@ const faqs = [
   },
 ];
 
+const guidesAdoption = [
+  { icon: '🏠', title: 'Préparer sa maison', desc: 'Checklist complète avant l\'arrivée de votre animal.', color: 'bg-blue-50 text-blue-700' },
+  { icon: '📋', title: 'Les premières 48h', desc: 'Guide pratique pour les premiers jours ensemble.', color: 'bg-orange-50 text-orange-700' },
+  { icon: '💊', title: 'Budget & vétérinaire', desc: 'Combien coûte un animal par mois, en vrai ?', color: 'bg-green-50 text-green-700' },
+  { icon: '🌍', title: 'Adopter à l\'étranger', desc: 'Tout savoir sur le rapatriement et les démarches.', color: 'bg-purple-50 text-purple-700' },
+];
+
 const animaux = ['🐕', '🐈', '🐇', '🐹', '🦜', '🐕‍🦺'];
 
 const heroPhotos = [
@@ -234,6 +241,12 @@ export default function LandingPage() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-1">
+            <a
+              href="#preparer-adoption"
+              className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
+            >
+              Préparer son adoption
+            </a>
             <Link
               to="/actualites"
               className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
@@ -300,6 +313,13 @@ export default function LandingPage() {
               className="md:hidden overflow-hidden bg-white border-t border-gray-100"
             >
               <div className="px-6 py-3 space-y-1">
+                <a
+                  href="#preparer-adoption"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  📚 Préparer son adoption
+                </a>
                 <Link
                   to="/actualites"
                   onClick={() => setMobileMenuOpen(false)}
@@ -557,6 +577,40 @@ export default function LandingPage() {
               Trouver mon compagnon idéal
             </Link>
             <p className="text-gray-400 text-xs mt-3">Gratuit. Sans engagement.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Préparer son adoption ────────────────────────────── */}
+      <section id="preparer-adoption" className="bg-gradient-to-b from-blue-50/60 to-white py-16">
+        <div className="max-w-5xl mx-auto px-6">
+          <motion.div {...fadeUpView()} className="text-center mb-10">
+            <span className="section-label">Guides pratiques</span>
+            <h2 className="text-3xl font-extrabold text-primary mt-2">Préparer son adoption</h2>
+            <p className="text-gray-500 mt-2">Tout ce qu'il faut savoir avant, pendant et après l'arrivée de votre compagnon.</p>
+          </motion.div>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            {guidesAdoption.map((guide, i) => (
+              <motion.div
+                key={guide.title}
+                {...fadeUpView(i * 0.1)}
+              >
+                <Link
+                  to="/actualites"
+                  className="flex items-start gap-4 p-5 rounded-2xl bg-white border border-gray-100
+                             hover:border-secondary/30 hover:shadow-card transition-all group"
+                >
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${guide.color}`}>
+                    {guide.icon}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-800 group-hover:text-secondary transition-colors">{guide.title}</h3>
+                    <p className="text-gray-500 text-sm mt-1">{guide.desc}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
