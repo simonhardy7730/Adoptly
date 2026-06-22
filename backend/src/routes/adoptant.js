@@ -104,7 +104,7 @@ router.get('/animals', authenticate, async (req, res) => {
             : null,
       }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
+      .slice(0, 50);
 
     res.json(results);
   } catch (err) {
