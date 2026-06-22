@@ -2,6 +2,11 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../lib/api';
 
+const SUPABASE_STORAGE = 'lybvajageblpdauprnus.supabase.co/storage';
+function isImageMsg(content) {
+  return content?.includes(SUPABASE_STORAGE) && /\.(jpg|jpeg|png|webp|gif)$/i.test(content);
+}
+
 function formatTime(isoString) {
   if (!isoString) return '';
   const d = new Date(isoString);
@@ -23,8 +28,11 @@ export default function Chat() {
   const [content, setContent]       = useState('');
   const [sending, setSending]       = useState(false);
   const [loading, setLoading]       = useState(true);
+  const [uploading, setUploading]   = useState(false);
+  const [zoomedImg, setZoomedImg]   = useState(null);
 
   const messagesEndRef = useRef(null);
+  const fileInputRef   = useRef(null);
   const pollRef        = useRef(null);
   const lastCountRef   = useRef(0);
 
@@ -86,6 +94,25 @@ export default function Chat() {
       alert(err.response?.data?.error || 'Erreur lors de l\'envoi. Le serveur redémarre peut-être — réessayez dans 1 minute.');
     }
     setSending(false);
+  }
+
+  async function handleImageUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('image', file);
+      const { data: newMsg } = await api.post(`/messages/${match_id}/image`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setMessages((prev) => [...prev, newMsg]);
+      setTimeout(scrollToBottom, 50);
+    } catch (err) {
+      alert('Erreur lors de l\'envoi de l\'image.');
+    }
+    setUploading(false);
   }
 
   function handleKeyDown(e) {
@@ -162,6 +189,15 @@ export default function Chat() {
                   )}
                   <div className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[75%] space-y-1`}>
+                      {isImageMsg(msg.content) ? (
+                        <img
+                          src={msg.content}
+                          alt="Photo"
+                          className={`max-w-full rounded-2xl cursor-pointer ${isMe ? 'rounded-br-sm' : 'rounded-bl-sm'}`}
+                          style={{ maxHeight: 280 }}
+                          onClick={() => setZoomedImg(msg.content)}
+                        />
+                      ) : (
                       <div
                         className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
                           isMe
@@ -171,6 +207,7 @@ export default function Chat() {
                       >
                         {msg.content}
                       </div>
+                      )}
                       <p className={`text-[10px] text-gray-400 ${isMe ? 'text-right' : 'text-left'} px-1`}>
                         {formatTime(msg.created_at)}
                       </p>
@@ -187,6 +224,22 @@ export default function Chat() {
       {/* Input bar */}
       <div className="bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0">
         <form onSubmit={handleSend} className="flex items-end gap-2">
+          <input type="file" ref={fileInputRef} accept="image/*" className="hidden" onChange={handleImageUpload} />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="p-2.5 rounded-2xl text-gray-400 hover:text-primary hover:bg-gray-50 transition-colors flex-shrink-0 disabled:opacity-40"
+            aria-label="Envoyer une photo"
+          >
+            {uploading ? (
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            )}
+          </button>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -216,6 +269,14 @@ export default function Chat() {
           </button>
         </form>
       </div>
+
+      {/* Image zoom overlay */}
+      {zoomedImg && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setZoomedImg(null)}>
+          <button className="absolute top-4 right-4 text-white text-3xl font-light" onClick={() => setZoomedImg(null)}>&times;</button>
+          <img src={zoomedImg} alt="Photo" className="max-w-full max-h-full rounded-lg object-contain" />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,9 +1,11 @@
 import express from 'express';
+import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
 import { sendNewMessageNotificationEmail } from '../lib/email.js';
 
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 // ── GET /api/messages/unread/count ────────────────────────
 // Must be registered before /:match_id to avoid route conflict
@@ -327,6 +329,47 @@ router.post('/:match_id', authenticate, async (req, res) => {
       })();
     }
 
+    res.status(201).json(message);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/messages/:match_id/image ───────────────────
+router.post('/:match_id/image', authenticate, upload.single('image'), async (req, res) => {
+  try {
+    const { match_id } = req.params;
+    const { id: userId, role } = req.user;
+
+    if (!req.file) return res.status(400).json({ error: 'Image requise' });
+
+    const match = await getMatchForUser(match_id, userId, role);
+    if (!match) return res.status(403).json({ error: 'Forbidden' });
+
+    const ext = req.file.originalname.split('.').pop()?.toLowerCase() || 'jpg';
+    const filename = `${match_id}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from('chat-images')
+      .upload(filename, req.file.buffer, { contentType: req.file.mimetype, upsert: false });
+
+    if (uploadErr) throw uploadErr;
+
+    const { data: urlData } = supabase.storage.from('chat-images').getPublicUrl(filename);
+    const imageUrl = urlData.publicUrl;
+
+    const { data: message, error } = await supabase
+      .from('messages')
+      .insert({
+        match_id,
+        sender_id: userId,
+        sender_role: role,
+        content: imageUrl,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
     res.status(201).json(message);
   } catch (err) {
     res.status(500).json({ error: err.message });
