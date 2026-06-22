@@ -1,19 +1,21 @@
 /**
  * Service d'envoi d'emails — Adoptly
- * Utilise l'API Resend (resend.com) via fetch natif (Node 18+).
- * Free tier : 3 000 emails/mois, 100/jour — largement suffisant en MVP.
+ * Utilise l'API Brevo (brevo.com) via fetch natif (Node 18+).
+ * Free tier : 300 emails/jour — 3x plus que Resend.
  *
- * Configuration : ajouter RESEND_API_KEY dans .env
- * Domaine expéditeur : configurer "bonjour@adoptly.fr" dans le dashboard Resend.
+ * Configuration : ajouter BREVO_API_KEY dans .env
+ * Fallback : utilise RESEND_API_KEY si BREVO_API_KEY absent (rétrocompatibilité).
  */
 
+const BREVO_URL  = 'https://api.brevo.com/v3/smtp/email';
 const RESEND_URL = 'https://api.resend.com/emails';
-const FROM       = 'Adoptly <info@adoptly.fr>';
+const FROM_NAME  = 'Adoptly';
+const FROM_EMAIL = 'info@adoptly.fr';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Envoie une liste d'emails en respectant le rate limit Resend (max 4/seconde).
+ * Envoie une liste d'emails en respectant le rate limit (max 4/seconde).
  * @param {Array<() => Promise>} fns - Fonctions async retournant chacune un appel sendEmail
  */
 export async function sendEmailsThrottled(fns) {
@@ -25,27 +27,49 @@ export async function sendEmailsThrottled(fns) {
   return results;
 }
 
-/** Utilitaire interne : envoie un email via l'API Resend */
+/** Utilitaire interne : envoie un email via Brevo (fallback Resend) */
 async function sendEmail({ to, subject, html }) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log('[Email] RESEND_API_KEY absent — email ignoré.');
-    return;
-  }
-  try {
-    const res = await fetch(RESEND_URL, {
-      method: 'POST',
-      headers: {
-        Authorization:  `Bearer ${process.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      console.error('[Email] Échec :', body);
+  if (process.env.BREVO_API_KEY) {
+    try {
+      const res = await fetch(BREVO_URL, {
+        method: 'POST',
+        headers: {
+          'api-key':      process.env.BREVO_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: { name: FROM_NAME, email: FROM_EMAIL },
+          to: [{ email: to }],
+          subject,
+          htmlContent: html,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        console.error('[Email/Brevo] Échec :', body);
+      }
+    } catch (err) {
+      console.error('[Email/Brevo] Erreur réseau :', err.message);
     }
-  } catch (err) {
-    console.error('[Email] Erreur réseau :', err.message);
+  } else if (process.env.RESEND_API_KEY) {
+    try {
+      const res = await fetch(RESEND_URL, {
+        method: 'POST',
+        headers: {
+          Authorization:  `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ from: `${FROM_NAME} <${FROM_EMAIL}>`, to, subject, html }),
+      });
+      if (!res.ok) {
+        const body = await res.text();
+        console.error('[Email/Resend] Échec :', body);
+      }
+    } catch (err) {
+      console.error('[Email/Resend] Erreur réseau :', err.message);
+    }
+  } else {
+    console.log('[Email] Aucune clé API (BREVO/RESEND) — email ignoré.');
   }
 }
 
