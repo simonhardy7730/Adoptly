@@ -371,8 +371,8 @@ router.get('/sitemap.xml', async (_req, res) => {
     const today = new Date().toISOString().split('T')[0];
 
     const [{ data: animals }, { data: shelters }, { data: articles }] = await Promise.all([
-      supabase.from('animals').select('id, updated_at').eq('status', 'active'),
-      supabase.from('shelters').select('id, updated_at'),
+      supabase.from('animals').select('id, created_at').eq('status', 'active'),
+      supabase.from('shelters').select('id, created_at'),
       supabase.from('articles').select('slug, updated_at').eq('status', 'published'),
     ]);
 
@@ -398,12 +398,12 @@ router.get('/sitemap.xml', async (_req, res) => {
     }
 
     for (const a of (animals || [])) {
-      const mod = a.updated_at?.split('T')[0] || today;
+      const mod = a.created_at?.split('T')[0] || today;
       xml += `  <url><loc>https://adoptly.fr/animal/${a.id}</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${mod}</lastmod></url>\n`;
     }
 
     for (const s of (shelters || [])) {
-      const mod = s.updated_at?.split('T')[0] || today;
+      const mod = s.created_at?.split('T')[0] || today;
       xml += `  <url><loc>https://adoptly.fr/refuges/${s.id}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${mod}</lastmod></url>\n`;
     }
 
