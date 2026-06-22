@@ -282,12 +282,12 @@ export default function AnimalPublic() {
         {/* CTA */}
         {!adopted ? (
           <div className="card p-6 text-center space-y-3">
-            <div className="text-4xl">💚</div>
+            <div className="text-4xl">🧩</div>
             <h2 className="font-bold text-gray-800 text-lg">
-              {animal.name} vous attend !
+              Êtes-vous compatibles ?
             </h2>
             <p className="text-gray-500 text-sm">
-              Créez un compte gratuit pour découvrir si {animal.name} est compatible avec votre mode de vie.
+              Créez votre profil gratuitement et notre algorithme vous dira si {animal.name} correspond à votre mode de vie.
             </p>
             <Link
               to={`/adoptant/register`}
@@ -298,7 +298,7 @@ export default function AnimalPublic() {
                 }
               }}
             >
-              Je veux adopter {animal.name} →
+              Tester ma compatibilité avec {animal.name} →
             </Link>
             <p className="text-gray-400 text-xs">
               Déjà membre ?{' '}
