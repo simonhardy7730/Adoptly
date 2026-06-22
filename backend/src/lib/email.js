@@ -557,7 +557,7 @@ export async function sendNewAnimalNotificationEmail({
   const animalDesc = animalBreed ? `${animalBreed} (${animalSpecies})` : animalSpecies;
 
   const photoBlock = photoUrl
-    ? `<img src="${photoUrl}" alt="${animalName}" style="width:100%;max-height:260px;object-fit:cover;display:block;border-radius:16px 16px 0 0;" />`
+    ? `<img src="${photoUrl}" alt="${animalName}" style="width:100%;display:block;border-radius:16px 16px 0 0;" />`
     : `<div style="width:100%;height:180px;background:#E0E9FF;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:center;font-size:64px;text-align:center;line-height:180px;">${speciesEmoji}</div>`;
 
   const html = `
