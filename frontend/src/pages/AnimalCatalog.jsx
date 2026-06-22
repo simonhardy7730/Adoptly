@@ -47,7 +47,7 @@ function AnimalCard({ animal }) {
       >
         <div className="aspect-square bg-gray-100 overflow-hidden">
           {animal.photo ? (
-            <img src={animal.photo} alt={animal.name} className="w-full h-full object-cover" loading="lazy" />
+            <img src={animal.photo} alt={animal.name} className="w-full h-full object-cover object-top" loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-5xl bg-blue-50">
               {SPECIES_OPTIONS.find(s => s.value === animal.species)?.emoji || '🐾'}

@@ -69,6 +69,51 @@ function ShareBar({ animal }) {
   );
 }
 
+function Lightbox({ photos, startIdx, onClose }) {
+  const [idx, setIdx] = useState(startIdx);
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') setIdx(i => (i + 1) % photos.length);
+      if (e.key === 'ArrowLeft') setIdx(i => (i - 1 + photos.length) % photos.length);
+    };
+    window.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', handler); document.body.style.overflow = ''; };
+  }, [photos.length, onClose]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl z-10">✕</button>
+      <img
+        src={photos[idx]}
+        alt=""
+        className="max-h-[90vh] max-w-[95vw] object-contain rounded-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+      {photos.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIdx(i => (i - 1 + photos.length) % photos.length); }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/20 text-white text-xl flex items-center justify-center hover:bg-white/30"
+          >‹</button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIdx(i => (i + 1) % photos.length); }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/20 text-white text-xl flex items-center justify-center hover:bg-white/30"
+          >›</button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+            {idx + 1} / {photos.length}
+          </div>
+        </>
+      )}
+    </motion.div>
+  );
+}
+
 export default function AnimalPublic() {
   const { id } = useParams();
   const [animal,  setAnimal]  = useState(null);
@@ -76,6 +121,7 @@ export default function AnimalPublic() {
   const [imgIdx,  setImgIdx]  = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
 
   useEffect(() => {
     api.get(`/public/animals/${id}`)
@@ -154,7 +200,8 @@ export default function AnimalPublic() {
                 key={imgIdx}
                 src={photos[imgIdx]}
                 alt={animal.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top cursor-pointer"
+                onClick={() => setLightbox(true)}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
@@ -324,6 +371,11 @@ export default function AnimalPublic() {
         </p>
 
       </div>
+
+      {/* Lightbox plein écran */}
+      {lightbox && photos.length > 0 && (
+        <Lightbox photos={photos} startIdx={imgIdx} onClose={() => setLightbox(false)} />
+      )}
     </div>
   );
 }
