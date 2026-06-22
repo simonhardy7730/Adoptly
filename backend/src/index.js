@@ -71,23 +71,6 @@ app.use('/api/articles', articlesRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
-// Temporary: resend welcome emails to users who missed them during Brevo outage
-import { sendWelcomeEmail } from './lib/email.js';
-app.post('/api/admin/resend-welcome', async (req, res) => {
-  if (req.headers['x-admin-key'] !== process.env.JWT_SECRET) return res.status(403).json({ error: 'Forbidden' });
-  const { emails } = req.body;
-  if (!Array.isArray(emails)) return res.status(400).json({ error: 'emails array required' });
-  const results = [];
-  for (const email of emails) {
-    try {
-      await sendWelcomeEmail({ email, firstName: 'Bonjour' });
-      results.push({ email, ok: true });
-    } catch (err) {
-      results.push({ email, ok: false, error: err.message });
-    }
-  }
-  res.json(results);
-});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
