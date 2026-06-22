@@ -30,3 +30,12 @@ Thumbs.db
 
 # Claude Code (config locale)
 .claude/
+
+# Photos animaux à la racine (utilisées pour Facebook, pas pour le repo)
+*.jpg
+*.jpeg
+*.webp
+*.png
+!frontend/**/*.png
+!frontend/**/*.jpg
+!frontend/**/*.webp

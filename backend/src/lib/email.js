@@ -182,6 +182,31 @@ export async function sendWelcomeEmail({ email }) {
         </div>
       </div>
 
+      <!-- Partage & Facebook -->
+      <div style="background:#F0F4FF;padding:28px 32px;text-align:center;">
+        <p style="color:#374151;font-size:14px;font-weight:700;margin:0 0 8px;">
+          Aidez-nous à sauver plus d'animaux 💙
+        </p>
+        <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 16px;">
+          Partagez Adoptly autour de vous — chaque partage peut mener à une adoption.
+        </p>
+        <div style="margin-bottom:12px;">
+          <a href="https://www.facebook.com/profile.php?id=61590534638627"
+             style="background:#1877F2;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:13px;padding:10px 24px;border-radius:10px;display:inline-block;">
+            Suivre notre page Facebook →
+          </a>
+        </div>
+        <div>
+          <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fadoptly.fr"
+             style="background:#fff;color:#1B4F8A;text-decoration:none;font-weight:600;
+                    font-size:13px;padding:10px 24px;border-radius:10px;display:inline-block;
+                    border:1px solid #D1D5DB;">
+            Partager Adoptly avec mes amis
+          </a>
+        </div>
+      </div>
+
       <!-- Pied de page -->
       <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
         <p style="color:#9CA3AF;font-size:12px;margin:0;">
@@ -1208,7 +1233,7 @@ export async function sendAdminNewAnimalEmail({ shelterName, shelterEmail, anima
     </div>
     <div style="padding:32px;">
       <h2 style="color:#1B4F8A;margin:0 0 16px;">🐾 Nouvel animal publié</h2>
-      ${photoUrl ? `<img src="${photoUrl}" style="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:16px;" />` : ''}
+      ${photoUrl ? `<img src="${photoUrl}" style="width:100%;border-radius:12px;margin-bottom:16px;" />` : ''}
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <tr><td style="padding:8px 0;color:#888;width:40%;">Animal</td><td style="padding:8px 0;font-weight:700;color:#1B4F8A;">${animalName}</td></tr>
         <tr><td style="padding:8px 0;color:#888;">Espèce</td><td style="padding:8px 0;">${species}${animalBreed ? ` — ${animalBreed}` : ''}</td></tr>
