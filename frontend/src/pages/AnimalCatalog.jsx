@@ -35,7 +35,7 @@ function AnimalCard({ animal }) {
     very_fearful: 'bg-red-50 text-red-700', resilient: 'bg-green-50 text-green-700',
   };
 
-  const firstTemp = animal.temperament?.split(',')[0]?.trim();
+  const temps = animal.temperament?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 2) || [];
 
   return (
     <Link to={`/animal/${animal.id}`}>
@@ -57,11 +57,13 @@ function AnimalCard({ animal }) {
         <div className="p-3 space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-bold text-gray-800 truncate">{animal.name}</h3>
-            {firstTemp && (
-              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${tempColors[firstTemp] || 'bg-gray-50 text-gray-600'}`}>
-                {tempLabels[firstTemp] || firstTemp}
-              </span>
-            )}
+            <div className="flex gap-1 flex-shrink-0">
+              {temps.map(tp => (
+                <span key={tp} className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${tempColors[tp] || 'bg-gray-50 text-gray-600'}`}>
+                  {tempLabels[tp] || tp}
+                </span>
+              ))}
+            </div>
           </div>
           <p className="text-gray-400 text-xs truncate">
             {SPECIES_LABEL[animal.species] || animal.species}
