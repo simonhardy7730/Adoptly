@@ -3,6 +3,7 @@
     { "source": "/share/animal/:id", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/share/animal/:id" },
     { "source": "/share/article/:slug", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/share/article/:slug" },
     { "source": "/share/animaux", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/share/animaux" },
+    { "source": "/sitemap.xml", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/sitemap.xml" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

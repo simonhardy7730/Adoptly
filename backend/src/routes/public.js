@@ -365,4 +365,61 @@ router.get('/share/animaux', async (req, res) => {
   }
 });
 
+// ── Sitemap dynamique ────────────────────────────────────
+router.get('/sitemap.xml', async (_req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const [{ data: animals }, { data: shelters }, { data: articles }] = await Promise.all([
+      supabase.from('animals').select('id, updated_at').eq('status', 'active'),
+      supabase.from('shelters').select('id, updated_at'),
+      supabase.from('articles').select('slug, updated_at').eq('status', 'published'),
+    ]);
+
+    const staticPages = [
+      { loc: '/',                   freq: 'weekly',  priority: '1.0' },
+      { loc: '/animaux',            freq: 'daily',   priority: '0.9' },
+      { loc: '/refuges',            freq: 'weekly',  priority: '0.8' },
+      { loc: '/pour-les-refuges',   freq: 'monthly', priority: '0.8' },
+      { loc: '/preparer-adoption',  freq: 'monthly', priority: '0.7' },
+      { loc: '/actualites',         freq: 'weekly',  priority: '0.7' },
+      { loc: '/adoptions',          freq: 'weekly',  priority: '0.6' },
+      { loc: '/adoptant/register',  freq: 'monthly', priority: '0.8' },
+      { loc: '/shelter/register',   freq: 'monthly', priority: '0.7' },
+      { loc: '/famille-accueil/register', freq: 'monthly', priority: '0.6' },
+      { loc: '/legal/cgu',          freq: 'yearly',  priority: '0.2' },
+      { loc: '/legal/privacy',      freq: 'yearly',  priority: '0.2' },
+    ];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    for (const p of staticPages) {
+      xml += `  <url><loc>https://adoptly.fr${p.loc}</loc><changefreq>${p.freq}</changefreq><priority>${p.priority}</priority><lastmod>${today}</lastmod></url>\n`;
+    }
+
+    for (const a of (animals || [])) {
+      const mod = a.updated_at?.split('T')[0] || today;
+      xml += `  <url><loc>https://adoptly.fr/animal/${a.id}</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${mod}</lastmod></url>\n`;
+    }
+
+    for (const s of (shelters || [])) {
+      const mod = s.updated_at?.split('T')[0] || today;
+      xml += `  <url><loc>https://adoptly.fr/refuges/${s.id}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${mod}</lastmod></url>\n`;
+    }
+
+    for (const ar of (articles || [])) {
+      const mod = ar.updated_at?.split('T')[0] || today;
+      xml += `  <url><loc>https://adoptly.fr/actualites/${ar.slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority><lastmod>${mod}</lastmod></url>\n`;
+    }
+
+    xml += `</urlset>`;
+
+    res.set('Content-Type', 'application/xml');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(xml);
+  } catch (err) {
+    res.status(500).send(`<!-- sitemap error: ${err.message} -->`);
+  }
+});
+
 export default router;
