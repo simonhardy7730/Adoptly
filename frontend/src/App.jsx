@@ -23,6 +23,7 @@ import FosterMatches        from './pages/foster/FosterMatches';
 import CGU                  from './pages/legal/CGU';
 import PrivacyPolicy        from './pages/legal/PrivacyPolicy';
 import AnimalPublic         from './pages/AnimalPublic';
+import AnimalCatalog        from './pages/AnimalCatalog';
 import ShelterList          from './pages/ShelterList';
 import ShelterPublic        from './pages/ShelterPublic';
 import ArticleList          from './pages/ArticleList';
@@ -135,6 +136,9 @@ function AppRoutes() {
       <Route path="/shelter/chat/:match_id" element={
         <PrivateRoute requiredRole="shelter"><ShelterChat /></PrivateRoute>
       }/>
+
+      {/* Catalogue public — accessible sans compte */}
+      <Route path="/animaux" element={<AnimalCatalog />} />
 
       {/* Page publique animal — accessible sans compte */}
       <Route path="/animal/:id" element={<AnimalPublic />} />

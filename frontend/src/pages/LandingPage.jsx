@@ -6,9 +6,9 @@ import api from '../lib/api';
 // ── Données ──────────────────────────────────────────────────────────────────
 
 const microTestimonials = [
-  { stars: 5, text: '"Enfin une adoption qu\'on ne regrette pas."', author: 'Marie L., Bruxelles' },
-  { stars: 5, text: '"Léo était exactement comme décrit. Le coup de foudre."', author: 'Thomas B., Liège' },
-  { stars: 5, text: '"Le refuge nous a rappelés dans l\'heure."', author: 'Camille R., Namur' },
+  { stars: 5, text: '"La plateforme nous aide à trouver des adoptants vraiment compatibles."', author: 'Cœur d\'Asha, refuge partenaire' },
+  { stars: 5, text: '"Le matching évite les mauvaises surprises des deux côtés."', author: 'Au Royaume des Félins, refuge partenaire' },
+  { stars: 5, text: '"Inscription rapide, interface claire et tout est gratuit."', author: 'SAVE A LIFE, refuge partenaire' },
 ];
 
 const etapes = [
@@ -235,6 +235,12 @@ export default function LandingPage() {
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-1">
             <Link
+              to="/animaux"
+              className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
+            >
+              Voir les animaux
+            </Link>
+            <Link
               to="/preparer-adoption"
               className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
             >
@@ -306,6 +312,13 @@ export default function LandingPage() {
               className="md:hidden overflow-hidden bg-white border-t border-gray-100"
             >
               <div className="px-6 py-3 space-y-1">
+                <Link
+                  to="/animaux"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  🐾 Voir les animaux
+                </Link>
                 <Link
                   to="/preparer-adoption"
                   onClick={() => setMobileMenuOpen(false)}

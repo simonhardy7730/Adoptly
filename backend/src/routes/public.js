@@ -23,6 +23,62 @@ router.get('/animals/photos', async (_req, res) => {
   }
 });
 
+// ── Catalogue public : tous les animaux actifs ──────────
+router.get('/animals', async (req, res) => {
+  try {
+    const { species } = req.query;
+    let query = supabase
+      .from('animals')
+      .select('id, name, species, breed, age, size, temperament, photos, status, shelter_id, special_needs')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    if (species && species !== 'all') {
+      if (species === 'small_animal') {
+        query = query.in('species', ['rabbit', 'guinea_pig', 'other']);
+      } else {
+        query = query.eq('species', species);
+      }
+    }
+
+    const { data: animals, error } = await query;
+    if (error) throw error;
+
+    const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
+    const { data: shelters } = shelterIds.length
+      ? await supabase.from('shelters').select('id, name, address').in('id', shelterIds)
+      : { data: [] };
+
+    const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
+
+    const result = (animals || []).map(a => {
+      const shelter = shelterMap[a.shelter_id] || {};
+      const city = shelter.address
+        ? (shelter.address.match(/\d{4,5}\s+([^,]+)$/)?.[1]?.trim()
+            || shelter.address.split(',').pop()?.trim()
+            || shelter.address)
+        : null;
+      return {
+        id: a.id,
+        name: a.name,
+        species: a.species,
+        breed: a.breed,
+        age: a.age,
+        size: a.size,
+        temperament: a.temperament,
+        photo: a.photos?.[0] || null,
+        special_needs: !!a.special_needs,
+        shelter_name: shelter.name || null,
+        city,
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Page publique d'un animal (sans authentification) ─────
 
 router.get('/animals/:id', async (req, res) => {
@@ -265,6 +321,47 @@ router.get('/share/article/:slug', async (req, res) => {
     res.redirect(`https://adoptly.fr/actualites/${article.slug}`);
   } catch {
     res.redirect('https://adoptly.fr/actualites');
+  }
+});
+
+// ── Share catalogue (OG meta pour crawlers) ─────────────
+router.get('/share/animaux', async (req, res) => {
+  try {
+    const ua = req.headers['user-agent'] || '';
+    const isCrawler = /facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot/i.test(ua);
+
+    const { count } = await supabase
+      .from('animals')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active');
+
+    const title = 'Animaux à adopter | Adoptly';
+    const desc = `${count || 'Des'} animaux cherchent une famille dans nos refuges partenaires. Chiens, chats, NAC — trouvez votre compagnon idéal gratuitement sur Adoptly.`;
+    const image = 'https://adoptly.fr/pwa-512x512.png';
+    const shareUrl = 'https://adoptly.fr/share/animaux';
+
+    if (isCrawler) {
+      return res.send(`<!DOCTYPE html><html><head>
+        <meta charset="UTF-8"/>
+        <title>${title}</title>
+        <meta property="og:type" content="website"/>
+        <meta property="og:url" content="${shareUrl}"/>
+        <meta property="og:title" content="${title}"/>
+        <meta property="og:description" content="${desc}"/>
+        <meta property="og:image" content="${image}"/>
+        <meta property="og:image:width" content="512"/>
+        <meta property="og:image:height" content="512"/>
+        <meta property="og:site_name" content="Adoptly"/>
+        <meta name="twitter:card" content="summary_large_image"/>
+        <meta name="twitter:title" content="${title}"/>
+        <meta name="twitter:description" content="${desc}"/>
+        <meta name="twitter:image" content="${image}"/>
+      </head><body><p>Redirection...</p></body></html>`);
+    }
+
+    res.redirect('https://adoptly.fr/animaux');
+  } catch {
+    res.redirect('https://adoptly.fr/animaux');
   }
 });
 
