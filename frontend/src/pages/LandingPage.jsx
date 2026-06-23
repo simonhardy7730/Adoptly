@@ -253,6 +253,12 @@ export default function LandingPage() {
               Nos articles
             </Link>
             <Link
+              to="/adoptions"
+              className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
+            >
+              Adoptions réussies
+            </Link>
+            <Link
               to="/pour-les-refuges"
               className="btn-ghost text-sm py-1.5 px-4 text-gray-500"
             >
@@ -339,6 +345,13 @@ export default function LandingPage() {
                   className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
                 >
                   🏠 Nos refuges
+                </Link>
+                <Link
+                  to="/adoptions"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  💚 Adoptions réussies
                 </Link>
                 <Link
                   to="/pour-les-refuges"

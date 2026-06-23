@@ -238,6 +238,8 @@ export default function AnimalCatalog() {
           {' · '}
           <Link to="/refuges" className="hover:text-gray-400">Nos refuges</Link>
           {' · '}
+          <Link to="/adoptions" className="hover:text-gray-400">Adoptions réussies</Link>
+          {' · '}
           <Link to="/preparer-adoption" className="hover:text-gray-400">Préparer son adoption</Link>
           {' · '}
           <Link to="/actualites" className="hover:text-gray-400">Actualités</Link>
