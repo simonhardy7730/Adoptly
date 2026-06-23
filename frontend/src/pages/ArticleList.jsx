@@ -87,11 +87,11 @@ export default function ArticleList() {
                 >
                   {/* Image de couverture */}
                   {article.cover_image && (
-                    <div className="w-full aspect-video overflow-hidden bg-gray-100">
+                    <div className="w-full aspect-[4/3] overflow-hidden bg-gray-100">
                       <img
                         src={article.cover_image}
                         alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
                       />
                     </div>
                   )}
