@@ -223,7 +223,7 @@ router.get('/adopted', async (_req, res) => {
       .select('id, name, species, breed, age, photos, shelters(name, logo_url)')
       .eq('status', 'adopted')
       .not('photos', 'is', null)
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(50);
     if (error) throw error;
     res.json(data || []);
