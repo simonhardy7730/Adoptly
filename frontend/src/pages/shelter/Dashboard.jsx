@@ -311,12 +311,25 @@ export default function Dashboard() {
   }
 
   async function markAdopted(animal) {
+    if (!window.confirm(`Êtes-vous sûr de vouloir marquer ${animal.name} comme adopté(e) ? Cette action notifiera tous les adoptants intéressés.`)) return;
     setMarkingAdopted(animal.id);
     try {
       await api.patch(`/shelter/animals/${animal.id}/adopted`);
       setData((d) => ({
         ...d,
         animals: d.animals.map((a) => a.id === animal.id ? { ...a, status: 'adopted' } : a),
+      }));
+    } catch {}
+    setMarkingAdopted(null);
+  }
+
+  async function markActive(animal) {
+    setMarkingAdopted(animal.id);
+    try {
+      await api.patch(`/shelter/animals/${animal.id}/reactivate`);
+      setData((d) => ({
+        ...d,
+        animals: d.animals.map((a) => a.id === animal.id ? { ...a, status: 'active' } : a),
       }));
     } catch {}
     setMarkingAdopted(null);
@@ -486,13 +499,21 @@ export default function Dashboard() {
                           >
                             {t('dash_edit')}
                           </Link>
-                          {animal.status !== 'adopted' && (
+                          {animal.status !== 'adopted' ? (
                             <button
                               onClick={() => markAdopted(animal)}
                               disabled={markingAdopted === animal.id}
                               className="text-xs font-medium text-purple-500 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors"
                             >
                               {markingAdopted === animal.id ? '…' : t('dash_mark_adopted')}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => markActive(animal)}
+                              disabled={markingAdopted === animal.id}
+                              className="text-xs font-medium text-green-500 hover:text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {markingAdopted === animal.id ? '…' : 'Remettre actif'}
                             </button>
                           )}
                           <button

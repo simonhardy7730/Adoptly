@@ -239,6 +239,26 @@ router.patch('/animals/:id/adopted', authenticate, async (req, res) => {
   }
 });
 
+// ── Remettre un animal en actif (annuler "adopté") ───────
+router.patch('/animals/:id/reactivate', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data: animal, error } = await supabase
+      .from('animals')
+      .update({ status: 'active' })
+      .eq('id', req.params.id)
+      .eq('shelter_id', req.user.id)
+      .eq('status', 'adopted')
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(animal);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Animals CRUD ──────────────────────────────────────────
 
 router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {
