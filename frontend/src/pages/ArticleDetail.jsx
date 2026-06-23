@@ -142,7 +142,7 @@ export default function ArticleDetail() {
             <img
               src={article.cover_image}
               alt={article.title}
-              className="w-full object-cover object-top max-h-96 rounded-3xl"
+              className="w-full aspect-video object-cover rounded-3xl"
             />
           </motion.div>
         )}
