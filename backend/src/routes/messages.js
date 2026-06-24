@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendNewMessageNotificationEmail } from '../lib/email.js';
+import { sendNewMessageNotificationEmail, sendAdoptantMessageNotificationEmail } from '../lib/email.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -325,6 +325,40 @@ router.post('/:match_id', authenticate, async (req, res) => {
           }
         } catch (emailErr) {
           console.error('[Messages] Erreur notification email:', emailErr.message);
+        }
+      })();
+    }
+
+    // Notifier l'adoptant par email quand un refuge envoie un message (non-bloquant)
+    if (role === 'shelter') {
+      (async () => {
+        try {
+          const { data: animal } = await supabase
+            .from('animals')
+            .select('name, shelter_id, shelters(email, name)')
+            .eq('id', match.animal_id)
+            .single();
+
+          const { data: adoptant } = await supabase
+            .from('adoptants')
+            .select('first_name, last_name, email')
+            .eq('id', match.adoptant_id)
+            .single();
+
+          const adoptantName = [adoptant?.first_name, adoptant?.last_name].filter(Boolean).join(' ') || 'Adoptant';
+          const preview = content.trim().length > 150 ? content.trim().slice(0, 150) + '…' : content.trim();
+
+          if (adoptant?.email) {
+            await sendAdoptantMessageNotificationEmail({
+              adoptantEmail:  adoptant.email,
+              adoptantName,
+              shelterName:    animal?.shelters?.name || 'Un refuge',
+              animalName:     animal?.name || 'votre animal',
+              messagePreview: preview,
+            });
+          }
+        } catch (emailErr) {
+          console.error('[Messages] Erreur notification adoptant:', emailErr.message);
         }
       })();
     }

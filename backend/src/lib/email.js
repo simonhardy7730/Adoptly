@@ -27,9 +27,34 @@ export async function sendEmailsThrottled(fns) {
   return results;
 }
 
-/** Utilitaire interne : envoie un email via Brevo (fallback Resend) */
+/** Envoie via Resend (prioritaire), fallback Brevo */
 async function sendEmail({ to, subject, html }) {
-  if (process.env.BREVO_API_KEY) {
+  let sent = false;
+
+  // Resend en priorité — domaine vérifié, fiable
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const res = await fetch(RESEND_URL, {
+        method: 'POST',
+        headers: {
+          Authorization:  `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ from: `${FROM_NAME} <${FROM_EMAIL}>`, to, subject, html }),
+      });
+      if (res.ok) {
+        sent = true;
+      } else {
+        const body = await res.text();
+        console.error('[Email/Resend] Échec :', res.status, body);
+      }
+    } catch (err) {
+      console.error('[Email/Resend] Erreur réseau :', err.message);
+    }
+  }
+
+  // Fallback Brevo si Resend a échoué ou n'est pas configuré
+  if (!sent && process.env.BREVO_API_KEY) {
     try {
       const res = await fetch(BREVO_URL, {
         method: 'POST',
@@ -44,32 +69,19 @@ async function sendEmail({ to, subject, html }) {
           htmlContent: html,
         }),
       });
-      if (!res.ok) {
+      if (res.ok) {
+        sent = true;
+      } else {
         const body = await res.text();
-        console.error('[Email/Brevo] Échec :', body);
+        console.error('[Email/Brevo] Échec :', res.status, body);
       }
     } catch (err) {
       console.error('[Email/Brevo] Erreur réseau :', err.message);
     }
-  } else if (process.env.RESEND_API_KEY) {
-    try {
-      const res = await fetch(RESEND_URL, {
-        method: 'POST',
-        headers: {
-          Authorization:  `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ from: `${FROM_NAME} <${FROM_EMAIL}>`, to, subject, html }),
-      });
-      if (!res.ok) {
-        const body = await res.text();
-        console.error('[Email/Resend] Échec :', body);
-      }
-    } catch (err) {
-      console.error('[Email/Resend] Erreur réseau :', err.message);
-    }
-  } else {
-    console.log('[Email] Aucune clé API (BREVO/RESEND) — email ignoré.');
+  }
+
+  if (!sent) {
+    console.error('[Email] ÉCHEC TOTAL — aucun provider n\'a pu envoyer à', to, '| sujet:', subject);
   }
 }
 
@@ -1206,6 +1218,84 @@ export async function sendNewMessageNotificationEmail({
   await sendEmail({
     to:      shelterEmail,
     subject: `💬 Nouveau message de ${adoptantName} à propos de ${animalName}`,
+    html,
+  });
+}
+
+export async function sendAdoptantMessageNotificationEmail({
+  adoptantEmail, adoptantName, shelterName, animalName, messagePreview,
+}) {
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:36px 32px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
+          </div>
+          <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
+        </div>
+      </div>
+
+      <div style="padding:40px 32px;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <div style="display:inline-block;background:#FFF3E0;border-radius:50px;padding:12px 24px;">
+            <span style="font-size:28px;">🐾</span>
+            <span style="color:#F07A2A;font-weight:800;font-size:18px;margin-left:8px;vertical-align:middle;">Bonne nouvelle !</span>
+          </div>
+        </div>
+
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 12px;text-align:center;">
+          ${shelterName} vous a répondu à propos de ${animalName} !
+        </h1>
+
+        <p style="color:#6B7280;font-size:14px;line-height:1.6;margin:0 0 24px;text-align:center;">
+          Le refuge a pris le temps de vous écrire. Votre futur compagnon vous attend peut-être !
+        </p>
+
+        <div style="background:#F4F7FF;border-radius:16px;padding:20px 24px;margin:0 0 24px;border-left:4px solid #1B4F8A;">
+          <p style="color:#9CA3AF;font-size:12px;margin:0 0 8px;font-weight:600;">APERÇU DU MESSAGE</p>
+          <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;font-style:italic;">
+            "${messagePreview}"
+          </p>
+        </div>
+
+        <div style="text-align:center;margin:32px 0 0;">
+          <a href="https://adoptly.fr/adoptant/dashboard"
+             style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;">
+            Lire et répondre sur Adoptly →
+          </a>
+          <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">
+            Connectez-vous pour voir le message complet et discuter avec le refuge.
+          </p>
+        </div>
+
+        <div style="background:#ECFDF5;border-radius:12px;padding:16px;text-align:center;margin-top:24px;">
+          <p style="color:#065F46;font-size:13px;margin:0;line-height:1.5;">
+            💚 Adoptly est 100% gratuit. Le refuge et vous êtes directement en contact.
+          </p>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">
+          © ${new Date().getFullYear()} Adoptly · <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  await sendEmail({
+    to:      adoptantEmail,
+    subject: `🐾 ${shelterName} vous a répondu à propos de ${animalName} !`,
     html,
   });
 }
