@@ -37,7 +37,8 @@ export default function Navbar() {
 
   const adoptantLinks = [
     { to: '/adoptant/swipe', label: t('nav_discover'), icon: '🐾' },
-    { to: '/adoptant/matches', label: t('nav_matches'), icon: '💚', badge: true },
+    { to: '/adoptant/matches', label: t('nav_matches'), icon: '💚' },
+    { to: '/adoptant/messages', label: '💬 Messages', icon: null, badge: true },
     { to: '/adoptant/profile', label: t('nav_profile'), icon: '👤' },
   ];
 
@@ -92,7 +93,7 @@ export default function Navbar() {
         {/* Mobile: hamburger */}
         <div className="flex sm:hidden items-center gap-2">
           {unreadCount > 0 && (
-            <Link to={role === 'shelter' ? '/shelter/messages' : '/adoptant/matches'} className="relative p-1">
+            <Link to={role === 'shelter' ? '/shelter/messages' : '/adoptant/messages'} className="relative p-1">
               <span className="text-lg">💬</span>
               <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
                 {unreadCount > 9 ? '9+' : unreadCount}

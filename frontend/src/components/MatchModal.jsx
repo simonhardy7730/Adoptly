@@ -109,13 +109,24 @@ export default function MatchModal({ animal, matchId, onClose }) {
             </div>
           )}
 
-          {/* Boutons d'action */}
+          {/* Bouton principal : envoyer un message */}
+          <button
+            onClick={() => {
+              markContacted();
+              navigate(`/chat/${matchId}`);
+            }}
+            className="w-full btn-primary text-center text-sm py-3"
+          >
+            💬 Envoyer un message
+          </button>
+
+          {/* Boutons secondaires */}
           <div className="flex gap-3">
             {shelter?.phone && (
               <a
                 href={`tel:${shelter.phone}`}
                 onClick={markContacted}
-                className="flex-1 btn-primary text-center text-sm"
+                className="flex-1 btn-secondary text-center text-sm"
               >
                 📞 Appeler
               </a>
@@ -124,7 +135,7 @@ export default function MatchModal({ animal, matchId, onClose }) {
               <a
                 href={`mailto:${shelter.email}`}
                 onClick={markContacted}
-                className="flex-1 btn-primary text-center text-sm"
+                className="flex-1 btn-secondary text-center text-sm"
               >
                 ✉️ E-mail
               </a>
@@ -134,7 +145,7 @@ export default function MatchModal({ animal, matchId, onClose }) {
           <div className="flex gap-3">
             <button
               onClick={() => navigate('/adoptant/matches')}
-              className="flex-1 btn-secondary text-sm"
+              className="flex-1 btn-ghost text-sm border border-gray-200 rounded-2xl"
             >
               Voir tous mes matchs
             </button>

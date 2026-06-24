@@ -133,7 +133,59 @@ router.get('/unread/matches', authenticate, async (req, res) => {
 router.get('/conversations', authenticate, async (req, res) => {
   try {
     const { role, id } = req.user;
-    if (role !== 'shelter') return res.status(403).json({ error: 'Réservé aux refuges' });
+
+    if (role === 'adoptant') {
+      const { data: matches, error: matchErr } = await supabase
+        .from('matches')
+        .select('id, adoptant_id, animal_id, animals(name, photos, shelter_id, shelters(name))')
+        .eq('adoptant_id', id)
+        .eq('swipe_direction', 'right');
+
+      if (matchErr) throw matchErr;
+      if (!matches?.length) return res.json([]);
+
+      const matchIds = matches.map((m) => m.id);
+
+      const { data: messages, error: msgErr } = await supabase
+        .from('messages')
+        .select('id, match_id, content, sender_role, read, created_at')
+        .in('match_id', matchIds)
+        .order('created_at', { ascending: false });
+
+      if (msgErr) throw msgErr;
+      if (!messages?.length) return res.json([]);
+
+      const convMap = {};
+      for (const msg of messages) {
+        if (!convMap[msg.match_id]) {
+          convMap[msg.match_id] = { lastMessage: msg, unread: 0 };
+        }
+        if (msg.sender_role === 'shelter' && !msg.read) {
+          convMap[msg.match_id].unread++;
+        }
+      }
+
+      const conversations = matches
+        .filter((m) => convMap[m.id])
+        .map((m) => {
+          const conv = convMap[m.id];
+          return {
+            match_id:      m.id,
+            animal_name:   m.animals?.name || 'Animal',
+            animal_photo:  m.animals?.photos?.[0] || null,
+            shelter_name:  m.animals?.shelters?.name || 'Refuge',
+            last_message:  conv.lastMessage.content,
+            last_sender:   conv.lastMessage.sender_role,
+            last_date:     conv.lastMessage.created_at,
+            unread:        conv.unread,
+          };
+        })
+        .sort((a, b) => new Date(b.last_date) - new Date(a.last_date));
+
+      return res.json(conversations);
+    }
+
+    if (role !== 'shelter') return res.status(403).json({ error: 'Forbidden' });
 
     // Get all animals for this shelter
     const { data: animals, error: animalErr } = await supabase

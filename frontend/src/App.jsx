@@ -33,6 +33,7 @@ import PreparerAdoption     from './pages/PreparerAdoption';
 import AdminDashboard       from './pages/admin/AdminDashboard';
 import AdoptionSuccess      from './pages/AdoptionSuccess';
 import CookieBanner         from './components/CookieBanner';
+import AdoptantMessages      from './pages/adoptant/AdoptantMessages';
 import Chat                 from './pages/Chat';
 import ShelterChat          from './pages/ShelterChat';
 import ShelterMessages      from './pages/shelter/ShelterMessages';
@@ -98,6 +99,9 @@ function AppRoutes() {
       }/>
       <Route path="/adoptant/profile" element={
         <PrivateRoute requiredRole="adoptant"><Profile /></PrivateRoute>
+      }/>
+      <Route path="/adoptant/messages" element={
+        <PrivateRoute requiredRole="adoptant"><AdoptantMessages /></PrivateRoute>
       }/>
       <Route path="/adoptant/animal" element={
         <PrivateRoute requiredRole="adoptant"><AnimalDetail /></PrivateRoute>
