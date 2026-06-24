@@ -558,7 +558,7 @@ export async function sendFosterMatchNotificationEmail({
  *           shelterName: string, photoUrl?: string }} params
  */
 export async function sendNewAnimalNotificationEmail({
-  adoptantEmail, adoptantFirstName,
+  adoptantId, adoptantEmail, adoptantFirstName,
   animalName, animalSpecies, animalBreed,
   shelterName, photoUrl,
 }) {
@@ -649,9 +649,13 @@ export async function sendNewAnimalNotificationEmail({
           <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
         </p>
         <p style="color:#D1D5DB;font-size:11px;margin:8px 0 0;">
-          Vous recevez ce message car votre profil est compatible avec cet animal.<br>
-          Connectez-vous à votre compte pour gérer vos préférences.
-        </p>
+          Vous recevez ce message car votre profil est compatible avec cet animal.
+        </p>${adoptantId ? `
+        <p style="margin:10px 0 0;">
+          <a href="https://adoptly-backend-p2os.onrender.com/api/unsubscribe/${adoptantId}" style="color:#9CA3AF;font-size:11px;text-decoration:underline;">
+            Ne plus recevoir ces notifications
+          </a>
+        </p>` : ''}
       </div>
     </div>
   </div>

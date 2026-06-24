@@ -473,9 +473,10 @@ async function notifyCompatibleAdoptants(animal, shelter) {
 
     const photoUrl = animal.photos?.[0] || null;
 
-    // Filtrer ceux dont le profil est compatible
+    // Filtrer ceux dont le profil est compatible ET notifications actives
     const compatible = adoptants.filter((a) => {
       try {
+        if (a.questionnaire_answers?.email_notifications === false) return false;
         return passesHardFilters(animal, shelter, a.questionnaire_answers);
       } catch {
         return false;
@@ -487,6 +488,7 @@ async function notifyCompatibleAdoptants(animal, shelter) {
     await sendEmailsThrottled(
       targets.map((a) => () =>
         sendNewAnimalNotificationEmail({
+          adoptantId:       a.id,
           adoptantEmail:    a.email,
           adoptantFirstName: a.first_name,
           animalName:       animal.name,
