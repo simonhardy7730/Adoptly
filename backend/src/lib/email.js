@@ -1398,3 +1398,100 @@ export async function sendShelterFeedbackEmail({ shelterName, shelterEmail, cate
     html,
   });
 }
+
+/**
+ * Envoie un digest quotidien à un adoptant avec les nouveaux animaux compatibles.
+ */
+export async function sendDailyDigestEmail({
+  adoptantId, adoptantEmail, adoptantFirstName, animals,
+}) {
+  const firstName = adoptantFirstName || 'Bonjour';
+  const count = animals.length;
+  const plural = count > 1;
+
+  const animalCards = animals.map((a) => {
+    const emoji = { dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾' }[a.species] || '🐾';
+    const photo = a.photos?.[0]
+      ? `<img src="${a.photos[0]}" alt="${a.name}" style="width:100%;height:160px;object-fit:cover;border-radius:12px 12px 0 0;display:block;" />`
+      : `<div style="width:100%;height:100px;background:#E0E9FF;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;font-size:40px;text-align:center;line-height:100px;">${emoji}</div>`;
+    const breed = a.breed ? ` · ${a.breed}` : '';
+    return `
+      <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);margin-bottom:16px;">
+        ${photo}
+        <div style="padding:14px 16px;">
+          <p style="margin:0 0 4px;font-weight:700;color:#1B4F8A;font-size:16px;">${emoji} ${a.name}</p>
+          <p style="margin:0;color:#6B7280;font-size:13px;">${a.shelterName}${breed}</p>
+        </div>
+      </div>`;
+  }).join('');
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vos matchs du jour — Adoptly</title>
+</head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+
+      <!-- En-tête -->
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:32px 32px 24px;text-align:center;">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.18);border-radius:10px;display:inline-block;text-align:center;line-height:32px;">
+            <span style="color:#fff;font-weight:900;font-size:18px;line-height:32px;">A</span>
+          </div>
+          <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
+        </div>
+        <h1 style="color:#fff;font-size:20px;font-weight:800;margin:0;letter-spacing:-0.3px;">
+          ${count} nouveau${plural ? 'x' : ''} animal${plural ? 'x' : ''} vous correspond${plural ? 'ent' : ''} !
+        </h1>
+      </div>
+
+      <!-- Corps -->
+      <div style="padding:28px 24px;">
+        <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px;">
+          ${firstName}, voici ${plural ? 'les animaux ajoutés' : "l'animal ajouté"} récemment qui ${plural ? 'correspondent' : 'correspond'} à votre profil :
+        </p>
+
+        ${animalCards}
+
+        <!-- CTA -->
+        <div style="text-align:center;margin-top:24px;">
+          <a href="https://adoptly.fr/adoptant/swipe"
+             style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;
+                    font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;">
+            Découvrir ${plural ? 'ces animaux' : animals[0].name} →
+          </a>
+        </div>
+      </div>
+
+      <!-- Pied de page -->
+      <div style="border-top:1px solid #F3F4F6;padding:24px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">
+          © ${new Date().getFullYear()} Adoptly ·
+          <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a>
+        </p>
+        <p style="color:#D1D5DB;font-size:11px;margin:8px 0 0;">
+          Vous recevez ce message car votre profil est compatible avec ces animaux.
+        </p>
+        <p style="margin:10px 0 0;">
+          <a href="https://adoptly-backend-p2os.onrender.com/api/unsubscribe/${adoptantId}" style="color:#9CA3AF;font-size:11px;text-decoration:underline;">
+            Ne plus recevoir ces notifications
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim();
+
+  await sendEmail({
+    to: adoptantEmail,
+    subject: `🐾 ${count} nouveau${plural ? 'x' : ''} animal${plural ? 'x' : ''} vous correspond${plural ? 'ent' : ''} sur Adoptly !`,
+    html,
+  });
+}

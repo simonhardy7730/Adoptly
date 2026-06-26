@@ -316,7 +316,7 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
         .single();
 
       await Promise.allSettled([
-        notifyCompatibleAdoptants(data, shelter),
+        // notifyCompatibleAdoptants désactivé — remplacé par le digest quotidien (GET /api/cron/daily-digest)
         sendAdminNewAnimalEmail({
           shelterName:   shelter?.name  || 'Refuge inconnu',
           shelterEmail:  shelter?.email || '',
@@ -325,7 +325,7 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
           animalBreed:   data.breed,
           photoUrl:      data.photos?.[0] || null,
         }),
-      ]);
+      ].filter(Boolean));
     } catch (notifErr) {
       console.error('[POST /animals] Notification error:', notifErr.message);
     }

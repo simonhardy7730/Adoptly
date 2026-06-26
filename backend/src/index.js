@@ -119,6 +119,83 @@ app.get('/api/unsubscribe/:adoptantId', async (req, res) => {
 });
 
 
+// ── Digest quotidien — appelé chaque matin par cron-job.org ───────────
+app.get('/api/cron/daily-digest', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const { passesHardFilters } = await import('./lib/matching.js');
+    const { sendDailyDigestEmail, sendEmailsThrottled } = await import('./lib/email.js');
+
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+    // Animaux ajoutés dans les dernières 24h
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: newAnimals } = await supabase
+      .from('animals')
+      .select('id, name, species, breed, photos, shelter_id, shelters(id, name, latitude, longitude)')
+      .eq('status', 'available')
+      .gte('created_at', since);
+
+    if (!newAnimals?.length) {
+      return res.json({ message: 'Aucun nouvel animal', sent: 0 });
+    }
+
+    // Tous les adoptants avec questionnaire + notifications actives
+    const { data: adoptants } = await supabase
+      .from('adoptants')
+      .select('id, email, first_name, questionnaire_answers')
+      .not('questionnaire_answers', 'is', null);
+
+    if (!adoptants?.length) {
+      return res.json({ message: 'Aucun adoptant', sent: 0 });
+    }
+
+    let totalSent = 0;
+    const emailFns = [];
+
+    for (const adoptant of adoptants) {
+      if (adoptant.questionnaire_answers?.email_notifications === false) continue;
+
+      const compatible = newAnimals.filter((a) => {
+        try {
+          return passesHardFilters(a, a.shelters, adoptant.questionnaire_answers);
+        } catch { return false; }
+      });
+
+      if (!compatible.length) continue;
+
+      const animals = compatible.map((a) => ({
+        name: a.name,
+        species: a.species,
+        breed: a.breed,
+        photos: a.photos,
+        shelterName: a.shelters?.name || 'Refuge partenaire',
+      }));
+
+      emailFns.push(() => sendDailyDigestEmail({
+        adoptantId: adoptant.id,
+        adoptantEmail: adoptant.email,
+        adoptantFirstName: adoptant.first_name,
+        animals,
+      }));
+
+      totalSent++;
+    }
+
+    await sendEmailsThrottled(emailFns);
+
+    console.log(`[Digest] ${totalSent} email(s) envoyé(s) pour ${newAnimals.length} nouvel animal(aux)`);
+    res.json({ message: 'Digest envoyé', sent: totalSent, newAnimals: newAnimals.length });
+  } catch (err) {
+    console.error('[Digest] Erreur:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
