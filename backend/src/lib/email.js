@@ -1408,6 +1408,8 @@ export async function sendDailyDigestEmail({
   const firstName = adoptantFirstName || 'Bonjour';
   const count = animals.length;
   const plural = count > 1;
+  const animalWord = plural ? 'animaux' : 'animal';
+  const nouveauWord = plural ? 'nouveaux' : 'nouvel';
 
   const animalCards = animals.map((a) => {
     const emoji = { dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾' }[a.species] || '🐾';
@@ -1446,7 +1448,7 @@ export async function sendDailyDigestEmail({
           <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
         </div>
         <h1 style="color:#fff;font-size:20px;font-weight:800;margin:0;letter-spacing:-0.3px;">
-          ${count} nouveau${plural ? 'x' : ''} animal${plural ? 'x' : ''} vous correspond${plural ? 'ent' : ''} !
+          ${count} ${nouveauWord} ${animalWord} vous correspond${plural ? 'ent' : ''} !
         </h1>
       </div>
 
@@ -1491,7 +1493,7 @@ export async function sendDailyDigestEmail({
 
   await sendEmail({
     to: adoptantEmail,
-    subject: `🐾 ${count} nouveau${plural ? 'x' : ''} animal${plural ? 'x' : ''} vous correspond${plural ? 'ent' : ''} sur Adoptly !`,
+    subject: `🐾 ${count} ${nouveauWord} ${animalWord} vous correspond${plural ? 'ent' : ''} sur Adoptly !`,
     html,
   });
 }
