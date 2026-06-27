@@ -119,7 +119,7 @@ app.get('/api/unsubscribe/:adoptantId', async (req, res) => {
 });
 
 
-// ── Digest quotidien — appelé chaque matin par cron-job.org ───────────
+// ── Digest quotidien — appelé chaque jour à 18h par cron-job.org ───────────
 app.get('/api/cron/daily-digest', async (req, res) => {
   if (req.query.key !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -132,38 +132,65 @@ app.get('/api/cron/daily-digest', async (req, res) => {
 
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-    // Animaux ajoutés dans les dernières 24h
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data: newAnimals } = await supabase
+    // Animaux ajoutés dans les dernières 26h (marge de 2h pour éviter les trous)
+    const since = new Date(Date.now() - 26 * 60 * 60 * 1000).toISOString();
+    const { data: newAnimals, error: animalsError } = await supabase
       .from('animals')
       .select('id, name, species, breed, photos, shelter_id, shelters(id, name, latitude, longitude)')
-      .eq('status', 'available')
+      .eq('status', 'active')
       .gte('created_at', since);
 
+    if (animalsError) {
+      console.error('[Digest] Erreur requête animaux:', animalsError.message);
+      return res.status(500).json({ error: animalsError.message });
+    }
+
+    console.log(`[Digest] ${newAnimals?.length || 0} animal(aux) trouvé(s) depuis ${since}`);
+
     if (!newAnimals?.length) {
-      return res.json({ message: 'Aucun nouvel animal', sent: 0 });
+      return res.json({ message: 'Aucun nouvel animal', sent: 0, since });
     }
 
     // Tous les adoptants avec questionnaire + notifications actives
-    const { data: adoptants } = await supabase
+    const { data: adoptants, error: adoptantsError } = await supabase
       .from('adoptants')
       .select('id, email, first_name, questionnaire_answers')
       .not('questionnaire_answers', 'is', null);
 
-    if (!adoptants?.length) {
-      return res.json({ message: 'Aucun adoptant', sent: 0 });
+    if (adoptantsError) {
+      console.error('[Digest] Erreur requête adoptants:', adoptantsError.message);
+      return res.status(500).json({ error: adoptantsError.message });
+    }
+
+    const activeAdoptants = (adoptants || []).filter(
+      (a) => a.questionnaire_answers?.email_notifications !== false
+    );
+    console.log(`[Digest] ${adoptants?.length || 0} adoptant(s) total, ${activeAdoptants.length} avec notifs actives`);
+
+    if (!activeAdoptants.length) {
+      return res.json({ message: 'Aucun adoptant avec notifs actives', sent: 0 });
     }
 
     let totalSent = 0;
     const emailFns = [];
+    const debugLog = [];
 
-    for (const adoptant of adoptants) {
-      if (adoptant.questionnaire_answers?.email_notifications === false) continue;
-
-      const compatible = newAnimals.filter((a) => {
+    for (const adoptant of activeAdoptants) {
+      const compatible = [];
+      for (const a of newAnimals) {
         try {
-          return passesHardFilters(a, a.shelters, adoptant.questionnaire_answers);
-        } catch { return false; }
+          if (passesHardFilters(a, a.shelters, adoptant.questionnaire_answers)) {
+            compatible.push(a);
+          }
+        } catch (err) {
+          console.error(`[Digest] Erreur matching ${a.name} ↔ ${adoptant.email}:`, err.message);
+        }
+      }
+
+      debugLog.push({
+        email: adoptant.email,
+        compatible: compatible.length,
+        total: newAnimals.length,
       });
 
       if (!compatible.length) continue;
@@ -186,12 +213,21 @@ app.get('/api/cron/daily-digest', async (req, res) => {
       totalSent++;
     }
 
+    console.log('[Digest] Détail matching:', JSON.stringify(debugLog));
+
     await sendEmailsThrottled(emailFns);
 
     console.log(`[Digest] ${totalSent} email(s) envoyé(s) pour ${newAnimals.length} nouvel animal(aux)`);
-    res.json({ message: 'Digest envoyé', sent: totalSent, newAnimals: newAnimals.length });
+    res.json({
+      message: 'Digest envoyé',
+      sent: totalSent,
+      newAnimals: newAnimals.length,
+      adoptantsChecked: activeAdoptants.length,
+      since,
+      debug: debugLog,
+    });
   } catch (err) {
-    console.error('[Digest] Erreur:', err.message);
+    console.error('[Digest] Erreur:', err.message, err.stack);
     res.status(500).json({ error: err.message });
   }
 });
