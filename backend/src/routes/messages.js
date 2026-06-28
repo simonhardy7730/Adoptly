@@ -381,6 +381,17 @@ router.post('/:match_id', authenticate, async (req, res) => {
       })();
     }
 
+    // Marquer le match comme contacté quand le refuge envoie un message
+    if (role === 'shelter') {
+      supabase
+        .from('matches')
+        .update({ contacted: true })
+        .eq('id', match_id)
+        .eq('contacted', false)
+        .then(() => {})
+        .catch(() => {});
+    }
+
     // Notifier l'adoptant par email quand un refuge envoie un message (non-bloquant)
     if (role === 'shelter') {
       (async () => {
