@@ -14,16 +14,18 @@ function makeToken(payload) {
 // ── Adoptant — inscription ────────────────────────────────────────────────────
 
 router.post('/adoptant/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, first_name } = req.body;
   if (!email || !password)
     return res.status(400).json({ error: 'Email et mot de passe requis' });
 
   try {
     const hash = await bcrypt.hash(password, 10);
+    const insertData = { email, password_hash: hash };
+    if (first_name?.trim()) insertData.first_name = first_name.trim();
     const { data, error } = await supabase
       .from('adoptants')
-      .insert({ email, password_hash: hash })
-      .select('id, email, created_at')
+      .insert(insertData)
+      .select('id, email, first_name, created_at')
       .single();
 
     if (error) {
@@ -87,6 +89,8 @@ router.post('/google', async (req, res) => {
 
     const supaUser = await supaRes.json();
     const { email } = supaUser;
+    const googleName = supaUser.user_metadata?.full_name || supaUser.user_metadata?.name || '';
+    const googleFirstName = supaUser.user_metadata?.given_name || googleName.split(' ')[0] || '';
 
     if (!email)
       return res.status(401).json({ error: 'Email introuvable dans le token' });
@@ -101,10 +105,12 @@ router.post('/google', async (req, res) => {
     let isNew = false;
 
     if (!adoptant) {
+      const insertData = { email, password_hash: 'GOOGLE_OAUTH' };
+      if (googleFirstName) insertData.first_name = googleFirstName;
       const { data: newAdoptant, error: insertError } = await supabase
         .from('adoptants')
-        .insert({ email, password_hash: 'GOOGLE_OAUTH' })
-        .select('id, email, created_at, questionnaire_answers')
+        .insert(insertData)
+        .select('id, email, first_name, created_at, questionnaire_answers')
         .single();
 
       if (insertError)

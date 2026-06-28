@@ -163,12 +163,21 @@ export default function Chat() {
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 space-y-2">
-            <span className="text-4xl">💬</span>
-            <p className="text-gray-500 font-medium text-sm">Aucun message</p>
-            <p className="text-gray-400 text-xs text-center">
-              Présentez-vous au refuge pour en savoir plus sur {animal?.name || 'cet animal'} !
+          <div className="flex flex-col items-center justify-center h-full space-y-4 px-4">
+            <span className="text-5xl">💬</span>
+            <p className="text-gray-700 font-bold text-base text-center">
+              Fais le premier pas !
             </p>
+            <p className="text-gray-400 text-sm text-center max-w-[280px]">
+              {shelter?.name || 'Le refuge'} peut voir ton intérêt pour {animal?.name || 'cet animal'}, mais attend un petit message de ta part.
+            </p>
+            <button
+              onClick={() => setContent(`Bonjour ! J'ai craqué pour ${animal?.name || 'votre animal'} et j'aimerais en savoir plus. Est-il toujours disponible ?`)}
+              className="bg-orange-50 border-2 border-orange-200 text-orange-700 rounded-2xl px-5 py-3 text-sm font-medium text-left max-w-[300px] hover:bg-orange-100 transition-colors active:scale-95"
+            >
+              💡 <span className="italic">« Bonjour ! J'ai craqué pour {animal?.name || 'votre animal'} et j'aimerais en savoir plus. Est-il toujours disponible ? »</span>
+            </button>
+            <p className="text-gray-300 text-xs">Clique pour utiliser ce message ou écris le tien</p>
           </div>
         ) : (
           <>
