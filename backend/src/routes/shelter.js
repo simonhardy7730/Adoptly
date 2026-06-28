@@ -160,6 +160,60 @@ router.put('/profile', authenticate, uploadMiddleware([
   }
 });
 
+// ── Tous les contacts en attente ─────────────────────────
+
+router.get('/pending-contacts', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data: animals } = await supabase
+      .from('animals')
+      .select('id, name, photos')
+      .eq('shelter_id', req.user.id);
+
+    const animalIds = (animals || []).map((a) => a.id);
+    if (animalIds.length === 0) return res.json({ contacts: [] });
+
+    const { data: matches, error } = await supabase
+      .from('matches')
+      .select('id, timestamp, contacted, adoptant_id, animal_id')
+      .in('animal_id', animalIds)
+      .eq('swipe_direction', 'right')
+      .eq('contacted', false)
+      .order('timestamp', { ascending: false });
+
+    if (error) throw error;
+
+    const adoptantIds = [...new Set((matches || []).map((m) => m.adoptant_id))];
+    let adoptants = [];
+    if (adoptantIds.length > 0) {
+      const { data } = await supabase
+        .from('adoptants')
+        .select('id, email, first_name, last_name')
+        .in('id', adoptantIds);
+      adoptants = data || [];
+    }
+
+    const contacts = (matches || []).map((m) => {
+      const a = adoptants.find((ad) => ad.id === m.adoptant_id) || {};
+      const animal = animals.find((an) => an.id === m.animal_id) || {};
+      return {
+        match_id:     m.id,
+        timestamp:    m.timestamp,
+        email:        a.email,
+        first_name:   a.first_name,
+        last_name:    a.last_name,
+        animal_name:  animal.name,
+        animal_photo: animal.photos?.[0] || null,
+      };
+    });
+
+    res.json({ contacts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Adoptants intéressés par un animal ───────────────────
 
 router.get('/animals/:id/interested', authenticate, async (req, res) => {

@@ -99,13 +99,101 @@ function InterestedModal({ animal, onClose, t }) {
   );
 }
 
-function StatCard({ value, label, emoji }) {
+function StatCard({ value, label, emoji, onClick }) {
   return (
-    <div className="card p-4 text-center space-y-1">
+    <div
+      className={`card p-4 text-center space-y-1 ${onClick ? 'cursor-pointer hover:shadow-md hover:border-secondary/30 transition-all active:scale-95' : ''}`}
+      onClick={onClick}
+    >
       <p className="text-2xl">{emoji}</p>
       <p className="text-2xl font-extrabold text-primary">{value}</p>
       <p className="text-gray-500 text-xs">{label}</p>
     </div>
+  );
+}
+
+function PendingContactsModal({ onClose, t }) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [contacts, setContacts] = useState([]);
+
+  useEffect(() => {
+    api.get('/shelter/pending-contacts')
+      .then(({ data }) => setContacts(data.contacts || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white rounded-3xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl"
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <div>
+            <h3 className="font-bold text-gray-800">{t('pending_title') || 'Contacts en attente'}</h3>
+            <p className="text-gray-400 text-xs mt-0.5">
+              {contacts.length} {contacts.length > 1 ? 'adoptants attendent votre réponse' : 'adoptant attend votre réponse'}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-4 space-y-3">
+          {loading ? (
+            <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
+          ) : contacts.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">
+              🎉 Aucun contact en attente !
+            </div>
+          ) : (
+            contacts.map((c) => {
+              const name = [c.first_name, c.last_name].filter(Boolean).join(' ') || 'Anonyme';
+              const date = new Date(c.timestamp).toLocaleDateString('fr-FR', {
+                day: 'numeric', month: 'short',
+              });
+              return (
+                <div key={c.match_id} className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
+                  {c.animal_photo ? (
+                    <img src={c.animal_photo} alt={c.animal_name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-lg">🐾</div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-700 text-sm truncate">{name}</p>
+                    <p className="text-gray-400 text-xs truncate">
+                      {t('pending_for') || 'Pour'} <span className="font-medium text-primary">{c.animal_name}</span>
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <span className="text-gray-300 text-xs">{date}</span>
+                    <button
+                      onClick={() => {
+                        onClose();
+                        navigate(`/shelter/chat/${c.match_id}`);
+                      }}
+                      className="text-sm font-medium text-white bg-secondary hover:bg-primary px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      💬
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -281,6 +369,7 @@ export default function Dashboard() {
   const [markingAdopted, setMarkingAdopted] = useState(null);
   const [copiedId,  setCopiedId]  = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showPending, setShowPending] = useState(false);
 
   function shareAnimal(animal) {
     const url = `https://adoptly.fr/share/animal/${animal.id}`;
@@ -410,7 +499,12 @@ export default function Dashboard() {
             <div className="grid grid-cols-3 gap-3">
               <StatCard value={data?.stats?.total_animals ?? 0} label={t('dash_stat_animals')} emoji="🐾" />
               <StatCard value={data?.stats?.matches_this_month ?? 0} label={t('dash_stat_matches')} emoji="💚" />
-              <StatCard value={data?.stats?.pending_contacts ?? 0} label={t('dash_stat_contacts')} emoji="📬" />
+              <StatCard
+                value={data?.stats?.pending_contacts ?? 0}
+                label={t('dash_stat_contacts')}
+                emoji="📬"
+                onClick={(data?.stats?.pending_contacts ?? 0) > 0 ? () => setShowPending(true) : undefined}
+              />
             </div>
 
             {/* Graphique matchs hebdomadaires */}
@@ -560,6 +654,9 @@ export default function Dashboard() {
         )}
         {showFeedback && (
           <FeedbackModal onClose={() => setShowFeedback(false)} />
+        )}
+        {showPending && (
+          <PendingContactsModal onClose={() => setShowPending(false)} t={t} />
         )}
       </AnimatePresence>
     </div>
