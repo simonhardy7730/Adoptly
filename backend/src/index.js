@@ -319,6 +319,108 @@ app.get('/api/cron/reminder-j2', async (req, res) => {
   }
 });
 
+// ── Relance J+3 — refuges qui n'ont pas répondu à un adoptant ──────────────
+app.get('/api/cron/reminder-j3-shelter', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const { sendReminderJ3ShelterEmail, sendEmailsThrottled } = await import('./lib/email.js');
+
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+    // Messages d'adoptants créés entre 72h et 96h ago, non lus
+    const now = new Date();
+    const h96 = new Date(now - 96 * 60 * 60 * 1000).toISOString();
+    const h72 = new Date(now - 72 * 60 * 60 * 1000).toISOString();
+
+    const { data: messages, error: msgErr } = await supabase
+      .from('messages')
+      .select('id, match_id, content, created_at')
+      .eq('sender_role', 'adoptant')
+      .eq('read', false)
+      .gte('created_at', h96)
+      .lte('created_at', h72);
+
+    if (msgErr) throw msgErr;
+
+    console.log(`[Reminder-J3] ${messages?.length || 0} message(s) non-lu(s) dans la fenêtre 72-96h`);
+
+    if (!messages?.length) {
+      return res.json({ message: 'Aucun message non-lu dans la fenêtre', sent: 0 });
+    }
+
+    // Dédupliquer par match_id (un seul rappel par conversation)
+    const matchMap = {};
+    for (const msg of messages) {
+      if (!matchMap[msg.match_id]) matchMap[msg.match_id] = msg;
+    }
+    const uniqueMatches = Object.values(matchMap);
+
+    const emailFns = [];
+
+    for (const msg of uniqueMatches) {
+      // Vérifier si le refuge a répondu après ce message
+      const { data: replies } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('match_id', msg.match_id)
+        .eq('sender_role', 'shelter')
+        .gt('created_at', msg.created_at)
+        .limit(1);
+
+      if (replies?.length > 0) continue;
+
+      const { data: match } = await supabase
+        .from('matches')
+        .select('adoptant_id, animal_id')
+        .eq('id', msg.match_id)
+        .single();
+
+      if (!match) continue;
+
+      const { data: adoptant } = await supabase
+        .from('adoptants')
+        .select('first_name, last_name, email')
+        .eq('id', match.adoptant_id)
+        .single();
+
+      const { data: animal } = await supabase
+        .from('animals')
+        .select('name, shelter_id, shelters(email, name)')
+        .eq('id', match.animal_id)
+        .single();
+
+      if (!animal?.shelters?.email) continue;
+
+      const adoptantName = [adoptant?.first_name, adoptant?.last_name].filter(Boolean).join(' ') || adoptant?.email || 'Un adoptant';
+      const preview = msg.content.length > 100 ? msg.content.slice(0, 100) + '…' : msg.content;
+
+      emailFns.push(() => sendReminderJ3ShelterEmail({
+        shelterEmail:   animal.shelters.email,
+        shelterName:    animal.shelters.name,
+        adoptantName,
+        animalName:     animal.name,
+        messagePreview: preview,
+      }));
+    }
+
+    await sendEmailsThrottled(emailFns);
+
+    console.log(`[Reminder-J3] ${emailFns.length} email(s) envoyé(s) à des refuges`);
+    res.json({
+      message: 'Relance J+3 refuges terminée',
+      sent: emailFns.length,
+      totalUnread: messages.length,
+    });
+  } catch (err) {
+    console.error('[Reminder-J3] Erreur:', err.message, err.stack);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

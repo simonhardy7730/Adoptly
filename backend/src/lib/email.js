@@ -1595,3 +1595,50 @@ export async function sendReminderJ2Email({
     html,
   });
 }
+
+export async function sendReminderJ3ShelterEmail({
+  shelterEmail, shelterName, adoptantName, animalName, messagePreview,
+}) {
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A);padding:24px;text-align:center;">
+        <span style="color:#fff;font-weight:900;font-size:20px;">Adoptly</span>
+      </div>
+      <div style="padding:32px 24px;">
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 12px;text-align:center;">
+          Un adoptant attend votre réponse !
+        </h1>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 8px;">
+          <strong>${adoptantName}</strong> vous a écrit il y a 3 jours à propos de <strong>${animalName}</strong> et n'a toujours pas reçu de réponse.
+        </p>
+        <div style="background:#f8f9fa;border-left:4px solid #1B4F8A;padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;">
+          <p style="color:#666;font-size:14px;margin:0;font-style:italic;">"${messagePreview}"</p>
+        </div>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:16px 0 24px;">
+          Une réponse rapide augmente les chances d'adoption. Même un court message fait la différence !
+        </p>
+        <p style="text-align:center;">
+          <a href="https://adoptly.fr/shelter/conversations" style="display:inline-block;background:#F07A2A;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">
+            Répondre à ${adoptantName}
+          </a>
+        </p>
+      </div>
+      <div style="padding:16px 24px;text-align:center;border-top:1px solid #f0f0f0;">
+        <p style="color:#aaa;font-size:12px;margin:0;">L'équipe Adoptly</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  await sendEmail({
+    to: shelterEmail,
+    subject: `${adoptantName} attend votre réponse pour ${animalName}`,
+    html,
+  });
+}
