@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendMatchNotificationEmail } from '../lib/email.js';
+import { sendMatchNotificationEmail, sendMatchEncouragementEmail } from '../lib/email.js';
 import { haversineKm, passesHardFilters, scoreAnimal } from '../lib/matching.js';
 
 const router = express.Router();
@@ -166,6 +166,15 @@ router.post('/swipe', authenticate, async (req, res) => {
           adoptantEmail:     adoptantInfo?.email || req.user.email,
           adoptantFirstName: adoptantInfo?.first_name,
           adoptantLastName:  adoptantInfo?.last_name,
+        }).catch(() => {});
+
+        sendMatchEncouragementEmail({
+          adoptantEmail:  adoptantInfo?.email || req.user.email,
+          adoptantName:   adoptantInfo?.first_name || '',
+          animalName:     animal.name,
+          animalPhoto:    animal.photos?.[0] || null,
+          shelterName:    animal.shelters.name,
+          matchId:        match.id,
         }).catch(() => {});
       }
 

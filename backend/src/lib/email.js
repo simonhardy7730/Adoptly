@@ -1497,3 +1497,52 @@ export async function sendDailyDigestEmail({
     html,
   });
 }
+
+export async function sendMatchEncouragementEmail({
+  adoptantEmail, adoptantName, animalName, animalPhoto, shelterName, matchId,
+}) {
+  const prenom = adoptantName || '';
+  const salut = prenom ? `${prenom}, tu` : 'Tu';
+  const photoBlock = animalPhoto
+    ? `<img src="${animalPhoto}" alt="${animalName}" style="width:100%;max-width:320px;border-radius:16px;display:block;margin:0 auto 20px;" />`
+    : '';
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A);padding:24px;text-align:center;">
+        <span style="color:#fff;font-weight:900;font-size:20px;">Adoptly</span>
+      </div>
+      <div style="padding:32px 24px;text-align:center;">
+        ${photoBlock}
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 12px;">
+          ${salut} as craqué pour ${animalName} !
+        </h1>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 8px;">
+          <strong>${shelterName}</strong> peut voir ton intérêt, mais attend un petit message de ta part pour démarrer la conversation.
+        </p>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px;">
+          Présente-toi en quelques mots — ton mode de vie, pourquoi ${animalName} t'a tapé dans l'œil — ça aide le refuge à mieux te connaître !
+        </p>
+        <a href="https://adoptly.fr/adoptant/matches" style="display:inline-block;background:#F07A2A;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">
+          Écrire à ${shelterName}
+        </a>
+      </div>
+      <div style="padding:16px 24px;text-align:center;border-top:1px solid #f0f0f0;">
+        <p style="color:#aaa;font-size:12px;margin:0;">L'équipe Adoptly</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  await sendEmail({
+    to: adoptantEmail,
+    subject: `${animalName} attend ton message — présente-toi !`,
+    html,
+  });
+}
