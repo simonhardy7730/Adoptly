@@ -1546,3 +1546,52 @@ export async function sendMatchEncouragementEmail({
     html,
   });
 }
+
+export async function sendReminderJ2Email({
+  adoptantEmail, adoptantName, animalName, animalPhoto, shelterName,
+}) {
+  const prenom = adoptantName || '';
+  const salut = prenom ? `${prenom}, ` : '';
+  const photoBlock = animalPhoto
+    ? `<img src="${animalPhoto}" alt="${animalName}" style="width:100%;max-width:320px;border-radius:16px;display:block;margin:0 auto 20px;" />`
+    : '';
+
+  const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:480px;margin:0 auto;padding:32px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A);padding:24px;text-align:center;">
+        <span style="color:#fff;font-weight:900;font-size:20px;">Adoptly</span>
+      </div>
+      <div style="padding:32px 24px;text-align:center;">
+        ${photoBlock}
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 12px;">
+          ${salut}${animalName} pense encore à toi !
+        </h1>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 8px;">
+          Tu as craqué pour <strong>${animalName}</strong> il y a 2 jours, mais tu n'as pas encore envoyé de message à <strong>${shelterName}</strong>.
+        </p>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px;">
+          Un simple "Bonjour" suffit pour démarrer la conversation. Le refuge attend de tes nouvelles !
+        </p>
+        <a href="https://adoptly.fr/adoptant/matches" style="display:inline-block;background:#F07A2A;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:700;font-size:15px;">
+          Écrire à ${shelterName}
+        </a>
+      </div>
+      <div style="padding:16px 24px;text-align:center;border-top:1px solid #f0f0f0;">
+        <p style="color:#aaa;font-size:12px;margin:0;">L'équipe Adoptly</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  await sendEmail({
+    to: adoptantEmail,
+    subject: `${salut}${animalName} attend toujours ton message !`,
+    html,
+  });
+}

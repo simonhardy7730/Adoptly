@@ -232,6 +232,93 @@ app.get('/api/cron/daily-digest', async (req, res) => {
   }
 });
 
+// ── Relance J+2 — adoptants qui ont swipé right mais pas écrit ─────────────
+app.get('/api/cron/reminder-j2', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const { sendReminderJ2Email, sendEmailsThrottled } = await import('./lib/email.js');
+
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+    // Matchs right créés entre 48h et 72h ago
+    const now = new Date();
+    const h72 = new Date(now - 72 * 60 * 60 * 1000).toISOString();
+    const h48 = new Date(now - 48 * 60 * 60 * 1000).toISOString();
+
+    const { data: matches, error: matchErr } = await supabase
+      .from('matches')
+      .select('id, adoptant_id, animal_id')
+      .eq('swipe_direction', 'right')
+      .gte('timestamp', h72)
+      .lte('timestamp', h48);
+
+    if (matchErr) throw matchErr;
+
+    console.log(`[Reminder-J2] ${matches?.length || 0} match(s) dans la fenêtre 48-72h`);
+
+    if (!matches?.length) {
+      return res.json({ message: 'Aucun match dans la fenêtre', sent: 0 });
+    }
+
+    // Filtrer ceux où l'adoptant n'a envoyé aucun message
+    const emailFns = [];
+    let skipped = 0;
+
+    for (const match of matches) {
+      const { data: msgs } = await supabase
+        .from('messages')
+        .select('id')
+        .eq('match_id', match.id)
+        .eq('sender_role', 'adoptant')
+        .limit(1);
+
+      if (msgs?.length > 0) {
+        skipped++;
+        continue;
+      }
+
+      const { data: adoptant } = await supabase
+        .from('adoptants')
+        .select('email, first_name')
+        .eq('id', match.adoptant_id)
+        .single();
+
+      const { data: animal } = await supabase
+        .from('animals')
+        .select('name, photos, shelters(name)')
+        .eq('id', match.animal_id)
+        .single();
+
+      if (!adoptant?.email || !animal) continue;
+
+      emailFns.push(() => sendReminderJ2Email({
+        adoptantEmail: adoptant.email,
+        adoptantName:  adoptant.first_name || '',
+        animalName:    animal.name,
+        animalPhoto:   animal.photos?.[0] || null,
+        shelterName:   animal.shelters?.name || 'Le refuge',
+      }));
+    }
+
+    await sendEmailsThrottled(emailFns);
+
+    console.log(`[Reminder-J2] ${emailFns.length} email(s) envoyé(s), ${skipped} ignoré(s) (déjà écrit)`);
+    res.json({
+      message: 'Relance J+2 terminée',
+      sent: emailFns.length,
+      skipped,
+      totalMatches: matches.length,
+    });
+  } catch (err) {
+    console.error('[Reminder-J2] Erreur:', err.message, err.stack);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
