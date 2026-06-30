@@ -15,9 +15,16 @@ function timeAgo(isoString) {
   return new Date(isoString).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+const FILTERS = [
+  { key: 'all',    label: 'Tout' },
+  { key: 'refuge', label: 'Nos refuges' },
+  { key: 'guide',  label: "Guides d'adoption" },
+];
+
 export default function ArticleList() {
   const [articles, setArticles] = useState([]);
   const [loading,  setLoading]  = useState(true);
+  const [filter,   setFilter]   = useState('all');
 
   useEffect(() => {
     document.title = 'Actualités | Adoptly';
@@ -27,6 +34,12 @@ export default function ArticleList() {
       .finally(() => setLoading(false));
     return () => { document.title = 'Adoptly - Adopter un animal en refuge'; };
   }, []);
+
+  const filtered = filter === 'all'
+    ? articles
+    : filter === 'refuge'
+      ? articles.filter(a => a.shelter_id)
+      : articles.filter(a => !a.shelter_id);
 
   return (
     <div className="min-h-screen bg-bg-light">
@@ -61,6 +74,25 @@ export default function ArticleList() {
           </p>
         </div>
 
+        {/* Filtres */}
+        {!loading && articles.length > 0 && (
+          <div className="flex justify-center gap-2">
+            {FILTERS.map(f => (
+              <button
+                key={f.key}
+                onClick={() => setFilter(f.key)}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                  filter === f.key
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-white text-gray-500 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Articles */}
         {loading ? (
           <div className="flex justify-center py-16">
@@ -72,9 +104,17 @@ export default function ArticleList() {
             <p className="text-gray-500 font-medium">Aucun article pour le moment</p>
             <p className="text-gray-400 text-sm">Les premiers articles arrivent bientôt !</p>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-12 space-y-3">
+            <div className="text-4xl">🔍</div>
+            <p className="text-gray-500 font-medium">Aucun article dans cette catégorie</p>
+            <button onClick={() => setFilter('all')} className="text-secondary text-sm font-medium hover:underline">
+              Voir tous les articles
+            </button>
+          </div>
         ) : (
           <div className="space-y-5">
-            {articles.map((article, i) => (
+            {filtered.map((article, i) => (
               <motion.div
                 key={article.id}
                 initial={{ opacity: 0, y: 16 }}
