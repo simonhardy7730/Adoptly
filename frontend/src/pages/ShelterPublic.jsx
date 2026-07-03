@@ -139,21 +139,26 @@ export default function ShelterPublic() {
           </motion.div>
         )}
 
-        {/* Photo du refuge */}
-        {shelter.description_photo_url && (
-          <motion.div
-            className="rounded-3xl overflow-hidden"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-          >
-            <img
-              src={shelter.description_photo_url}
-              alt={`Photo de ${shelter.name}`}
-              className="w-full object-cover max-h-64 rounded-3xl"
-            />
-          </motion.div>
-        )}
+        {/* Photos du refuge */}
+        {(() => {
+          const photos = shelter.description_photos?.length
+            ? shelter.description_photos
+            : shelter.description_photo_url ? [shelter.description_photo_url] : [];
+          if (!photos.length) return null;
+          return (
+            <motion.div
+              className={`grid gap-2 ${photos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              {photos.map((url, i) => (
+                <img key={i} src={url} alt={`Photo de ${shelter.name}`}
+                  className="w-full object-cover max-h-64 rounded-3xl" />
+              ))}
+            </motion.div>
+          );
+        })()}
 
         {/* Galerie photos des animaux */}
         {gallery.length > 0 && (

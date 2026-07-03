@@ -24,8 +24,8 @@ export default function ShelterProfile() {
   });
   const [logoFile,      setLogoFile]      = useState(null);
   const [logoPreview,   setLogoPreview]   = useState(null);
-  const [descPhotoFile, setDescPhotoFile] = useState(null);
-  const [descPhotoPreview, setDescPhotoPreview] = useState(null);
+  const [descPhotos,    setDescPhotos]    = useState([]);
+  const [newDescFiles,  setNewDescFiles]  = useState([]);
 
   useEffect(() => {
     api.get('/shelter/profile')
@@ -39,7 +39,10 @@ export default function ShelterProfile() {
           siret:       data.siret       || '',
         });
         setLogoPreview(data.logo_url || null);
-        setDescPhotoPreview(data.description_photo_url || null);
+        const photos = data.description_photos?.length
+          ? data.description_photos
+          : data.description_photo_url ? [data.description_photo_url] : [];
+        setDescPhotos(photos);
       })
       .catch(() => navigate('/shelter/dashboard'))
       .finally(() => setLoading(false));
@@ -56,16 +59,20 @@ export default function ShelterProfile() {
       formData.append('address',     form.address);
       formData.append('description', form.description);
       formData.append('siret',       form.siret);
-      if (logoFile)      formData.append('logo',              logoFile);
-      if (descPhotoFile) formData.append('description_photo', descPhotoFile);
-      // Garder les URLs existantes si pas de nouveau fichier
-      if (!logoFile && logoPreview)            formData.append('existing_logo_url',              logoPreview);
-      if (!descPhotoFile && descPhotoPreview)  formData.append('existing_description_photo_url', descPhotoPreview);
+      if (logoFile) formData.append('logo', logoFile);
+      if (!logoFile && logoPreview) formData.append('existing_logo_url', logoPreview);
+      newDescFiles.forEach(f => formData.append('description_photos', f));
+      formData.append('existing_description_photos', JSON.stringify(descPhotos));
 
       const { data } = await api.put('/shelter/profile', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setProfile(data);
+      const saved_photos = data.description_photos?.length
+        ? data.description_photos
+        : data.description_photo_url ? [data.description_photo_url] : [];
+      setDescPhotos(saved_photos);
+      setNewDescFiles([]);
       setEditing(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
@@ -80,9 +87,12 @@ export default function ShelterProfile() {
     setEditing(false);
     setError('');
     setLogoFile(null);
-    setDescPhotoFile(null);
+    setNewDescFiles([]);
     setLogoPreview(profile?.logo_url || null);
-    setDescPhotoPreview(profile?.description_photo_url || null);
+    const photos = profile?.description_photos?.length
+      ? profile.description_photos
+      : profile?.description_photo_url ? [profile.description_photo_url] : [];
+    setDescPhotos(photos);
     setForm({
       name:        profile?.name        || '',
       phone:       profile?.phone       || '',
@@ -163,12 +173,13 @@ export default function ShelterProfile() {
                   {profile.description}
                 </p>
               )}
-              {profile?.description_photo_url && (
-                <img
-                  src={profile.description_photo_url}
-                  alt="Photo du refuge"
-                  className="w-full rounded-2xl mt-3 object-cover max-h-48"
-                />
+              {descPhotos.length > 0 && (
+                <div className={`mt-3 grid gap-2 ${descPhotos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {descPhotos.map((url, i) => (
+                    <img key={i} src={url} alt={`Photo refuge ${i + 1}`}
+                      className="w-full rounded-2xl object-cover max-h-48" />
+                  ))}
+                </div>
               )}
 
               <button
@@ -230,31 +241,48 @@ export default function ShelterProfile() {
                 <p className="text-xs text-gray-400 mt-0.5 text-right">{form.description.length}/1000</p>
               </div>
 
-              {/* Photo du refuge */}
+              {/* Photos du refuge (max 5) */}
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">
-                  🖼️ Photo du refuge <span className="text-gray-400 font-normal">(optionnel)</span>
+                  🖼️ Photos du refuge <span className="text-gray-400 font-normal">(max 5)</span>
                 </label>
-                {descPhotoPreview ? (
-                  <div className="relative">
-                    <img src={descPhotoPreview} alt="Photo refuge"
-                      className="w-full rounded-2xl object-cover max-h-40" />
-                    <button type="button"
-                      onClick={() => { setDescPhotoFile(null); setDescPhotoPreview(null); }}
-                      className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full"
-                    >Supprimer</button>
-                  </div>
-                ) : (
-                  <button type="button" onClick={() => descPhotoRef.current?.click()}
-                    className="w-full h-20 rounded-2xl border-2 border-dashed border-gray-300 flex items-center justify-center gap-2 text-gray-400 hover:border-secondary hover:text-secondary transition-colors"
-                  >
-                    <span>📷</span><span className="text-sm">Ajouter une photo</span>
-                  </button>
-                )}
+                <div className="grid grid-cols-3 gap-2">
+                  {descPhotos.map((url, i) => (
+                    <div key={`existing-${i}`} className="relative aspect-square">
+                      <img src={url} alt={`Photo ${i + 1}`}
+                        className="w-full h-full rounded-xl object-cover" />
+                      <button type="button"
+                        onClick={() => setDescPhotos(prev => prev.filter((_, j) => j !== i))}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center shadow"
+                      >✕</button>
+                    </div>
+                  ))}
+                  {newDescFiles.map((f, i) => (
+                    <div key={`new-${i}`} className="relative aspect-square">
+                      <img src={URL.createObjectURL(f)} alt={`Nouvelle ${i + 1}`}
+                        className="w-full h-full rounded-xl object-cover" />
+                      <button type="button"
+                        onClick={() => setNewDescFiles(prev => prev.filter((_, j) => j !== i))}
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white text-xs rounded-full flex items-center justify-center shadow"
+                      >✕</button>
+                    </div>
+                  ))}
+                  {(descPhotos.length + newDescFiles.length) < 5 && (
+                    <button type="button" onClick={() => descPhotoRef.current?.click()}
+                      className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-secondary hover:text-secondary transition-colors"
+                    >
+                      <span className="text-lg">+</span>
+                      <span className="text-xs">Photo</span>
+                    </button>
+                  )}
+                </div>
                 <input ref={descPhotoRef} type="file" accept="image/*" className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
-                    if (f) { setDescPhotoFile(f); setDescPhotoPreview(URL.createObjectURL(f)); }
+                    if (f && (descPhotos.length + newDescFiles.length) < 5) {
+                      setNewDescFiles(prev => [...prev, f]);
+                    }
+                    e.target.value = '';
                   }}
                 />
               </div>

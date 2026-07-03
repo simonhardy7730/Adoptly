@@ -116,7 +116,7 @@ router.get('/profile', authenticate, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('shelters')
-      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url, siret')
+      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url, description_photos, siret')
       .eq('id', req.user.id)
       .single();
     if (error) throw error;
@@ -128,16 +128,19 @@ router.get('/profile', authenticate, async (req, res) => {
 
 router.put('/profile', authenticate, uploadMiddleware([
   { name: 'logo',              maxCount: 1 },
-  { name: 'description_photo', maxCount: 1 },
+  { name: 'description_photos', maxCount: 5 },
 ]), async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   const { name, phone, address, description, siret } = req.body;
   try {
-    const logoUrl        = await uploadVideo(req.files?.logo?.[0]              || null, req.user.id)
-                        || req.body.existing_logo_url              || null;
-    const descPhotoUrl   = await uploadVideo(req.files?.description_photo?.[0] || null, req.user.id)
-                        || req.body.existing_description_photo_url || null;
+    const logoUrl = await uploadVideo(req.files?.logo?.[0] || null, req.user.id)
+                 || req.body.existing_logo_url || null;
+
+    const newPhotoUrls    = await uploadPhotos(req.files?.description_photos || [], req.user.id);
+    const existingPhotos  = safeJson(req.body.existing_description_photos, []);
+    const descriptionPhotos = [...existingPhotos, ...newPhotoUrls].slice(0, 5);
+    const descPhotoUrl    = descriptionPhotos[0] || null;
 
     const { data, error } = await supabase
       .from('shelters')
@@ -148,10 +151,11 @@ router.put('/profile', authenticate, uploadMiddleware([
         description:             description || null,
         logo_url:                logoUrl,
         description_photo_url:   descPhotoUrl,
+        description_photos:      descriptionPhotos,
         siret:                   siret       || null,
       })
       .eq('id', req.user.id)
-      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url, siret')
+      .select('id, email, name, phone, address, latitude, longitude, created_at, logo_url, description, description_photo_url, description_photos, siret')
       .single();
     if (error) throw error;
     res.json(data);

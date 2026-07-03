@@ -94,7 +94,7 @@ router.get('/animals/:id', async (req, res) => {
     // Récupérer les infos publiques du refuge (nom + ville extraite de l'adresse)
     const { data: shelter } = await supabase
       .from('shelters')
-      .select('name, address, logo_url, description, description_photo_url')
+      .select('name, address, logo_url, description, description_photo_url, description_photos')
       .eq('id', animal.shelter_id)
       .single();
 
@@ -105,6 +105,7 @@ router.get('/animals/:id', async (req, res) => {
       shelter_logo_url:             shelter?.logo_url             || null,
       shelter_description:          shelter?.description          || null,
       shelter_description_photo_url:shelter?.description_photo_url|| null,
+      shelter_description_photos:   shelter?.description_photos   || [],
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -118,7 +119,7 @@ router.get('/shelters', async (_req, res) => {
     // Récupérer tous les refuges avec leurs animaux actifs
     const { data: shelters, error } = await supabase
       .from('shelters')
-      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at, siret')
+      .select('id, name, address, phone, email, logo_url, description, description_photo_url, description_photos, created_at, siret')
       .order('name', { ascending: true });
 
     if (error) throw error;
@@ -157,6 +158,7 @@ router.get('/shelters', async (_req, res) => {
           logo_url:      shelter.logo_url || null,
           description:   shelter.description || null,
           description_photo_url: shelter.description_photo_url || null,
+          description_photos: shelter.description_photos || [],
           siret:         shelter.siret || null,
           created_at:    shelter.created_at,
           animal_count:  shelterAnimals.length,
@@ -178,7 +180,7 @@ router.get('/shelters/:id', async (req, res) => {
   try {
     const { data: shelter, error } = await supabase
       .from('shelters')
-      .select('id, name, address, phone, email, logo_url, description, description_photo_url, created_at, siret')
+      .select('id, name, address, phone, email, logo_url, description, description_photo_url, description_photos, created_at, siret')
       .eq('id', req.params.id)
       .single();
 
