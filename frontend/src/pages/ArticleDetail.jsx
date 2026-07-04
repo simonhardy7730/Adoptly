@@ -208,12 +208,28 @@ export default function ArticleDetail() {
         </div>
 
         {/* Footer */}
-        <div className="text-center text-gray-300 text-xs pb-4 space-x-3">
+        <div className="text-center text-gray-300 text-xs pb-20 space-x-3">
           <Link to="/" className="hover:text-gray-500 transition-colors">Accueil</Link>
           <span>·</span>
           <Link to="/actualites" className="hover:text-gray-500 transition-colors">Actualités</Link>
           <span>·</span>
           <Link to="/refuges" className="hover:text-gray-500 transition-colors">Refuges</Link>
+        </div>
+      </div>
+
+      {/* Sticky CTA bottom bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-bold text-primary text-sm truncate">Trouvez votre compagnon idéal</p>
+            <p className="text-gray-400 text-xs">Test de compatibilité gratuit · 2 min</p>
+          </div>
+          <Link
+            to="/adoptant/register"
+            className="btn-primary text-sm py-2.5 px-5 whitespace-nowrap flex-shrink-0"
+          >
+            Commencer →
+          </Link>
         </div>
       </div>
     </div>
