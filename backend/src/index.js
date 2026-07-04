@@ -71,6 +71,9 @@ app.use('/api/articles', articlesRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 
+// ── Pages SEO + sitemap accessibles à la racine ─────────
+app.use(publicRoutes);
+
 // ── Désinscription notifications (lien dans les emails) ───────────
 app.get('/api/unsubscribe/:adoptantId', async (req, res) => {
   try {

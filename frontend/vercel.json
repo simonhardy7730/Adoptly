@@ -3,7 +3,10 @@
     { "source": "/share/animal/:id", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/share/animal/:id" },
     { "source": "/share/article/:slug", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/share/article/:slug" },
     { "source": "/share/animaux", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/share/animaux" },
-    { "source": "/sitemap.xml", "destination": "https://adoptly-backend-p2os.onrender.com/api/public/sitemap.xml" },
+    { "source": "/sitemap.xml", "destination": "https://adoptly-backend-p2os.onrender.com/sitemap.xml" },
+    { "source": "/chiens-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chiens-a-adopter" },
+    { "source": "/chats-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chats-a-adopter" },
+    { "source": "/animaux-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/animaux-a-adopter" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [

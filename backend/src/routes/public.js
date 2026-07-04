@@ -367,6 +367,205 @@ router.get('/share/animaux', async (req, res) => {
   }
 });
 
+// ── Pages SEO server-rendered ────────────────────────────
+function seoAnimalPage({ title, description, canonical, animals, shelterMap, species }) {
+  const heading = species === 'dog' ? 'Chiens à adopter' : species === 'cat' ? 'Chats à adopter' : 'Animaux à adopter';
+  const count = animals.length;
+  const speciesLabel = species === 'dog' ? 'chiens' : species === 'cat' ? 'chats' : 'animaux';
+
+  const animalCards = animals.map(a => {
+    const photo = a.photos?.[0] || '';
+    const shelter = shelterMap[a.shelter_id] || {};
+    const city = shelter.address ? (shelter.address.match(/\d{4,5}\s+([^,]+)/)?.[1]?.trim() || shelter.address.split(',').pop()?.trim() || '') : '';
+    const age = a.age_years != null ? (a.age_years < 1 ? 'Moins d\'1 an' : `${a.age_years} an${a.age_years > 1 ? 's' : ''}`) : '';
+    return `
+      <a href="https://adoptly.fr/animal/${a.id}" style="display:block;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);text-decoration:none;color:#333;">
+        ${photo ? `<img src="${photo}" alt="${a.name}" style="width:100%;height:200px;object-fit:cover;" loading="lazy"/>` : ''}
+        <div style="padding:12px 16px;">
+          <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:#1B4F8A;">${a.name}</h3>
+          <p style="margin:0;font-size:13px;color:#666;">${a.breed || 'Croisé'} · ${age}${city ? ` · ${city}` : ''}</p>
+          ${shelter.name ? `<p style="margin:4px 0 0;font-size:12px;color:#999;">🏠 ${shelter.name}</p>` : ''}
+        </div>
+      </a>`;
+  }).join('\n');
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: title,
+    description,
+    url: `https://adoptly.fr${canonical}`,
+    numberOfItems: count,
+    provider: { '@type': 'Organization', name: 'Adoptly', url: 'https://adoptly.fr' },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: count,
+      itemListElement: animals.slice(0, 20).map((a, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'Product',
+          name: a.name,
+          description: `${a.name}, ${a.breed || 'croisé'}${a.age_years != null ? `, ${a.age_years} an(s)` : ''} — disponible à l'adoption via Adoptly`,
+          image: a.photos?.[0] || '',
+          url: `https://adoptly.fr/animal/${a.id}`,
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' },
+        },
+      })),
+    },
+  };
+
+  return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>${title}</title>
+  <meta name="description" content="${description}"/>
+  <link rel="canonical" href="https://adoptly.fr${canonical}"/>
+  <meta name="robots" content="index, follow"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="${title}"/>
+  <meta property="og:description" content="${description}"/>
+  <meta property="og:url" content="https://adoptly.fr${canonical}"/>
+  <meta property="og:image" content="https://adoptly.fr/pwa-512x512.png"/>
+  <meta property="og:locale" content="fr_FR"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Inter,system-ui,sans-serif;background:#f5f7fa;color:#333}
+    .nav{background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .logo-box{width:28px;height:28px;background:#1B4F8A;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:14px}
+    .logo-text{font-weight:900;color:#1B4F8A;font-size:18px}
+    .cta-btn{background:#F07A2A;color:#fff;padding:8px 20px;border-radius:10px;text-decoration:none;font-weight:600;font-size:14px}
+    .container{max-width:960px;margin:0 auto;padding:24px 16px}
+    .hero{text-align:center;margin-bottom:32px}
+    .hero h1{font-size:28px;font-weight:800;color:#1B4F8A;margin-bottom:8px}
+    .hero p{font-size:15px;color:#666;max-width:600px;margin:0 auto 16px}
+    .count{display:inline-block;background:#e8f0fe;color:#1B4F8A;font-weight:700;padding:6px 16px;border-radius:20px;font-size:14px;margin-bottom:8px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .bottom-cta{text-align:center;margin:40px 0;padding:32px;background:linear-gradient(135deg,#1B4F8A,#2d6ab8);border-radius:20px;color:#fff}
+    .bottom-cta h2{font-size:22px;font-weight:800;margin-bottom:8px}
+    .bottom-cta p{font-size:14px;opacity:.85;margin-bottom:20px}
+    .bottom-cta a{display:inline-block;background:#fff;color:#1B4F8A;font-weight:700;padding:12px 28px;border-radius:12px;text-decoration:none;font-size:15px}
+    footer{text-align:center;padding:24px;font-size:12px;color:#aaa}
+    footer a{color:#1B4F8A;text-decoration:none}
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="https://adoptly.fr" class="logo">
+      <div class="logo-box">A</div>
+      <span class="logo-text">Adoptly</span>
+    </a>
+    <a href="https://adoptly.fr/adoptant/register" class="cta-btn">Adopter →</a>
+  </nav>
+  <div class="container">
+    <div class="hero">
+      <span class="count">${count} ${speciesLabel} disponibles</span>
+      <h1>${heading} en refuge — France, Belgique, Europe</h1>
+      <p>${description}</p>
+    </div>
+    <div class="grid">
+      ${animalCards}
+    </div>
+    <div class="bottom-cta">
+      <h2>Trouvez votre compagnon idéal</h2>
+      <p>Notre algorithme analyse 14 critères de compatibilité pour vous proposer les ${speciesLabel} qui correspondent à votre mode de vie. Gratuit et sans engagement.</p>
+      <a href="https://adoptly.fr/adoptant/register">Commencer le questionnaire →</a>
+    </div>
+  </div>
+  <footer>
+    <a href="https://adoptly.fr">Adoptly</a> · <a href="https://adoptly.fr/actualites">Actualités</a> · <a href="https://adoptly.fr/refuges">Nos refuges</a> · <a href="https://adoptly.fr/legal/cgu">CGU</a>
+  </footer>
+</body>
+</html>`;
+}
+
+router.get('/chiens-a-adopter', async (_req, res) => {
+  try {
+    const { data: animals } = await supabase
+      .from('animals')
+      .select('id, name, breed, age_years, photos, shelter_id, size')
+      .eq('status', 'active').eq('species', 'dog')
+      .order('created_at', { ascending: false });
+
+    const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
+    const { data: shelters } = await supabase
+      .from('shelters').select('id, name, address').in('id', shelterIds);
+    const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
+
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(seoAnimalPage({
+      title: `Chiens à adopter en refuge — ${(animals || []).length} chiens disponibles | Adoptly`,
+      description: `Découvrez ${(animals || []).length} chiens disponibles à l'adoption dans nos refuges partenaires en France, Belgique et Europe. Matching intelligent gratuit basé sur 14 critères de compatibilité.`,
+      canonical: '/chiens-a-adopter',
+      animals: animals || [],
+      shelterMap,
+      species: 'dog',
+    }));
+  } catch (err) {
+    res.status(500).send('Erreur serveur');
+  }
+});
+
+router.get('/chats-a-adopter', async (_req, res) => {
+  try {
+    const { data: animals } = await supabase
+      .from('animals')
+      .select('id, name, breed, age_years, photos, shelter_id, size')
+      .eq('status', 'active').eq('species', 'cat')
+      .order('created_at', { ascending: false });
+
+    const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
+    const { data: shelters } = await supabase
+      .from('shelters').select('id, name, address').in('id', shelterIds);
+    const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
+
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(seoAnimalPage({
+      title: `Chats à adopter en refuge — ${(animals || []).length} chats disponibles | Adoptly`,
+      description: `Découvrez ${(animals || []).length} chats disponibles à l'adoption dans nos refuges partenaires. Trouvez le chat qui correspond à votre mode de vie grâce au matching intelligent Adoptly. 100% gratuit.`,
+      canonical: '/chats-a-adopter',
+      animals: animals || [],
+      shelterMap,
+      species: 'cat',
+    }));
+  } catch (err) {
+    res.status(500).send('Erreur serveur');
+  }
+});
+
+router.get('/animaux-a-adopter', async (_req, res) => {
+  try {
+    const { data: animals } = await supabase
+      .from('animals')
+      .select('id, name, breed, age_years, photos, shelter_id, species, size')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
+    const { data: shelters } = await supabase
+      .from('shelters').select('id, name, address').in('id', shelterIds);
+    const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
+
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(seoAnimalPage({
+      title: `Animaux à adopter en refuge — ${(animals || []).length} animaux disponibles | Adoptly`,
+      description: `Découvrez ${(animals || []).length} animaux (chiens, chats, lapins...) disponibles à l'adoption dans nos refuges partenaires en France, Belgique et Europe. Matching intelligent gratuit.`,
+      canonical: '/animaux-a-adopter',
+      animals: animals || [],
+      shelterMap,
+      species: 'all',
+    }));
+  } catch (err) {
+    res.status(500).send('Erreur serveur');
+  }
+});
+
 // ── Sitemap dynamique ────────────────────────────────────
 router.get('/sitemap.xml', async (_req, res) => {
   try {
@@ -386,6 +585,9 @@ router.get('/sitemap.xml', async (_req, res) => {
       { loc: '/preparer-adoption',  freq: 'monthly', priority: '0.7' },
       { loc: '/actualites',         freq: 'weekly',  priority: '0.7' },
       { loc: '/adoptions',          freq: 'weekly',  priority: '0.6' },
+      { loc: '/chiens-a-adopter',   freq: 'daily',   priority: '0.9' },
+      { loc: '/chats-a-adopter',    freq: 'daily',   priority: '0.9' },
+      { loc: '/animaux-a-adopter',  freq: 'daily',   priority: '0.9' },
       { loc: '/adoptant/register',  freq: 'monthly', priority: '0.8' },
       { loc: '/shelter/register',   freq: 'monthly', priority: '0.7' },
       { loc: '/famille-accueil/register', freq: 'monthly', priority: '0.6' },
