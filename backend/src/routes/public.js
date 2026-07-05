@@ -368,6 +368,14 @@ router.get('/share/animaux', async (req, res) => {
 });
 
 // ── Pages SEO server-rendered ────────────────────────────
+// a.age est en MOIS en base
+function seoAgeLabel(months) {
+  if (months == null) return '';
+  if (months < 12) return `${months} mois`;
+  const y = Math.floor(months / 12);
+  return `${y} an${y > 1 ? 's' : ''}`;
+}
+
 function seoAnimalPage({ title, description, canonical, animals, shelterMap, species }) {
   const heading = species === 'dog' ? 'Chiens à adopter' : species === 'cat' ? 'Chats à adopter' : 'Animaux à adopter';
   const count = animals.length;
@@ -377,7 +385,7 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
     const photo = a.photos?.[0] || '';
     const shelter = shelterMap[a.shelter_id] || {};
     const city = shelter.address ? (shelter.address.match(/\d{4,5}\s+([^,]+)/)?.[1]?.trim() || shelter.address.split(',').pop()?.trim() || '') : '';
-    const age = a.age != null ? (a.age < 1 ? 'Moins d\'1 an' : `${a.age} an${a.age > 1 ? 's' : ''}`) : '';
+    const age = seoAgeLabel(a.age);
     return `
       <a href="https://adoptly.fr/animal/${a.id}" style="display:block;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);text-decoration:none;color:#333;">
         ${photo ? `<img src="${photo}" alt="${a.name}" style="width:100%;height:200px;object-fit:cover;" loading="lazy"/>` : ''}
@@ -406,7 +414,7 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
         item: {
           '@type': 'Product',
           name: a.name,
-          description: `${a.name}, ${a.breed || 'croisé'}${a.age != null ? `, ${a.age} an(s)` : ''} — disponible à l'adoption via Adoptly`,
+          description: `${a.name}, ${a.breed || 'croisé'}${a.age != null ? `, ${seoAgeLabel(a.age)}` : ''} — disponible à l'adoption via Adoptly`,
           image: a.photos?.[0] || '',
           url: `https://adoptly.fr/animal/${a.id}`,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' },
@@ -561,6 +569,21 @@ router.get('/animaux-a-adopter', async (_req, res) => {
       shelterMap,
       species: 'all',
     }));
+  } catch (err) {
+    res.status(500).send('Erreur serveur');
+  }
+});
+
+// ── Kit publications Facebook (page privée, lien non listé) ──
+// Le HTML est généré par backend/make-fb-kit.js et stocké dans Supabase
+// Storage, qui refuse de servir du text/html — on le proxifie ici.
+router.get('/kit-facebook-7h2p', async (_req, res) => {
+  try {
+    const { data, error } = await supabase.storage.from('animal-photos').download('fb-kit-7h2p/index.html');
+    if (error) return res.status(404).send('Kit introuvable');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.set('X-Robots-Tag', 'noindex, nofollow');
+    res.send(Buffer.from(await data.arrayBuffer()));
   } catch (err) {
     res.status(500).send('Erreur serveur');
   }

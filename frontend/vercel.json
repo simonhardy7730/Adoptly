@@ -7,6 +7,7 @@
     { "source": "/chiens-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chiens-a-adopter" },
     { "source": "/chats-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chats-a-adopter" },
     { "source": "/animaux-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/animaux-a-adopter" },
+    { "source": "/kit-facebook-7h2p", "destination": "https://adoptly-backend-p2os.onrender.com/kit-facebook-7h2p" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
