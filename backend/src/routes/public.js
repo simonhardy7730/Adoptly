@@ -600,7 +600,7 @@ const SEO_SEGMENTS = [
     title: c => `Adopter un chien de Roumanie — ${c} chiens disponibles | Adoptly`,
     desc: c => `${c} chiens sauvés des rues et des fourrières de Roumanie cherchent une famille en France ou en Belgique. Transport organisé, passeport européen, vaccins à jour. Service d'adoption gratuit.`,
     intro: `<p>En Roumanie, des milliers de chiens survivent dans les rues ou dans des fourrières surpeuplées. Nos refuges partenaires les sauvent, les soignent et les préparent à l'adoption : chaque chien arrive <strong>identifié, vacciné, stérilisé et muni de son passeport européen</strong>.</p>
-<p>Le transport vers la France ou la Belgique est organisé par les refuges via des transporteurs agréés — vous n'avez pas à vous déplacer en Roumanie. Répondez à notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> pour découvrir les chiens compatibles avec votre mode de vie.</p>`,
+<p>Le transport vers la France ou la Belgique est organisé par les refuges via des transporteurs agréés — vous n'avez pas à vous déplacer en Roumanie. Répondez à notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> pour découvrir les chiens compatibles avec votre mode de vie, et consultez notre <a href="https://adoptly.fr/actualites/adopter-chien-roumanie-france-guide-complet">guide complet de l'adoption d'un chien de Roumanie</a>.</p>`,
   },
   {
     slug: 'petit-chien-a-adopter',
@@ -640,7 +640,7 @@ const SEO_SEGMENTS = [
     title: c => `Adopter un chien en Belgique — ${c} chiens disponibles | Adoptly`,
     desc: c => `${c} chiens disponibles à l'adoption pour les familles en Belgique. Refuges partenaires en Belgique et en Europe, transport organisé, passeport européen. Service d'adoption gratuit.`,
     intro: `<p>Vous habitez en Belgique et souhaitez adopter un chien ? Tous les chiens ci-dessous sont adoptables depuis la Belgique : certains se trouvent dans des refuges belges, d'autres chez nos refuges partenaires européens qui organisent le transport jusqu'à chez vous — chiens identifiés, vaccinés, stérilisés, avec passeport européen.</p>
-<p>L'adoption suit les règles belges du bien-être animal : les refuges vérifient chaque famille avant de confier un animal. Notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> facilite cette étape en présentant votre profil directement au refuge.</p>`,
+<p>L'adoption suit les règles belges du bien-être animal : les refuges vérifient chaque famille avant de confier un animal. Notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> facilite cette étape en présentant votre profil directement au refuge. Pour les démarches détaillées, consultez notre <a href="https://adoptly.fr/actualites/adopter-animal-belgique-refuges-demarches">guide de l'adoption en Belgique</a>.</p>`,
   },
   {
     slug: 'adopter-un-chien-en-france',

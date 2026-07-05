@@ -65,10 +65,18 @@ export default function ArticleDetail() {
         );
       }
 
-      // Regular paragraph — handle **bold** and line breaks
-      const parts = trimmed.split(/(\*\*[^*]+\*\*)/g).map((part, j) => {
+      // Regular paragraph — handle **bold**, [links](url) and line breaks
+      const parts = trimmed.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g).map((part, j) => {
         if (part.startsWith('**') && part.endsWith('**')) {
           return <strong key={j}>{part.slice(2, -2)}</strong>;
+        }
+        const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (linkMatch) {
+          return (
+            <a key={j} href={linkMatch[2]} className="text-primary font-semibold underline">
+              {linkMatch[1]}
+            </a>
+          );
         }
         // Handle single line breaks within a paragraph
         return part.split('\n').map((line, k) => (
