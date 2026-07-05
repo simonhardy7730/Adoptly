@@ -235,6 +235,22 @@ app.get('/api/cron/daily-digest', async (req, res) => {
   }
 });
 
+// ── Sync du kit Facebook — appelé chaque nuit par cron-job.org ────────────
+app.get('/api/cron/fb-kit', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { syncFbKit } = await import('./lib/fbkit.js');
+    const result = await syncFbKit();
+    console.log('[FbKit] Sync:', JSON.stringify(result));
+    res.json({ message: 'Kit synchronisé', ...result });
+  } catch (err) {
+    console.error('[FbKit] Erreur:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Relance J+2 — adoptants qui ont swipé right mais pas écrit ─────────────
 app.get('/api/cron/reminder-j2', async (req, res) => {
   if (req.query.key !== process.env.CRON_SECRET) {
