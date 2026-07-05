@@ -377,7 +377,7 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
     const photo = a.photos?.[0] || '';
     const shelter = shelterMap[a.shelter_id] || {};
     const city = shelter.address ? (shelter.address.match(/\d{4,5}\s+([^,]+)/)?.[1]?.trim() || shelter.address.split(',').pop()?.trim() || '') : '';
-    const age = a.age_years != null ? (a.age_years < 1 ? 'Moins d\'1 an' : `${a.age_years} an${a.age_years > 1 ? 's' : ''}`) : '';
+    const age = a.age != null ? (a.age < 1 ? 'Moins d\'1 an' : `${a.age} an${a.age > 1 ? 's' : ''}`) : '';
     return `
       <a href="https://adoptly.fr/animal/${a.id}" style="display:block;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);text-decoration:none;color:#333;">
         ${photo ? `<img src="${photo}" alt="${a.name}" style="width:100%;height:200px;object-fit:cover;" loading="lazy"/>` : ''}
@@ -406,7 +406,7 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
         item: {
           '@type': 'Product',
           name: a.name,
-          description: `${a.name}, ${a.breed || 'croisé'}${a.age_years != null ? `, ${a.age_years} an(s)` : ''} — disponible à l'adoption via Adoptly`,
+          description: `${a.name}, ${a.breed || 'croisé'}${a.age != null ? `, ${a.age} an(s)` : ''} — disponible à l'adoption via Adoptly`,
           image: a.photos?.[0] || '',
           url: `https://adoptly.fr/animal/${a.id}`,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' },
@@ -489,7 +489,7 @@ router.get('/chiens-a-adopter', async (_req, res) => {
   try {
     const { data: animals } = await supabase
       .from('animals')
-      .select('id, name, breed, age_years, photos, shelter_id, size')
+      .select('id, name, breed, age, photos, shelter_id, size')
       .eq('status', 'active').eq('species', 'dog')
       .order('created_at', { ascending: false });
 
@@ -516,7 +516,7 @@ router.get('/chats-a-adopter', async (_req, res) => {
   try {
     const { data: animals } = await supabase
       .from('animals')
-      .select('id, name, breed, age_years, photos, shelter_id, size')
+      .select('id, name, breed, age, photos, shelter_id, size')
       .eq('status', 'active').eq('species', 'cat')
       .order('created_at', { ascending: false });
 
@@ -543,7 +543,7 @@ router.get('/animaux-a-adopter', async (_req, res) => {
   try {
     const { data: animals } = await supabase
       .from('animals')
-      .select('id, name, breed, age_years, photos, shelter_id, species, size')
+      .select('id, name, breed, age, photos, shelter_id, species, size')
       .eq('status', 'active')
       .order('created_at', { ascending: false });
 
