@@ -376,10 +376,11 @@ function seoAgeLabel(months) {
   return `${y} an${y > 1 ? 's' : ''}`;
 }
 
-function seoAnimalPage({ title, description, canonical, animals, shelterMap, species }) {
-  const heading = species === 'dog' ? 'Chiens à adopter' : species === 'cat' ? 'Chats à adopter' : 'Animaux à adopter';
+function seoAnimalPage({ title, description, canonical, animals, shelterMap, species, heading: customHeading, label: customLabel, intro }) {
+  const defaultHeading = species === 'dog' ? 'Chiens à adopter' : species === 'cat' ? 'Chats à adopter' : 'Animaux à adopter';
+  const heading = customHeading || `${defaultHeading} en refuge — France, Belgique, Europe`;
   const count = animals.length;
-  const speciesLabel = species === 'dog' ? 'chiens' : species === 'cat' ? 'chats' : 'animaux';
+  const speciesLabel = customLabel || (species === 'dog' ? 'chiens' : species === 'cat' ? 'chats' : 'animaux');
 
   const animalCards = animals.map(a => {
     const photo = a.photos?.[0] || '';
@@ -455,6 +456,9 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
     .hero p{font-size:15px;color:#666;max-width:600px;margin:0 auto 16px}
     .count{display:inline-block;background:#e8f0fe;color:#1B4F8A;font-weight:700;padding:6px 16px;border-radius:20px;font-size:14px;margin-bottom:8px}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .intro{max-width:720px;margin:0 auto 28px;color:#555;font-size:15px;line-height:1.7}
+    .intro p{margin-bottom:12px}
+    .intro a{color:#1B4F8A;font-weight:600}
     .bottom-cta{text-align:center;margin:40px 0;padding:32px;background:linear-gradient(135deg,#1B4F8A,#2d6ab8);border-radius:20px;color:#fff}
     .bottom-cta h2{font-size:22px;font-weight:800;margin-bottom:8px}
     .bottom-cta p{font-size:14px;opacity:.85;margin-bottom:20px}
@@ -474,9 +478,10 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
   <div class="container">
     <div class="hero">
       <span class="count">${count} ${speciesLabel} disponibles</span>
-      <h1>${heading} en refuge — France, Belgique, Europe</h1>
+      <h1>${heading}</h1>
       <p>${description}</p>
     </div>
+    ${intro ? `<div class="intro">${intro}</div>` : ''}
     <div class="grid">
       ${animalCards}
     </div>
@@ -574,6 +579,115 @@ router.get('/animaux-a-adopter', async (_req, res) => {
   }
 });
 
+// ── Pages SEO segmentées (chiots, tailles, seniors, origine, pays) ──
+// Uniquement visibles via Google : aucun lien depuis l'app.
+const SEO_SEGMENTS = [
+  {
+    slug: 'chiots-a-adopter',
+    filter: a => a.age != null && a.age < 12,
+    heading: 'Chiots à adopter en refuge',
+    label: 'chiots',
+    title: c => `Chiots à adopter — ${c} chiots en refuge | Adoptly`,
+    desc: c => `${c} chiots de moins d'un an disponibles à l'adoption dans nos refuges partenaires. Adoption possible partout en France, Belgique et Europe. Service gratuit avec matching de compatibilité.`,
+    intro: `<p>Adopter un chiot en refuge, c'est possible — et c'est souvent une meilleure idée qu'un achat en élevage ou en animalerie. Nos refuges partenaires recueillent régulièrement des portées abandonnées : des chiots de moins d'un an, identifiés, vaccinés et suivis par des vétérinaires, qui attendent une famille pour grandir.</p>
+<p>Un chiot demande du temps, de la patience et de l'éducation. Notre <a href="https://adoptly.fr/adoptant/register">questionnaire de compatibilité</a> vérifie que votre mode de vie correspond avant la mise en relation — c'est gratuit et ça évite les adoptions ratées.</p>`,
+  },
+  {
+    slug: 'chiens-de-roumanie-a-adopter',
+    filter: a => (a.origin_country || '').toLowerCase().includes('rouman') || a.is_international,
+    heading: 'Chiens de Roumanie à adopter',
+    label: 'chiens',
+    title: c => `Adopter un chien de Roumanie — ${c} chiens disponibles | Adoptly`,
+    desc: c => `${c} chiens sauvés des rues et des fourrières de Roumanie cherchent une famille en France ou en Belgique. Transport organisé, passeport européen, vaccins à jour. Service d'adoption gratuit.`,
+    intro: `<p>En Roumanie, des milliers de chiens survivent dans les rues ou dans des fourrières surpeuplées. Nos refuges partenaires les sauvent, les soignent et les préparent à l'adoption : chaque chien arrive <strong>identifié, vacciné, stérilisé et muni de son passeport européen</strong>.</p>
+<p>Le transport vers la France ou la Belgique est organisé par les refuges via des transporteurs agréés — vous n'avez pas à vous déplacer en Roumanie. Répondez à notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> pour découvrir les chiens compatibles avec votre mode de vie.</p>`,
+  },
+  {
+    slug: 'petit-chien-a-adopter',
+    filter: a => a.size === 'small',
+    heading: 'Petits chiens à adopter en refuge',
+    label: 'petits chiens',
+    title: c => `Petit chien à adopter — ${c} petits chiens en refuge | Adoptly`,
+    desc: c => `${c} petits chiens disponibles à l'adoption dans nos refuges partenaires en Europe. Idéal en appartement. Adoption via un service gratuit avec matching de compatibilité.`,
+    intro: `<p>Vous cherchez un chien de petit gabarit, adapté à un appartement ou à une vie citadine ? Les refuges regorgent de petits chiens pleins de vie qui attendent leur famille — souvent plus longtemps que les autres, car on pense rarement à eux en premier.</p>
+<p>Chaque profil ci-dessous est réel et à jour. Pour savoir lesquels correspondent vraiment à votre quotidien, faites notre <a href="https://adoptly.fr/adoptant/register">test de compatibilité gratuit</a> : logement, rythme de vie, expérience — on analyse 14 critères.</p>`,
+  },
+  {
+    slug: 'grand-chien-a-adopter',
+    filter: a => a.size === 'large',
+    heading: 'Grands chiens à adopter en refuge',
+    label: 'grands chiens',
+    title: c => `Grand chien à adopter — ${c} grands chiens en refuge | Adoptly`,
+    desc: c => `${c} chiens de grande taille disponibles à l'adoption dans nos refuges partenaires en Europe. Bergers, croisés et grands gabarits. Service d'adoption gratuit.`,
+    intro: `<p>Les grands chiens sont souvent les derniers adoptés en refuge : ils impressionnent, prennent de la place... et pourtant ce sont fréquemment les plus doux. Bergers, croisés de grande taille, gardiens au grand cœur — ils attendent une famille avec un peu d'espace et beaucoup d'amour.</p>
+<p>Avant d'adopter un grand gabarit, vérifiez la compatibilité avec votre logement et votre rythme de vie grâce à notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a>.</p>`,
+  },
+  {
+    slug: 'chien-senior-a-adopter',
+    filter: a => a.age != null && a.age >= 84,
+    heading: 'Chiens seniors à adopter',
+    label: 'chiens seniors',
+    title: c => `Chien senior à adopter — ${c} chiens de 7 ans et plus | Adoptly`,
+    desc: c => `${c} chiens seniors (7 ans et plus) attendent une famille dans nos refuges partenaires. Calmes, éduqués et affectueux : l'adoption d'un senior change deux vies. Service gratuit.`,
+    intro: `<p>Adopter un chien senior, c'est offrir une retraite douce à un animal qui a souvent tout connu — et recevoir en échange un compagnon calme, posé, généralement propre et éduqué. Les seniors sont les grands oubliés des refuges, alors que ce sont souvent les adoptions les plus faciles à vivre au quotidien.</p>
+<p>Chaque chien ci-dessous a 7 ans ou plus et attend une famille. Découvrez ceux qui correspondent à votre mode de vie avec notre <a href="https://adoptly.fr/adoptant/register">test de compatibilité gratuit</a>.</p>`,
+  },
+  {
+    slug: 'adopter-un-chien-en-belgique',
+    filter: () => true,
+    heading: 'Adopter un chien en Belgique',
+    label: 'chiens',
+    title: c => `Adopter un chien en Belgique — ${c} chiens disponibles | Adoptly`,
+    desc: c => `${c} chiens disponibles à l'adoption pour les familles en Belgique. Refuges partenaires en Belgique et en Europe, transport organisé, passeport européen. Service d'adoption gratuit.`,
+    intro: `<p>Vous habitez en Belgique et souhaitez adopter un chien ? Tous les chiens ci-dessous sont adoptables depuis la Belgique : certains se trouvent dans des refuges belges, d'autres chez nos refuges partenaires européens qui organisent le transport jusqu'à chez vous — chiens identifiés, vaccinés, stérilisés, avec passeport européen.</p>
+<p>L'adoption suit les règles belges du bien-être animal : les refuges vérifient chaque famille avant de confier un animal. Notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> facilite cette étape en présentant votre profil directement au refuge.</p>`,
+  },
+  {
+    slug: 'adopter-un-chien-en-france',
+    filter: () => true,
+    heading: 'Adopter un chien en France',
+    label: 'chiens',
+    title: c => `Adopter un chien en France — ${c} chiens disponibles | Adoptly`,
+    desc: c => `${c} chiens disponibles à l'adoption pour les familles en France. Refuges partenaires en France et en Europe, transport organisé, passeport européen. Service d'adoption gratuit.`,
+    intro: `<p>Vous habitez en France et cherchez un chien à adopter ? Tous les chiens ci-dessous sont adoptables depuis la France : certains sont dans des refuges et familles d'accueil françaises, d'autres chez nos refuges partenaires européens qui organisent le transport — chiens identifiés, vaccinés, stérilisés, avec passeport européen conforme à la réglementation.</p>
+<p>Chaque adoption passe par le refuge, qui valide votre famille. Pour gagner du temps, remplissez notre <a href="https://adoptly.fr/adoptant/register">questionnaire de compatibilité gratuit</a> : il présente votre mode de vie au refuge et vous propose les chiens qui vous correspondent.</p>`,
+  },
+];
+
+for (const seg of SEO_SEGMENTS) {
+  router.get('/' + seg.slug, async (_req, res) => {
+    try {
+      const { data: animals } = await supabase
+        .from('animals')
+        .select('id, name, breed, age, photos, shelter_id, size, origin_country, is_international')
+        .eq('status', 'active').eq('species', 'dog')
+        .order('created_at', { ascending: false });
+
+      const filtered = (animals || []).filter(seg.filter);
+      const shelterIds = [...new Set(filtered.map(a => a.shelter_id))];
+      const { data: shelters } = shelterIds.length
+        ? await supabase.from('shelters').select('id, name, address').in('id', shelterIds)
+        : { data: [] };
+      const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
+
+      res.set('Cache-Control', 'public, max-age=3600');
+      res.send(seoAnimalPage({
+        title: seg.title(filtered.length),
+        description: seg.desc(filtered.length),
+        canonical: '/' + seg.slug,
+        animals: filtered,
+        shelterMap,
+        species: 'dog',
+        heading: seg.heading,
+        label: seg.label,
+        intro: seg.intro,
+      }));
+    } catch (err) {
+      res.status(500).send('Erreur serveur');
+    }
+  });
+}
+
 // ── Kit publications Facebook (page privée, lien non listé) ──
 // Le HTML est généré par backend/make-fb-kit.js et stocké dans Supabase
 // Storage, qui refuse de servir du text/html — on le proxifie ici.
@@ -595,7 +709,7 @@ router.get('/sitemap.xml', async (_req, res) => {
     const today = new Date().toISOString().split('T')[0];
 
     const [{ data: animals }, { data: shelters }, { data: articles }] = await Promise.all([
-      supabase.from('animals').select('id, created_at').eq('status', 'active'),
+      supabase.from('animals').select('id, created_at, species, age, size, origin_country, is_international').eq('status', 'active'),
       supabase.from('shelters').select('id, created_at'),
       supabase.from('articles').select('slug, updated_at').eq('status', 'published'),
     ]);
@@ -617,6 +731,14 @@ router.get('/sitemap.xml', async (_req, res) => {
       { loc: '/legal/cgu',          freq: 'yearly',  priority: '0.2' },
       { loc: '/legal/privacy',      freq: 'yearly',  priority: '0.2' },
     ];
+
+    // Pages SEO segmentées — uniquement si assez d'animaux (contenu maigre = pénalité)
+    const activeDogs = (animals || []).filter(a => a.species === 'dog');
+    for (const seg of SEO_SEGMENTS) {
+      if (activeDogs.filter(seg.filter).length >= 6) {
+        staticPages.push({ loc: '/' + seg.slug, freq: 'daily', priority: '0.8' });
+      }
+    }
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 

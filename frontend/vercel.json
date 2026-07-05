@@ -8,6 +8,13 @@
     { "source": "/chats-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chats-a-adopter" },
     { "source": "/animaux-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/animaux-a-adopter" },
     { "source": "/kit-facebook-7h2p", "destination": "https://adoptly-backend-p2os.onrender.com/kit-facebook-7h2p" },
+    { "source": "/chiots-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chiots-a-adopter" },
+    { "source": "/chiens-de-roumanie-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chiens-de-roumanie-a-adopter" },
+    { "source": "/petit-chien-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/petit-chien-a-adopter" },
+    { "source": "/grand-chien-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/grand-chien-a-adopter" },
+    { "source": "/chien-senior-a-adopter", "destination": "https://adoptly-backend-p2os.onrender.com/chien-senior-a-adopter" },
+    { "source": "/adopter-un-chien-en-belgique", "destination": "https://adoptly-backend-p2os.onrender.com/adopter-un-chien-en-belgique" },
+    { "source": "/adopter-un-chien-en-france", "destination": "https://adoptly-backend-p2os.onrender.com/adopter-un-chien-en-france" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
