@@ -18,20 +18,76 @@ const TEMP_FR = {
   energetic: 'plein d\'énergie', shy: 'un peu timide au début', sociable: 'sociable',
   independent: 'indépendant', curious: 'curieux', gentle: 'doux', protective: 'protecteur',
 };
+const TEMP_FR_F = {
+  playful: 'joueuse', cuddly: 'câline', calm: 'calme', affectionate: 'affectueuse',
+  energetic: 'pleine d\'énergie', shy: 'un peu timide au début', sociable: 'sociable',
+  independent: 'indépendante', curious: 'curieuse', gentle: 'douce', protective: 'protectrice',
+};
+
+// Pas de champ sexe en base : on le déduit de l'histoire écrite par le refuge
+function isFemale(story) {
+  if (!story) return false;
+  const s = story.toLowerCase();
+  const fem  = (s.match(/\b(elle|née|chatte|chienne|minette|louloute|puce|câline|joueuse|douce|gentille|craintive|stérilisée|adoptée|trouvée|recueillie|sauvée)\b/g) || []).length;
+  const masc = (s.match(/\b(il|né|chaton|loulou|câlin|joueur|doux|gentil|craintif|castré|stérilisé|adopté|trouvé|recueilli|sauvé)\b/g) || []).length;
+  return fem > masc;
+}
 
 function esc(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function caption(d) {
+// Extrait court de l'histoire, en filtrant les phrases qui citent une association
+function storyExcerpt(story, shelterNames) {
+  if (!story) return '';
+  const clean = story.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const sentences = clean.split(/(?<=[.!?])\s+/);
+  const banned = ['association', 'refuge ', 'asso ', 'la mairie nous'];
+  const kept = [];
+  for (const s of sentences) {
+    const low = s.toLowerCase();
+    if (shelterNames.some(n => low.includes(n))) continue;
+    if (banned.some(b => low.includes(b))) continue;
+    kept.push(s.trim());
+    if (kept.join(' ').length > 200) break;
+  }
+  let out = kept.join(' ');
+  if (out.length > 260) {
+    out = out.slice(0, 260);
+    out = out.slice(0, out.lastIndexOf(' ')) + '…';
+  }
+  return out;
+}
+
+// Ligne d'entente chiens / chats / enfants depuis requirements
+function compatLine(req) {
+  if (!req) return '';
+  const out = [];
+  if (req.dogs_compatible === 'yes') out.push('OK chiens ✔️');
+  else if (req.dogs_compatible === 'no') out.push('sans autre chien');
+  if (req.cats_compatible === 'yes') out.push('OK chats ✔️');
+  else if (req.cats_compatible === 'no') out.push('sans chat');
+  if (req.children_compatible === 'yes') out.push('OK enfants ✔️');
+  else if (req.children_compatible === 'no') out.push('sans enfant');
+  else if (/^\d+\+$/.test(req.children_compatible || '')) out.push(`enfants à partir de ${req.children_compatible.replace('+', '')} ans`);
+  return out.length ? `🤝 Entente : ${out.join(' · ')}` : '';
+}
+
+function caption(d, shelterNames = []) {
   const name = d.name.trim().replace(/\s+/g, ' ');
   const displayName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+  const female = isFemale(d.story);
   const breed = (d.breed || 'croisé').trim();
   const age = ageLabel(d.age);
   const size = SIZE_FR[d.size];
-  const traits = (d.temperament || '').split(',').map(t => TEMP_FR[t.trim()]).filter(Boolean);
+  const tempMap = female ? TEMP_FR_F : TEMP_FR;
+  const traits = (d.temperament || '').split(',').map(t => tempMap[t.trim()]).filter(Boolean);
 
-  const desc = breed.toLowerCase().startsWith('crois') ? 'Croisé' : breed.charAt(0).toUpperCase() + breed.slice(1);
+  let desc = breed.toLowerCase().startsWith('crois') ? 'Croisé' : breed.charAt(0).toUpperCase() + breed.slice(1);
+  if (female) {
+    if (desc === 'Croisé') desc = 'Croisée';
+    else if (desc.endsWith('éen')) desc += 'ne';
+  }
   const parts = [];
   if (age) parts.push(age);
   if (size) parts.push(size);
@@ -41,21 +97,24 @@ function caption(d) {
   if (traits.length === 1) line3 = `${displayName} est ${traits[0]}.`;
   else if (traits.length > 1) line3 = `${displayName} est ${traits.slice(0, -1).join(', ')} et ${traits[traits.length - 1]}.`;
 
+  const story = storyExcerpt(d.story, shelterNames);
+  const compat = compatLine(d.requirements);
+
   const tags = d.species === 'cat'
     ? '#ChatAAdopter #AdoptionChat #AdoptionAnimale #Adoptly'
     : '#ChienAAdopter #AdoptionChien #AdoptionAnimale #Adoptly';
 
-  return `🐾 Voici ${displayName} !
+  const blocks = [
+    `🐾 Voici ${displayName} !`,
+    `${line2}.${line3 ? '\n' + line3 : ''}`,
+  ];
+  if (story) blocks.push(`📖 Son histoire : ${story}`);
+  if (compat) blocks.push(compat);
+  blocks.push(`${female ? 'Elle' : 'Il'} ne demande qu'une chose : une famille qui lui donnera sa chance. 🧡`);
+  blocks.push(`💙 Son profil complet est ici :\nhttps://adoptly.fr/animal/${d.id}`);
+  blocks.push(tags);
 
-${line2}.
-${line3}
-
-Il ne demande qu'une chose : une famille qui lui donnera sa chance. 🧡
-
-💙 Son profil complet est ici :
-https://adoptly.fr/animal/${d.id}
-
-${tags}`;
+  return blocks.join('\n\n');
 }
 
 async function brandedImage(d) {
@@ -88,11 +147,17 @@ async function brandedImage(d) {
 export async function syncFbKit() {
   const { data: dogs, error: dogsErr } = await supabase
     .from('animals')
-    .select('id, name, breed, age, size, temperament, photos, species, created_at')
+    .select('id, name, breed, age, size, temperament, photos, species, story, requirements, created_at')
     .eq('status', 'active').in('species', ['dog', 'cat'])
     .not('photos', 'is', null)
     .order('created_at', { ascending: false });
   if (dogsErr) throw new Error(dogsErr.message);
+
+  // Noms des refuges (pour filtrer leurs mentions dans les histoires)
+  const { data: shelters } = await supabase.from('shelters').select('name');
+  const shelterNames = (shelters || [])
+    .map(s => s.name.replace(/[^\p{L}\s']/gu, '').replace(/\s+/g, ' ').trim().toLowerCase())
+    .filter(n => n.length > 3);
 
   const activeDogs = (dogs || []).filter(d => d.photos?.length);
   activeDogs.sort((a, b) => a.species === b.species ? 0 : a.species === 'dog' ? -1 : 1);
@@ -129,7 +194,7 @@ export async function syncFbKit() {
     .filter(d => !failedIds.has(d.id))
     .map(d => {
       const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(`${KIT_DIR}/${d.id}.jpg`);
-      return { id: d.id, species: d.species, name: d.name.trim(), img: pub.publicUrl, text: caption(d) };
+      return { id: d.id, species: d.species, name: d.name.trim(), img: pub.publicUrl, text: caption(d, shelterNames) };
     });
 
   const nbDogs = items.filter(i => i.species === 'dog').length;
