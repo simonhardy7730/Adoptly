@@ -132,7 +132,7 @@ export default function PreparerAdoption() {
   useEffect(() => {
     document.title = 'Préparer son adoption | Adoptly';
     window.scrollTo(0, 0);
-    return () => { document.title = 'Adoptly - Adopter un animal en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
   }, []);
 
   return (

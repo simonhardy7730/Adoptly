@@ -32,7 +32,7 @@ export default function ArticleList() {
       .then(({ data }) => setArticles(data))
       .catch(() => {})
       .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly - Adopter un animal en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
   }, []);
 
   const filtered = filter === 'all'

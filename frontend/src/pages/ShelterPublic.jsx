@@ -24,7 +24,7 @@ export default function ShelterPublic() {
         if (err.response?.status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly - Adopter un animal en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
   }, [id]);
 
   if (loading) return (

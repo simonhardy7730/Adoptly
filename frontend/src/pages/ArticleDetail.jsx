@@ -20,7 +20,7 @@ export default function ArticleDetail() {
         if (err.response?.status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly - Adopter un animal en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
   }, [slug]);
 
   if (loading) return (
