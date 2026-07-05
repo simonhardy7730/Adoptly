@@ -40,7 +40,13 @@ function esc(s) {
 // Extrait court de l'histoire, en filtrant les phrases qui citent une association
 function storyExcerpt(story, shelterNames) {
   if (!story) return '';
-  const clean = story.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const clean = story
+    .replace(/[\r\n]+/g, ' ')
+    // certains refuges écrivent déjà "Son histoire :" dans leur texte — on retire
+    // l'étiquette pour ne pas la doubler avec la nôtre
+    .replace(/(son|sa|leur)\s+histoire\s*:/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   const sentences = clean.split(/(?<=[.!?])\s+/);
   // On écarte : les phrases citant une association par son nom (via shelterNames),
   // les appels aux dons/cagnottes et les liens — pas les mentions génériques du refuge.
