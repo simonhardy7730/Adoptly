@@ -42,18 +42,20 @@ function storyExcerpt(story, shelterNames) {
   if (!story) return '';
   const clean = story.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
   const sentences = clean.split(/(?<=[.!?])\s+/);
-  const banned = ['association', 'refuge ', 'asso ', 'la mairie nous'];
+  // On écarte : les phrases citant une association par son nom (via shelterNames),
+  // les appels aux dons/cagnottes et les liens — pas les mentions génériques du refuge.
+  const banned = ['association', 'la mairie nous', 'gofund', 'paypal', 'cagnotte', 'http', 'www.', 'frais d\'adoption'];
   const kept = [];
   for (const s of sentences) {
     const low = s.toLowerCase();
     if (shelterNames.some(n => low.includes(n))) continue;
     if (banned.some(b => low.includes(b))) continue;
     kept.push(s.trim());
-    if (kept.join(' ').length > 200) break;
+    if (kept.join(' ').length > 420) break;
   }
   let out = kept.join(' ');
-  if (out.length > 260) {
-    out = out.slice(0, 260);
+  if (out.length > 480) {
+    out = out.slice(0, 480);
     out = out.slice(0, out.lastIndexOf(' ')) + '…';
   }
   return out;
