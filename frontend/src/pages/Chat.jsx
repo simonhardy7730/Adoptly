@@ -80,12 +80,11 @@ export default function Chat() {
     return () => clearInterval(pollRef.current);
   }, [fetchMessages]);
 
-  async function handleSend(e) {
-    e.preventDefault();
-    if (!content.trim() || sending) return;
+  async function sendMessage(text) {
+    if (!text.trim() || sending) return;
     setSending(true);
     try {
-      const { data: newMsg } = await api.post(`/messages/${match_id}`, { content });
+      const { data: newMsg } = await api.post(`/messages/${match_id}`, { content: text });
       setMessages((prev) => [...prev, newMsg]);
       setContent('');
       setTimeout(scrollToBottom, 50);
@@ -94,6 +93,11 @@ export default function Chat() {
       alert(err.response?.data?.error || 'Erreur lors de l\'envoi. Le serveur redémarre peut-être — réessayez dans 1 minute.');
     }
     setSending(false);
+  }
+
+  async function handleSend(e) {
+    e.preventDefault();
+    await sendMessage(content);
   }
 
   async function handleImageUpload(e) {
@@ -171,13 +175,23 @@ export default function Chat() {
             <p className="text-gray-400 text-sm text-center max-w-[280px]">
               {shelter?.name || 'Le refuge'} peut voir ton intérêt pour {animal?.name || 'cet animal'}, mais attend un petit message de ta part.
             </p>
-            <button
-              onClick={() => setContent(`Bonjour ! J'ai craqué pour ${animal?.name || 'votre animal'} et j'aimerais en savoir plus. Est-il toujours disponible ?`)}
-              className="bg-orange-50 border-2 border-orange-200 text-orange-700 rounded-2xl px-5 py-3 text-sm font-medium text-left max-w-[300px] hover:bg-orange-100 transition-colors active:scale-95"
-            >
-              💡 <span className="italic">« Bonjour ! J'ai craqué pour {animal?.name || 'votre animal'} et j'aimerais en savoir plus. Est-il toujours disponible ? »</span>
-            </button>
-            <p className="text-gray-300 text-xs">Clique pour utiliser ce message ou écris le tien</p>
+            <div className="flex flex-col gap-2 w-full max-w-[320px]">
+              {[
+                `Bonjour ! J'ai craqué pour ${animal?.name || 'votre animal'} et j'aimerais en savoir plus. Est-il toujours disponible ?`,
+                `Bonjour ! Comment ${animal?.name || 'votre animal'} se comporte-t-il au quotidien ? J'aimerais savoir s'il correspondrait à mon mode de vie.`,
+                `Bonjour ! Je serais intéressé(e) pour rencontrer ${animal?.name || 'votre animal'}. Comment se passe la suite ?`,
+              ].map((suggestion, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => sendMessage(suggestion)}
+                  disabled={sending}
+                  className="bg-orange-50 border-2 border-orange-200 text-orange-700 rounded-2xl px-4 py-3 text-sm font-medium text-left hover:bg-orange-100 transition-colors active:scale-95 disabled:opacity-50"
+                >
+                  💬 <span className="italic">« {suggestion} »</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-gray-300 text-xs">Touche un message pour l'envoyer, ou écris le tien</p>
           </div>
         ) : (
           <>
