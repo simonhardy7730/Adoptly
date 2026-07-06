@@ -5,6 +5,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import PasswordInput from '../../components/PasswordInput';
 
 function getPasswordStrength(password) {
   if (!password || password.length < 6) return { score: 0, label: 'Trop court', color: 'bg-red-400' };
@@ -113,11 +114,9 @@ export default function FosterAuth({ mode = 'login' }) {
                   </Link>
                 )}
               </div>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 minLength={6}
-                className="input-field"
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}

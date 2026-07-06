@@ -5,6 +5,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function ShelterAuth({ mode = 'login' }) {
   const navigate  = useNavigate();
@@ -119,11 +120,9 @@ export default function ShelterAuth({ mode = 'login' }) {
                   </Link>
                 )}
               </div>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 minLength={6}
-                className="input-field"
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}

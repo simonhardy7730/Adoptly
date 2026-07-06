@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../../lib/api';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import PasswordInput from '../../components/PasswordInput';
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -119,11 +120,9 @@ export default function ResetPassword() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Nouveau mot de passe
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   required
                   minLength={6}
-                  className="input-field"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -135,11 +134,9 @@ export default function ResetPassword() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Confirmer le mot de passe
                 </label>
-                <input
-                  type="password"
+                <PasswordInput
                   required
                   minLength={6}
-                  className="input-field"
                   placeholder="••••••••"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
