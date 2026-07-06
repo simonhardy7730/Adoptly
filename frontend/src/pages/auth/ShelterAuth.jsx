@@ -9,7 +9,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 export default function ShelterAuth({ mode = 'login' }) {
   const navigate  = useNavigate();
   const { login } = useAuth();
-  const { t, lang, setLang } = useLanguage();
+  const { t } = useLanguage();
 
   const [form, setForm] = useState({
     email:     '',
@@ -67,15 +67,6 @@ export default function ShelterAuth({ mode = 'login' }) {
           <span>←</span>
           <span className="text-sm font-medium">Retour</span>
         </Link>
-
-        {/* Toggle langue FR / NL */}
-        <button
-          onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
-          className="text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200
-                     text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
-        >
-          {lang === 'fr' ? '🇧🇪 NL' : '🇧🇪 FR'}
-        </button>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 pb-16">
@@ -109,7 +100,7 @@ export default function ShelterAuth({ mode = 'login' }) {
                 type="email"
                 required
                 className="input-field"
-                placeholder="asiel@voorbeeld.be"
+                placeholder="contact@monrefuge.fr"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />

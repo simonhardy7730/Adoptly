@@ -8,7 +8,7 @@ import api from '../lib/api';
 export default function Navbar() {
   const { role, logout } = useAuth();
   const navigate = useNavigate();
-  const { t, lang, setLang } = useLanguage();
+  const { t } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -71,15 +71,6 @@ export default function Navbar() {
               {link.badge && <UnreadBadge />}
             </Link>
           ))}
-
-          <button
-            onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
-            className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200
-                       text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
-            title={lang === 'fr' ? 'Switch to Nederlands' : 'Passer en français'}
-          >
-            {lang === 'fr' ? 'NL' : 'FR'}
-          </button>
 
           <button
             onClick={handleLogout}
@@ -146,13 +137,6 @@ export default function Navbar() {
                   )}
                 </Link>
               ))}
-
-              <button
-                onClick={() => { setLang(lang === 'fr' ? 'nl' : 'fr'); setMobileMenuOpen(false); }}
-                className="block w-full text-left py-2.5 px-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
-              >
-                🌐 {lang === 'fr' ? 'Nederlands' : 'Français'}
-              </button>
 
               <button
                 onClick={() => { setMobileMenuOpen(false); handleLogout(); }}

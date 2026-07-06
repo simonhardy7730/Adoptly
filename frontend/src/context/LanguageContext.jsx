@@ -1,23 +1,13 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext } from 'react';
 import { translations } from '../lib/translations';
 
 const LanguageContext = createContext(null);
 
-/** Détecte la langue du navigateur au premier chargement */
-function detectDefaultLang() {
-  const saved = localStorage.getItem('shelter_lang');
-  if (saved === 'nl' || saved === 'fr') return saved;
-  const browser = (navigator.language || '').toLowerCase();
-  return browser.startsWith('nl') ? 'nl' : 'fr';
-}
-
+// Site 100% français : le néerlandais a été retiré (confusion utilisateurs).
+// On garde le contexte pour ne pas toucher aux appels t() existants.
 export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState(detectDefaultLang);
-
-  function setLang(l) {
-    setLangState(l);
-    localStorage.setItem('shelter_lang', l);
-  }
+  const lang = 'fr';
+  function setLang() {}
 
   /**
    * Retourne la chaîne traduite.

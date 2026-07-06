@@ -39,7 +39,7 @@ function getPasswordStrength(password) {
 export default function AdoptantAuth({ mode = 'login' }) {
   const navigate  = useNavigate();
   const { login } = useAuth();
-  const { t, lang, setLang } = useLanguage();
+  const { t } = useLanguage();
   const [form,    setForm]    = useState({ email: '', password: '' });
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,14 +93,6 @@ export default function AdoptantAuth({ mode = 'login' }) {
           <span>←</span>
           <span className="text-sm font-medium">{t('ad_back')}</span>
         </Link>
-        <button
-          onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
-          className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200
-                     text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
-          title={lang === 'fr' ? 'Switch to Nederlands' : 'Passer en français'}
-        >
-          {lang === 'fr' ? 'NL' : 'FR'}
-        </button>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 pb-16">

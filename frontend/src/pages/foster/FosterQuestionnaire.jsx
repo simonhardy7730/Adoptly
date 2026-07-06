@@ -121,7 +121,7 @@ const DEFAULTS = {
 
 export default function FosterQuestionnaire() {
   const navigate = useNavigate();
-  const { lang, setLang } = useLanguage();
+  const { lang } = useLanguage();
   const [answers, setAnswers]             = useState(DEFAULTS);
   const [stepIndex, setStepIndex]         = useState(0);
   const [dir, setDir]                     = useState(1);
@@ -229,13 +229,6 @@ export default function FosterQuestionnaire() {
             <span className="text-gray-400 text-sm">
               {stepIndex + 1} / {STEPS.length}
             </span>
-            <button
-              onClick={() => setLang(lang === 'fr' ? 'nl' : 'fr')}
-              className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200
-                         text-gray-500 hover:border-secondary hover:text-secondary transition-colors"
-            >
-              {lang === 'fr' ? 'NL' : 'FR'}
-            </button>
           </div>
         </div>
 
