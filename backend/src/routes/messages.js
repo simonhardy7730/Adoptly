@@ -7,6 +7,22 @@ import { sendNewMessageNotificationEmail, sendAdoptantMessageNotificationEmail }
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
+// PostgREST encode un `.in(col, [ids])` dans l'URL. Avec des centaines d'ids
+// (gros refuges = beaucoup de matchs) l'URL dépasse la limite serveur et la
+// requête échoue silencieusement. On découpe en lots pour rester sous la limite.
+async function selectIn(table, columns, inColumn, values, applyFilters) {
+  const CHUNK = 100;
+  let rows = [];
+  for (let i = 0; i < values.length; i += CHUNK) {
+    let q = supabase.from(table).select(columns).in(inColumn, values.slice(i, i + CHUNK));
+    if (applyFilters) q = applyFilters(q);
+    const { data, error } = await q;
+    if (error) throw error;
+    rows = rows.concat(data || []);
+  }
+  return rows;
+}
+
 // ── GET /api/messages/unread/count ────────────────────────
 // Must be registered before /:match_id to avoid route conflict
 router.get('/unread/count', authenticate, async (req, res) => {
@@ -27,15 +43,10 @@ router.get('/unread/count', authenticate, async (req, res) => {
 
       const matchIds = matches.map((m) => m.id);
 
-      const { count, error } = await supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .in('match_id', matchIds)
-        .eq('sender_role', 'shelter')
-        .eq('read', false);
-
-      if (error) throw error;
-      return res.json({ count: count || 0 });
+      const unread = await selectIn('messages', 'id', 'match_id', matchIds, (q) =>
+        q.eq('sender_role', 'shelter').eq('read', false)
+      );
+      return res.json({ count: unread.length });
     }
 
     if (role === 'shelter') {
@@ -62,15 +73,10 @@ router.get('/unread/count', authenticate, async (req, res) => {
 
       const matchIds = matches.map((m) => m.id);
 
-      const { count, error } = await supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .in('match_id', matchIds)
-        .eq('sender_role', 'adoptant')
-        .eq('read', false);
-
-      if (error) throw error;
-      return res.json({ count: count || 0 });
+      const unread = await selectIn('messages', 'id', 'match_id', matchIds, (q) =>
+        q.eq('sender_role', 'adoptant').eq('read', false)
+      );
+      return res.json({ count: unread.length });
     }
 
     return res.status(403).json({ error: 'Forbidden' });
@@ -113,16 +119,11 @@ router.get('/unread/matches', authenticate, async (req, res) => {
 
     if (!matchIds.length) return res.json([]);
 
-    const { data: unreadMsgs, error } = await supabase
-      .from('messages')
-      .select('match_id')
-      .in('match_id', matchIds)
-      .eq('sender_role', otherRole)
-      .eq('read', false);
+    const unreadMsgs = await selectIn('messages', 'match_id', 'match_id', matchIds, (q) =>
+      q.eq('sender_role', otherRole).eq('read', false)
+    );
 
-    if (error) throw error;
-
-    const unreadMatchIds = [...new Set((unreadMsgs || []).map((m) => m.match_id))];
+    const unreadMatchIds = [...new Set(unreadMsgs.map((m) => m.match_id))];
     res.json(unreadMatchIds);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -146,14 +147,9 @@ router.get('/conversations', authenticate, async (req, res) => {
 
       const matchIds = matches.map((m) => m.id);
 
-      const { data: messages, error: msgErr } = await supabase
-        .from('messages')
-        .select('id, match_id, content, sender_role, read, created_at')
-        .in('match_id', matchIds)
-        .order('created_at', { ascending: false });
-
-      if (msgErr) throw msgErr;
-      if (!messages?.length) return res.json([]);
+      const messages = await selectIn('messages', 'id, match_id, content, sender_role, read, created_at', 'match_id', matchIds);
+      messages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      if (!messages.length) return res.json([]);
 
       const convMap = {};
       for (const msg of messages) {
@@ -210,24 +206,16 @@ router.get('/conversations', authenticate, async (req, res) => {
 
     const matchIds = matches.map((m) => m.id);
 
-    // Get the last message and unread count per match
-    const { data: messages, error: msgErr } = await supabase
-      .from('messages')
-      .select('id, match_id, content, sender_role, read, created_at')
-      .in('match_id', matchIds)
-      .order('created_at', { ascending: false });
-
-    if (msgErr) throw msgErr;
-    if (!messages?.length) return res.json([]);
+    // Get the last message and unread count per match (chunked to avoid URL overflow)
+    const messages = await selectIn('messages', 'id, match_id, content, sender_role, read, created_at', 'match_id', matchIds);
+    messages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (!messages.length) return res.json([]);
 
     // Get adoptant info
     const adoptantIds = [...new Set(matches.map((m) => m.adoptant_id))];
-    const { data: adoptants } = await supabase
-      .from('adoptants')
-      .select('id, first_name, last_name, email')
-      .in('id', adoptantIds);
+    const adoptants = await selectIn('adoptants', 'id, first_name, last_name, email', 'id', adoptantIds);
 
-    const adoptantMap = Object.fromEntries((adoptants || []).map((a) => [a.id, a]));
+    const adoptantMap = Object.fromEntries(adoptants.map((a) => [a.id, a]));
 
     // Group by match
     const convMap = {};
