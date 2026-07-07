@@ -1,27 +1,12 @@
 import express from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
+import { selectIn } from '../lib/db.js';
 import { authenticate } from '../middleware/auth.js';
 import { sendNewMessageNotificationEmail, sendAdoptantMessageNotificationEmail } from '../lib/email.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
-
-// PostgREST encode un `.in(col, [ids])` dans l'URL. Avec des centaines d'ids
-// (gros refuges = beaucoup de matchs) l'URL dépasse la limite serveur et la
-// requête échoue silencieusement. On découpe en lots pour rester sous la limite.
-async function selectIn(table, columns, inColumn, values, applyFilters) {
-  const CHUNK = 100;
-  let rows = [];
-  for (let i = 0; i < values.length; i += CHUNK) {
-    let q = supabase.from(table).select(columns).in(inColumn, values.slice(i, i + CHUNK));
-    if (applyFilters) q = applyFilters(q);
-    const { data, error } = await q;
-    if (error) throw error;
-    rows = rows.concat(data || []);
-  }
-  return rows;
-}
 
 // ── GET /api/messages/unread/count ────────────────────────
 // Must be registered before /:match_id to avoid route conflict
@@ -62,14 +47,8 @@ router.get('/unread/count', authenticate, async (req, res) => {
 
       const animalIds = animals.map((a) => a.id);
 
-      const { data: matches, error: matchErr } = await supabase
-        .from('matches')
-        .select('id')
-        .in('animal_id', animalIds);
-
-      if (matchErr) throw matchErr;
-
-      if (!matches || matches.length === 0) return res.json({ count: 0 });
+      const matches = await selectIn('matches', 'id', 'animal_id', animalIds);
+      if (!matches.length) return res.json({ count: 0 });
 
       const matchIds = matches.map((m) => m.id);
 
@@ -107,11 +86,8 @@ router.get('/unread/matches', authenticate, async (req, res) => {
         .select('id')
         .eq('shelter_id', id);
       if (animals?.length) {
-        const { data: matches } = await supabase
-          .from('matches')
-          .select('id')
-          .in('animal_id', animals.map((a) => a.id));
-        matchIds = (matches || []).map((m) => m.id);
+        const matches = await selectIn('matches', 'id', 'animal_id', animals.map((a) => a.id));
+        matchIds = matches.map((m) => m.id);
       }
     } else {
       return res.status(403).json({ error: 'Forbidden' });
@@ -196,13 +172,8 @@ router.get('/conversations', authenticate, async (req, res) => {
     const animalMap = Object.fromEntries(animals.map((a) => [a.id, a]));
 
     // Get all matches for these animals that have messages
-    const { data: matches, error: matchErr } = await supabase
-      .from('matches')
-      .select('id, adoptant_id, animal_id')
-      .in('animal_id', animalIds);
-
-    if (matchErr) throw matchErr;
-    if (!matches?.length) return res.json([]);
+    const matches = await selectIn('matches', 'id, adoptant_id, animal_id', 'animal_id', animalIds);
+    if (!matches.length) return res.json([]);
 
     const matchIds = matches.map((m) => m.id);
 

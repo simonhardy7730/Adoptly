@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
+import { selectIn } from '../lib/db.js';
 import { authenticate } from '../middleware/auth.js';
 import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendEmailsThrottled, sendShelterFeedbackEmail } from '../lib/email.js';
 import { passesHardFilters } from '../lib/matching.js';
@@ -50,11 +51,7 @@ router.get('/dashboard', authenticate, async (req, res) => {
     const animalIds = (animals || []).map((a) => a.id);
     let allMatches = [];
     if (animalIds.length > 0) {
-      const { data } = await supabase
-        .from('matches')
-        .select('animal_id, swipe_direction, contacted, timestamp')
-        .in('animal_id', animalIds);
-      allMatches = data || [];
+      allMatches = await selectIn('matches', 'animal_id, swipe_direction, contacted, timestamp', 'animal_id', animalIds);
     }
 
     const thisMonthStart = new Date();
@@ -178,24 +175,19 @@ router.get('/pending-contacts', authenticate, async (req, res) => {
     const animalIds = (animals || []).map((a) => a.id);
     if (animalIds.length === 0) return res.json({ contacts: [] });
 
-    const { data: matches, error } = await supabase
-      .from('matches')
-      .select('id, timestamp, contacted, adoptant_id, animal_id')
-      .in('animal_id', animalIds)
-      .eq('swipe_direction', 'right')
-      .eq('contacted', false)
-      .order('timestamp', { ascending: false });
+    const matches = await selectIn(
+      'matches',
+      'id, timestamp, contacted, adoptant_id, animal_id',
+      'animal_id',
+      animalIds,
+      (q) => q.eq('swipe_direction', 'right').eq('contacted', false)
+    );
+    matches.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    if (error) throw error;
-
-    const adoptantIds = [...new Set((matches || []).map((m) => m.adoptant_id))];
+    const adoptantIds = [...new Set(matches.map((m) => m.adoptant_id))];
     let adoptants = [];
     if (adoptantIds.length > 0) {
-      const { data } = await supabase
-        .from('adoptants')
-        .select('id, email, first_name, last_name')
-        .in('id', adoptantIds);
-      adoptants = data || [];
+      adoptants = await selectIn('adoptants', 'id, email, first_name, last_name', 'id', adoptantIds);
     }
 
     const contacts = (matches || []).map((m) => {
@@ -247,11 +239,7 @@ router.get('/animals/:id/interested', authenticate, async (req, res) => {
     const adoptantIds = (matches || []).map((m) => m.adoptant_id);
     let adoptants = [];
     if (adoptantIds.length > 0) {
-      const { data } = await supabase
-        .from('adoptants')
-        .select('id, email, first_name, last_name')
-        .in('id', adoptantIds);
-      adoptants = data || [];
+      adoptants = await selectIn('adoptants', 'id, email, first_name, last_name', 'id', adoptantIds);
     }
 
     const result = (matches || []).map((m) => {
@@ -489,10 +477,7 @@ async function notifyAdoptedAnimal(animal, shelterId) {
 
     // Récupérer les emails/prénoms des adoptants concernés
     const adoptantIds = matches.map((m) => m.adoptant_id);
-    const { data: adoptants } = await supabase
-      .from('adoptants')
-      .select('id, email, first_name')
-      .in('id', adoptantIds);
+    const adoptants = await selectIn('adoptants', 'id, email, first_name', 'id', adoptantIds);
 
     if (!adoptants?.length) return;
 

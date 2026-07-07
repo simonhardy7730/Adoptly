@@ -1,5 +1,6 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
+import { selectIn } from '../lib/db.js';
 
 const router = express.Router();
 
@@ -45,9 +46,9 @@ router.get('/animals', async (req, res) => {
     if (error) throw error;
 
     const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
-    const { data: shelters } = shelterIds.length
-      ? await supabase.from('shelters').select('id, name, address').in('id', shelterIds)
-      : { data: [] };
+    const shelters = shelterIds.length
+      ? await selectIn('shelters', 'id, name, address', 'id', shelterIds)
+      : [];
 
     const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
 
@@ -128,11 +129,7 @@ router.get('/shelters', async (_req, res) => {
 
     // Compter les animaux actifs par refuge et récupérer les espèces
     const shelterIds = shelters.map((s) => s.id);
-    const { data: animals } = await supabase
-      .from('animals')
-      .select('shelter_id, species, photos')
-      .eq('status', 'active')
-      .in('shelter_id', shelterIds);
+    const animals = await selectIn('animals', 'shelter_id, species, photos', 'shelter_id', shelterIds, (q) => q.eq('status', 'active'));
 
     // Enrichir chaque refuge
     const enriched = shelters
@@ -507,8 +504,7 @@ router.get('/chiens-a-adopter', async (_req, res) => {
       .order('created_at', { ascending: false });
 
     const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
-    const { data: shelters } = await supabase
-      .from('shelters').select('id, name, address').in('id', shelterIds);
+    const shelters = await selectIn('shelters', 'id, name, address', 'id', shelterIds);
     const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
 
     res.set('Cache-Control', 'public, max-age=3600');
@@ -534,8 +530,7 @@ router.get('/chats-a-adopter', async (_req, res) => {
       .order('created_at', { ascending: false });
 
     const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
-    const { data: shelters } = await supabase
-      .from('shelters').select('id, name, address').in('id', shelterIds);
+    const shelters = await selectIn('shelters', 'id, name, address', 'id', shelterIds);
     const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
 
     res.set('Cache-Control', 'public, max-age=3600');
@@ -561,8 +556,7 @@ router.get('/animaux-a-adopter', async (_req, res) => {
       .order('created_at', { ascending: false });
 
     const shelterIds = [...new Set((animals || []).map(a => a.shelter_id))];
-    const { data: shelters } = await supabase
-      .from('shelters').select('id, name, address').in('id', shelterIds);
+    const shelters = await selectIn('shelters', 'id, name, address', 'id', shelterIds);
     const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
 
     res.set('Cache-Control', 'public, max-age=3600');
@@ -665,9 +659,9 @@ for (const seg of SEO_SEGMENTS) {
 
       const filtered = (animals || []).filter(seg.filter);
       const shelterIds = [...new Set(filtered.map(a => a.shelter_id))];
-      const { data: shelters } = shelterIds.length
-        ? await supabase.from('shelters').select('id, name, address').in('id', shelterIds)
-        : { data: [] };
+      const shelters = shelterIds.length
+        ? await selectIn('shelters', 'id, name, address', 'id', shelterIds)
+        : [];
       const shelterMap = Object.fromEntries((shelters || []).map(s => [s.id, s]));
 
       res.set('Cache-Control', 'public, max-age=3600');
