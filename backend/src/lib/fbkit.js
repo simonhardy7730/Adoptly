@@ -216,7 +216,7 @@ export async function syncFbKit() {
       lastSpecies = it.species;
     }
     cards += `
-  <div class="card" data-id="${it.id}">
+  <div class="card" data-id="${it.id}" data-name="${esc(it.name.toLowerCase())}">
     <a href="${it.img}" target="_blank"><img src="${it.img}" alt="${esc(it.name)}" loading="lazy"/></a>
     <div class="body">
       <h2>${esc(it.name.toUpperCase())}</h2>
@@ -251,6 +251,10 @@ export async function syncFbKit() {
   button.copy { background: #1B4F8A; color: #fff; margin-bottom: 8px; }
   button.copy.ok { background: #22a06b; }
   button.done-btn { background: #eef2f8; color: #1B4F8A; }
+  .search-wrap { position: sticky; top: 0; z-index: 20; background: #f0f4fa; padding: 8px 0 12px; max-width: 1100px; margin: 0 auto; }
+  #search { width: 100%; padding: 13px 16px; font-size: 16px; border: 2px solid #dde5f0; border-radius: 12px; outline: none; }
+  #search:focus { border-color: #1B4F8A; }
+  .aucun { text-align: center; color: #889; padding: 30px; display: none; }
   .card.fait { opacity: 0.45; }
   .card.fait img { filter: grayscale(1); }
   .card.fait h2 { text-decoration: line-through; }
@@ -264,10 +268,34 @@ export async function syncFbKit() {
   <strong>2.</strong> Touche « Copier le texte » et colle-le dans ta publication Facebook.<br/>
   <strong>3.</strong> Une fois publiée, touche « Publication faite » — l'animal sera barré pour t'y retrouver.</p>
 </header>
+<div class="search-wrap">
+  <input id="search" type="search" placeholder="🔍 Rechercher un animal par son nom…" oninput="rechercher(this.value)" autocomplete="off"/>
+</div>
+<p class="aucun" id="aucun">Aucun animal ne correspond à cette recherche.</p>
 <div class="grid">
 ${cards}
 </div>
 <script>
+function rechercher(q) {
+  q = q.trim().toLowerCase();
+  const cards = document.querySelectorAll('.card');
+  let visibles = 0;
+  cards.forEach(c => {
+    const ok = !q || c.dataset.name.includes(q);
+    c.style.display = ok ? '' : 'none';
+    if (ok) visibles++;
+  });
+  // Masquer un titre de section si aucun animal visible en dessous
+  document.querySelectorAll('.section').forEach(sec => {
+    let el = sec.nextElementSibling, anyVisible = false;
+    while (el && !el.classList.contains('section')) {
+      if (el.classList.contains('card') && el.style.display !== 'none') { anyVisible = true; break; }
+      el = el.nextElementSibling;
+    }
+    sec.style.display = anyVisible ? '' : 'none';
+  });
+  document.getElementById('aucun').style.display = visibles === 0 ? 'block' : 'none';
+}
 function copie(i, btn) {
   navigator.clipboard.writeText(document.getElementById('t' + i).textContent).then(() => {
     btn.textContent = '✅ Copié !';
