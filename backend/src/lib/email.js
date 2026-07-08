@@ -192,6 +192,18 @@ export async function sendWelcomeEmail({ email }) {
           </a>
           <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">Prend moins de 3 minutes.</p>
         </div>
+
+        <!-- Astuce PWA -->
+        <div style="background:#FFF5EB;border-radius:16px;padding:20px 22px;margin-top:28px;">
+          <p style="color:#F07A2A;font-size:14px;font-weight:700;margin:0 0 10px;">📱 Ajoutez Adoptly sur votre téléphone</p>
+          <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 10px;">
+            Retrouvez vos coups de cœur et vos messages en un clic, comme une vraie appli — rien à télécharger sur l'App Store ou le Play Store.
+          </p>
+          <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0;">
+            <strong>Sur iPhone (Safari) :</strong> bouton Partager ⬆️ → « Sur l'écran d'accueil » → Ajouter<br/>
+            <strong>Sur Android (Chrome) :</strong> menu ⋮ en haut à droite → « Installer l'application »
+          </p>
+        </div>
       </div>
 
       <!-- Partage & Facebook -->
