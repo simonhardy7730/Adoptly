@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import NotificationPrompt from './NotificationPrompt';
 import api from '../lib/api';
 
 export default function Navbar() {
@@ -52,6 +53,7 @@ export default function Navbar() {
   const links = role === 'adoptant' ? adoptantLinks : role === 'shelter' ? shelterLinks : [];
 
   return (
+    <>
     <nav className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
 
@@ -149,5 +151,7 @@ export default function Navbar() {
         )}
       </AnimatePresence>
     </nav>
+    <NotificationPrompt />
+    </>
   );
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adoptly-v1';
+const CACHE_NAME = 'adoptly-v2';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -39,5 +39,41 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => caches.match(event.request))
+  );
+});
+
+// ── Notifications push ──────────────────────────────────
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = {}; }
+
+  const title = data.title || 'Adoptly';
+  const options = {
+    body: data.body || '',
+    icon: '/pwa-192x192.png',
+    badge: '/pwa-192x192.png',
+    data: { url: data.url || 'https://adoptly.fr' },
+    vibrate: [80, 40, 80],
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Ouvrir la bonne page au clic sur la notification
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || 'https://adoptly.fr';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      // Si une fenêtre Adoptly est déjà ouverte, on la réutilise
+      for (const client of list) {
+        if (client.url.includes('adoptly.fr') && 'focus' in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
   );
 });

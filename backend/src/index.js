@@ -10,6 +10,7 @@ import publicRoutes  from './routes/public.js';
 import adminRoutes   from './routes/admin.js';
 import messagesRouter from './routes/messages.js';
 import articlesRouter from './routes/articles.js';
+import pushRouter     from './routes/push.js';
 
 dotenv.config();
 
@@ -68,6 +69,7 @@ app.use('/api/public', publicRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/messages', messagesRouter);
 app.use('/api/articles', articlesRouter);
+app.use('/api/push', pushRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { supabase } from '../lib/supabase.js';
 import { selectIn } from '../lib/db.js';
+import { sendPushToUser } from '../lib/push.js';
 import { authenticate } from '../middleware/auth.js';
 import { sendNewMessageNotificationEmail, sendAdoptantMessageNotificationEmail } from '../lib/email.js';
 
@@ -334,6 +335,17 @@ router.post('/:match_id', authenticate, async (req, res) => {
               messagePreview: preview,
             });
           }
+
+          // Notification push au refuge
+          if (animal?.shelter_id) {
+            await sendPushToUser({
+              userId: animal.shelter_id,
+              role:   'shelter',
+              title:  `💬 ${adoptantName} vous a écrit`,
+              body:   `À propos de ${animal.name} : ${preview}`,
+              url:    'https://adoptly.fr/shelter/messages',
+            });
+          }
         } catch (emailErr) {
           console.error('[Messages] Erreur notification email:', emailErr.message);
         }
@@ -379,6 +391,15 @@ router.post('/:match_id', authenticate, async (req, res) => {
               messagePreview: preview,
             });
           }
+
+          // Notification push à l'adoptant
+          await sendPushToUser({
+            userId: match.adoptant_id,
+            role:   'adoptant',
+            title:  `🐾 ${animal?.shelters?.name || 'Un refuge'} vous a répondu`,
+            body:   `À propos de ${animal?.name || 'votre animal'} : ${preview}`,
+            url:    'https://adoptly.fr/adoptant/messages',
+          });
         } catch (emailErr) {
           console.error('[Messages] Erreur notification adoptant:', emailErr.message);
         }
