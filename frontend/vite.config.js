@@ -7,7 +7,6 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      selfDestroying: true,
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon-180x180.png'],
       // Le manifest.json public est conservé tel quel — le plugin le surcharge si on le définit ici
       manifest: {
@@ -31,8 +30,10 @@ export default defineConfig({
       },
       workbox: {
         // Incrémente le cacheId pour forcer le remplacement de l'ancien cache SW
-        cacheId: 'adoptly-v2',
+        cacheId: 'adoptly-v3',
         cleanupOutdatedCaches: true,
+        // Injecte nos gestionnaires de notifications push dans le SW généré
+        importScripts: ['/push-sw.js'],
         // Précache tous les assets statiques de l'app
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         // Stratégies réseau pour les ressources dynamiques
