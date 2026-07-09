@@ -192,6 +192,8 @@ export default function AnimalPublic() {
                 src={animal.video_url}
                 controls
                 autoPlay
+                playsInline
+                preload="metadata"
                 className="w-full h-full object-contain bg-black"
                 onEnded={() => setShowVideo(false)}
               />

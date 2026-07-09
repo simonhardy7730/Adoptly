@@ -22,9 +22,12 @@ registerRoute(
   })
 );
 
-// Photos Supabase — Cache First
+// Photos Supabase — Cache First (IMAGES uniquement).
+// Important : on n'intercepte PAS les vidéos (.mp4) — le cache casse les
+// requêtes Range et empêche la lecture vidéo sur mobile. Les vidéos passent
+// donc directement par le réseau (lecture native, avec support Range).
 registerRoute(
-  /^https:\/\/.*supabase\.co\/storage\/.*/i,
+  /^https:\/\/.*supabase\.co\/storage\/.*\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i,
   new CacheFirst({
     cacheName: 'adoptly-photos',
     plugins: [

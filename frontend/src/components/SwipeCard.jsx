@@ -154,6 +154,8 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
               src={animal.video_url}
               controls
               autoPlay
+              playsInline
+              preload="metadata"
               className="w-full h-full object-contain bg-black"
               onEnded={() => setShowVideo(false)}
             />
