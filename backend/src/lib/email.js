@@ -199,9 +199,13 @@ export async function sendWelcomeEmail({ email }) {
           <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 10px;">
             Retrouvez vos coups de cœur et vos messages en un clic, comme une vraie appli — rien à télécharger sur l'App Store ou le Play Store.
           </p>
+          <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 10px;">
+            <strong>📱 Sur iPhone (avec Safari) :</strong><br/>
+            Bouton Partager ⬆️ → « Sur l'écran d'accueil » → Ajouter
+          </p>
           <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0;">
-            <strong>Sur iPhone (Safari) :</strong> bouton Partager ⬆️ → « Sur l'écran d'accueil » → Ajouter<br/>
-            <strong>Sur Android (Chrome) :</strong> menu ⋮ en haut à droite → « Installer l'application »
+            <strong>🤖 Sur Android (avec Chrome) :</strong><br/>
+            Menu ⋮ en haut à droite → « Installer l'application » ou « Ajouter à l'écran d'accueil »
           </p>
         </div>
       </div>

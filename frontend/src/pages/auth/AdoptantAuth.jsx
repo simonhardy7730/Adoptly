@@ -75,7 +75,11 @@ export default function AdoptantAuth({ mode = 'login' }) {
     setLoading(true);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        // Force Google à toujours proposer le choix du compte
+        queryParams: { prompt: 'select_account' },
+      },
     });
     if (oauthError) {
       setError(t('auth_error_default'));
