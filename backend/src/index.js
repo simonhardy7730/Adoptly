@@ -220,17 +220,20 @@ app.get('/api/cron/daily-digest', async (req, res) => {
 
     console.log('[Digest] Détail matching:', JSON.stringify(debugLog));
 
-    await sendEmailsThrottled(emailFns);
-
-    console.log(`[Digest] ${totalSent} email(s) envoyé(s) pour ${newAnimals.length} nouvel animal(aux)`);
+    // Répondre immédiatement à cron-job.org pour éviter le timeout (~30s),
+    // puis envoyer les emails en arrière-plan (Render est un serveur persistant).
     res.json({
-      message: 'Digest envoyé',
-      sent: totalSent,
+      message: 'Digest lancé (envoi en arrière-plan)',
+      queued: totalSent,
       newAnimals: newAnimals.length,
       adoptantsChecked: activeAdoptants.length,
       since,
       debug: debugLog,
     });
+
+    sendEmailsThrottled(emailFns)
+      .then(() => console.log(`[Digest] ${totalSent} email(s) envoyé(s) en arrière-plan pour ${newAnimals.length} nouvel animal(aux)`))
+      .catch((e) => console.error('[Digest] Erreur envoi arrière-plan:', e.message));
   } catch (err) {
     console.error('[Digest] Erreur:', err.message, err.stack);
     res.status(500).json({ error: err.message });
@@ -325,15 +328,17 @@ app.get('/api/cron/reminder-j2', async (req, res) => {
       }));
     }
 
-    await sendEmailsThrottled(emailFns);
-
-    console.log(`[Reminder-J2] ${emailFns.length} email(s) envoyé(s), ${skipped} ignoré(s) (déjà écrit)`);
+    const j2Count = emailFns.length;
     res.json({
-      message: 'Relance J+2 terminée',
-      sent: emailFns.length,
+      message: 'Relance J+2 lancée (envoi en arrière-plan)',
+      queued: j2Count,
       skipped,
       totalMatches: matches.length,
     });
+
+    sendEmailsThrottled(emailFns)
+      .then(() => console.log(`[Reminder-J2] ${j2Count} email(s) envoyé(s) en arrière-plan, ${skipped} ignoré(s) (déjà écrit)`))
+      .catch((e) => console.error('[Reminder-J2] Erreur envoi arrière-plan:', e.message));
   } catch (err) {
     console.error('[Reminder-J2] Erreur:', err.message, err.stack);
     res.status(500).json({ error: err.message });
@@ -428,14 +433,16 @@ app.get('/api/cron/reminder-j3-shelter', async (req, res) => {
       }));
     }
 
-    await sendEmailsThrottled(emailFns);
-
-    console.log(`[Reminder-J3] ${emailFns.length} email(s) envoyé(s) à des refuges`);
+    const j3Count = emailFns.length;
     res.json({
-      message: 'Relance J+3 refuges terminée',
-      sent: emailFns.length,
+      message: 'Relance J+3 refuges lancée (envoi en arrière-plan)',
+      queued: j3Count,
       totalUnread: messages.length,
     });
+
+    sendEmailsThrottled(emailFns)
+      .then(() => console.log(`[Reminder-J3] ${j3Count} email(s) envoyé(s) à des refuges en arrière-plan`))
+      .catch((e) => console.error('[Reminder-J3] Erreur envoi arrière-plan:', e.message));
   } catch (err) {
     console.error('[Reminder-J3] Erreur:', err.message, err.stack);
     res.status(500).json({ error: err.message });
