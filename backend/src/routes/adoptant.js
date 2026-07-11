@@ -77,7 +77,7 @@ router.get('/animals', authenticate, async (req, res) => {
       .from('animals')
       .select('*, shelters(id, name, phone, email, address, latitude, longitude)')
       .eq('status', 'active')
-      .limit(200);
+      .limit(500);
 
     if (swipedIds.length > 0) {
       query = query.not('id', 'in', `(${swipedIds.join(',')})`);
@@ -103,8 +103,7 @@ router.get('/animals', authenticate, async (req, res) => {
               )
             : null,
       }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 50);
+      .sort((a, b) => b.score - a.score);
 
     res.json(results);
   } catch (err) {
