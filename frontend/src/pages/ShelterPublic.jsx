@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../lib/api';
+import { setCanonical, resetCanonical } from '../lib/seo';
 
 const SPECIES_EMOJI = { dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾' };
 const SPECIES_LABEL = { dog: 'Chiens', cat: 'Chats', rabbit: 'Lapins', guinea_pig: 'Cobayes', other: 'Autres' };
@@ -19,12 +20,13 @@ export default function ShelterPublic() {
       .then(({ data }) => {
         setShelter(data);
         document.title = `${data.name} | Adoptly`;
+        setCanonical(`/refuges/${id}`);
       })
       .catch((err) => {
         if (err.response?.status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
   }, [id]);
 
   if (loading) return (

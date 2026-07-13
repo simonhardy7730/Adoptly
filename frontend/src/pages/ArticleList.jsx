@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../lib/api';
+import { setCanonical, resetCanonical } from '../lib/seo';
 
 function timeAgo(isoString) {
   if (!isoString) return '';
@@ -28,11 +29,12 @@ export default function ArticleList() {
 
   useEffect(() => {
     document.title = 'Actualités | Adoptly';
+    setCanonical('/actualites');
     api.get('/articles')
       .then(({ data }) => setArticles(data))
       .catch(() => {})
       .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
   }, []);
 
   const filtered = filter === 'all'

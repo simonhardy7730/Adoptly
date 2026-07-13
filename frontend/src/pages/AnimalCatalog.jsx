@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../lib/api';
+import { setCanonical, resetCanonical } from '../lib/seo';
 
 const SPECIES_OPTIONS = [
   { value: 'all', label: 'Tous', emoji: '🐾' },
@@ -90,6 +91,7 @@ export default function AnimalCatalog() {
 
   useEffect(() => {
     document.title = 'Animaux à adopter | Adoptly';
+    setCanonical('/animaux');
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'description'; document.head.appendChild(meta); }
     meta.content = 'Découvrez les animaux disponibles à l\'adoption dans nos refuges partenaires. Chiens, chats, NAC — trouvez votre compagnon idéal sur Adoptly.';

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { setCanonical, resetCanonical } from '../lib/seo';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
@@ -131,8 +132,9 @@ export default function PreparerAdoption() {
 
   useEffect(() => {
     document.title = 'Préparer son adoption | Adoptly';
+    setCanonical('/preparer-adoption');
     window.scrollTo(0, 0);
-    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
   }, []);
 
   return (

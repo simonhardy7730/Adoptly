@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../lib/api';
+import { setCanonical, resetCanonical } from '../lib/seo';
 
 const SPECIES_EMOJI = { dog: '🐕', cat: '🐈', rabbit: '🐇', bird: '🐦', guinea_pig: '🐹', other: '🐾' };
 const SPECIES_LABEL = { dog: 'Chien', cat: 'Chat', rabbit: 'Lapin', bird: 'Oiseau', guinea_pig: 'Cobaye', other: 'Animal' };
@@ -128,12 +129,13 @@ export default function AnimalPublic() {
       .then(({ data }) => {
         setAnimal(data);
         document.title = `${data.name} cherche une famille | Adoptly`;
+        setCanonical(`/animal/${id}`);
       })
       .catch((err) => {
         if (err.response?.status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
   }, [id]);
 
   if (loading) return (

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../lib/api';
+import { setCanonical, resetCanonical } from '../lib/seo';
 
 export default function ArticleDetail() {
   const { slug } = useParams();
@@ -15,12 +16,13 @@ export default function ArticleDetail() {
       .then(({ data }) => {
         setArticle(data);
         document.title = `${data.title} | Adoptly`;
+        setCanonical(`/actualites/${slug}`);
       })
       .catch((err) => {
         if (err.response?.status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; };
+    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
   }, [slug]);
 
   if (loading) return (
