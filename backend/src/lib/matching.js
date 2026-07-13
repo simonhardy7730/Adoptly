@@ -17,7 +17,9 @@ export function haversineKm(lat1, lon1, lat2, lon2) {
 
 // Pays situés en Amérique du Nord — zone d'adoption distincte de l'Europe.
 // (La Guadeloupe n'y figure pas : ces animaux sont rapatriés en France.)
-const NORTH_AMERICA = new Set(['Canada', 'États-Unis', 'Etats-Unis', 'USA', 'Québec', 'Quebec']);
+// Normalisé (minuscules + trim) car origin_country est saisi à la main.
+const NORTH_AMERICA = new Set(['canada', 'états-unis', 'etats-unis', 'usa', 'québec', 'quebec']);
+const isNorthAmerica = (country) => NORTH_AMERICA.has((country || '').trim().toLowerCase());
 
 export function passesHardFilters(animal, shelter, prefs) {
   // Animaux internationaux (hors Belgique/France)
@@ -27,7 +29,7 @@ export function passesHardFilters(animal, shelter, prefs) {
     if (prefs.accepts_international === false) return false;
     // Pas de match transatlantique : l'animal et l'adoptant doivent être
     // sur la même zone d'adoption (Amérique du Nord vs Europe).
-    const animalNorthAmerica = NORTH_AMERICA.has(animal.origin_country);
+    const animalNorthAmerica = isNorthAmerica(animal.origin_country);
     const adopterNorthAmerica = prefs.longitude < -30; // null/undefined => false (Europe par défaut)
     if (animalNorthAmerica !== adopterNorthAmerica) return false;
   } else {
@@ -107,7 +109,7 @@ export function passesHardFiltersFoster(animal, shelter, prefs) {
   if (animal.is_international) {
     if (prefs.accepts_international === false) return false;
     // Pas de match transatlantique (même zone d'adoption).
-    const animalNorthAmerica = NORTH_AMERICA.has(animal.origin_country);
+    const animalNorthAmerica = isNorthAmerica(animal.origin_country);
     const adopterNorthAmerica = prefs.longitude < -30;
     if (animalNorthAmerica !== adopterNorthAmerica) return false;
   } else {
