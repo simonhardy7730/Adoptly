@@ -323,19 +323,19 @@ export default function AnimalForm() {
               ))}
 
               {existingPhotos.length + newFiles.length < 3 && (
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-secondary hover:text-secondary transition-colors"
+                <label
+                  htmlFor="photo-upload"
+                  className="w-24 h-24 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-secondary hover:text-secondary transition-colors cursor-pointer"
                 >
                   <span className="text-2xl">+</span>
                   <span className="text-xs">{t('form_photo_add')}</span>
-                </button>
+                </label>
               )}
             </div>
 
             <input
               ref={fileRef}
+              id="photo-upload"
               type="file"
               accept="image/*"
               multiple
@@ -367,18 +367,18 @@ export default function AnimalForm() {
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => videoRef.current?.click()}
-                className="w-full h-24 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-secondary hover:text-secondary transition-colors"
+              <label
+                htmlFor="video-upload"
+                className="w-full h-24 rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-secondary hover:text-secondary transition-colors cursor-pointer"
               >
                 <span className="text-2xl">▶</span>
                 <span className="text-xs">Ajouter une vidéo</span>
-              </button>
+              </label>
             )}
 
             <input
               ref={videoRef}
+              id="video-upload"
               type="file"
               accept="video/mp4,video/mov,video/quicktime,video/webm"
               className="hidden"
