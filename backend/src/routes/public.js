@@ -239,7 +239,7 @@ router.get('/share/animal/:id', async (req, res) => {
       .eq('id', req.params.id)
       .single();
 
-    if (!animal) return res.redirect('https://adoptly.fr');
+    if (!animal) return res.redirect('https://www.adoptly.fr');
 
     const ua = req.headers['user-agent'] || '';
     const isCrawler = /facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot/i.test(ua);
@@ -250,8 +250,8 @@ router.get('/share/animal/:id', async (req, res) => {
     const desc = animal.story
       ? animal.story.slice(0, 160)
       : `${species} · ${age} · ${animal.shelters?.name || 'Refuge partenaire'} — Adoptez-le sur Adoptly !`;
-    const photo = animal.photos?.[0] || 'https://adoptly.fr/pwa-512x512.png';
-    const shareUrl = `https://adoptly.fr/share/animal/${animal.id}`;
+    const photo = animal.photos?.[0] || 'https://www.adoptly.fr/pwa-512x512.png';
+    const shareUrl = `https://www.adoptly.fr/share/animal/${animal.id}`;
 
     if (isCrawler) {
       return res.send(`<!DOCTYPE html><html><head>
@@ -272,9 +272,9 @@ router.get('/share/animal/:id', async (req, res) => {
       </head><body><p>Redirection...</p></body></html>`);
     }
 
-    res.redirect(`https://adoptly.fr/animal/${animal.id}`);
+    res.redirect(`https://www.adoptly.fr/animal/${animal.id}`);
   } catch {
-    res.redirect('https://adoptly.fr');
+    res.redirect('https://www.adoptly.fr');
   }
 });
 
@@ -288,15 +288,15 @@ router.get('/share/article/:slug', async (req, res) => {
       .eq('status', 'published')
       .single();
 
-    if (!article) return res.redirect('https://adoptly.fr/actualites');
+    if (!article) return res.redirect('https://www.adoptly.fr/actualites');
 
     const ua = req.headers['user-agent'] || '';
     const isCrawler = /facebookexternalhit|whatsapp|twitterbot|linkedinbot|slackbot|telegrambot|discordbot/i.test(ua);
 
     const title = article.title;
     const desc = article.excerpt || '';
-    const image = article.cover_image || 'https://adoptly.fr/pwa-512x512.png';
-    const shareUrl = `https://adoptly.fr/share/article/${article.slug}`;
+    const image = article.cover_image || 'https://www.adoptly.fr/pwa-512x512.png';
+    const shareUrl = `https://www.adoptly.fr/share/article/${article.slug}`;
 
     if (isCrawler) {
       return res.send(`<!DOCTYPE html><html><head>
@@ -317,9 +317,9 @@ router.get('/share/article/:slug', async (req, res) => {
       </head><body><p>Redirection...</p></body></html>`);
     }
 
-    res.redirect(`https://adoptly.fr/actualites/${article.slug}`);
+    res.redirect(`https://www.adoptly.fr/actualites/${article.slug}`);
   } catch {
-    res.redirect('https://adoptly.fr/actualites');
+    res.redirect('https://www.adoptly.fr/actualites');
   }
 });
 
@@ -336,8 +336,8 @@ router.get('/share/animaux', async (req, res) => {
 
     const title = 'Animaux à adopter | Adoptly';
     const desc = `${count || 'Des'} animaux cherchent une famille dans nos refuges partenaires. Chiens, chats, NAC — trouvez votre compagnon idéal gratuitement sur Adoptly.`;
-    const image = 'https://adoptly.fr/pwa-512x512.png';
-    const shareUrl = 'https://adoptly.fr/share/animaux';
+    const image = 'https://www.adoptly.fr/pwa-512x512.png';
+    const shareUrl = 'https://www.adoptly.fr/share/animaux';
 
     if (isCrawler) {
       return res.send(`<!DOCTYPE html><html><head>
@@ -358,9 +358,9 @@ router.get('/share/animaux', async (req, res) => {
       </head><body><p>Redirection...</p></body></html>`);
     }
 
-    res.redirect('https://adoptly.fr/animaux');
+    res.redirect('https://www.adoptly.fr/animaux');
   } catch {
-    res.redirect('https://adoptly.fr/animaux');
+    res.redirect('https://www.adoptly.fr/animaux');
   }
 });
 
@@ -385,7 +385,7 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
     const city = shelter.address ? (shelter.address.match(/\d{4,5}\s+([^,]+)/)?.[1]?.trim() || shelter.address.split(',').pop()?.trim() || '') : '';
     const age = seoAgeLabel(a.age);
     return `
-      <a href="https://adoptly.fr/animal/${a.id}" style="display:block;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);text-decoration:none;color:#333;">
+      <a href="https://www.adoptly.fr/animal/${a.id}" style="display:block;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);text-decoration:none;color:#333;">
         ${photo ? `<img src="${photo}" alt="${a.name}" style="width:100%;height:200px;object-fit:cover;" loading="lazy"/>` : ''}
         <div style="padding:12px 16px;">
           <h3 style="margin:0 0 4px;font-size:16px;font-weight:700;color:#1B4F8A;">${a.name}</h3>
@@ -400,9 +400,9 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
     '@type': 'CollectionPage',
     name: title,
     description,
-    url: `https://adoptly.fr${canonical}`,
+    url: `https://www.adoptly.fr${canonical}`,
     numberOfItems: count,
-    provider: { '@type': 'Organization', name: 'Adoptly', url: 'https://adoptly.fr' },
+    provider: { '@type': 'Organization', name: 'Adoptly', url: 'https://www.adoptly.fr' },
     mainEntity: {
       '@type': 'ItemList',
       numberOfItems: count,
@@ -414,7 +414,7 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
           name: a.name,
           description: `${a.name}, ${a.breed || 'croisé'}${a.age != null ? `, ${seoAgeLabel(a.age)}` : ''} — disponible à l'adoption via Adoptly`,
           image: a.photos?.[0] || '',
-          url: `https://adoptly.fr/animal/${a.id}`,
+          url: `https://www.adoptly.fr/animal/${a.id}`,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR', availability: 'https://schema.org/InStock' },
         },
       })),
@@ -428,13 +428,13 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>${title}</title>
   <meta name="description" content="${description}"/>
-  <link rel="canonical" href="https://adoptly.fr${canonical}"/>
+  <link rel="canonical" href="https://www.adoptly.fr${canonical}"/>
   <meta name="robots" content="index, follow"/>
   <meta property="og:type" content="website"/>
   <meta property="og:title" content="${title}"/>
   <meta property="og:description" content="${description}"/>
-  <meta property="og:url" content="https://adoptly.fr${canonical}"/>
-  <meta property="og:image" content="https://adoptly.fr/pwa-512x512.png"/>
+  <meta property="og:url" content="https://www.adoptly.fr${canonical}"/>
+  <meta property="og:image" content="https://www.adoptly.fr/pwa-512x512.png"/>
   <meta property="og:locale" content="fr_FR"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
@@ -466,11 +466,11 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
 </head>
 <body>
   <nav class="nav">
-    <a href="https://adoptly.fr" class="logo">
+    <a href="https://www.adoptly.fr" class="logo">
       <div class="logo-box">A</div>
       <span class="logo-text">Adoptly</span>
     </a>
-    <a href="https://adoptly.fr/adoptant/register" class="cta-btn">Adopter →</a>
+    <a href="https://www.adoptly.fr/adoptant/register" class="cta-btn">Adopter →</a>
   </nav>
   <div class="container">
     <div class="hero">
@@ -485,11 +485,11 @@ function seoAnimalPage({ title, description, canonical, animals, shelterMap, spe
     <div class="bottom-cta">
       <h2>Trouvez votre compagnon idéal</h2>
       <p>Notre algorithme analyse 14 critères de compatibilité pour vous proposer les ${speciesLabel} qui correspondent à votre mode de vie. Gratuit et sans engagement.</p>
-      <a href="https://adoptly.fr/adoptant/register">Commencer le questionnaire →</a>
+      <a href="https://www.adoptly.fr/adoptant/register">Commencer le questionnaire →</a>
     </div>
   </div>
   <footer>
-    <a href="https://adoptly.fr">Adoptly</a> · <a href="https://adoptly.fr/actualites">Actualités</a> · <a href="https://adoptly.fr/refuges">Nos refuges</a> · <a href="https://adoptly.fr/legal/cgu">CGU</a>
+    <a href="https://www.adoptly.fr">Adoptly</a> · <a href="https://www.adoptly.fr/actualites">Actualités</a> · <a href="https://www.adoptly.fr/refuges">Nos refuges</a> · <a href="https://www.adoptly.fr/legal/cgu">CGU</a>
   </footer>
 </body>
 </html>`;
@@ -584,7 +584,7 @@ const SEO_SEGMENTS = [
     title: c => `Chiots à adopter — ${c} chiots en refuge | Adoptly`,
     desc: c => `${c} chiots de moins d'un an disponibles à l'adoption dans nos refuges partenaires. Adoption possible partout en France, Belgique et Europe. Service gratuit avec matching de compatibilité.`,
     intro: `<p>Adopter un chiot en refuge, c'est possible — et c'est souvent une meilleure idée qu'un achat en élevage ou en animalerie. Nos refuges partenaires recueillent régulièrement des portées abandonnées : des chiots de moins d'un an, identifiés, vaccinés et suivis par des vétérinaires, qui attendent une famille pour grandir.</p>
-<p>Un chiot demande du temps, de la patience et de l'éducation. Notre <a href="https://adoptly.fr/adoptant/register">questionnaire de compatibilité</a> vérifie que votre mode de vie correspond avant la mise en relation — c'est gratuit et ça évite les adoptions ratées.</p>`,
+<p>Un chiot demande du temps, de la patience et de l'éducation. Notre <a href="https://www.adoptly.fr/adoptant/register">questionnaire de compatibilité</a> vérifie que votre mode de vie correspond avant la mise en relation — c'est gratuit et ça évite les adoptions ratées.</p>`,
   },
   {
     slug: 'chiens-de-roumanie-a-adopter',
@@ -594,7 +594,7 @@ const SEO_SEGMENTS = [
     title: c => `Adopter un chien de Roumanie — ${c} chiens disponibles | Adoptly`,
     desc: c => `${c} chiens sauvés des rues et des fourrières de Roumanie cherchent une famille en France ou en Belgique. Transport organisé, passeport européen, vaccins à jour. Service d'adoption gratuit.`,
     intro: `<p>En Roumanie, des milliers de chiens survivent dans les rues ou dans des fourrières surpeuplées. Nos refuges partenaires les sauvent, les soignent et les préparent à l'adoption : chaque chien arrive <strong>identifié, vacciné, stérilisé et muni de son passeport européen</strong>.</p>
-<p>Le transport vers la France ou la Belgique est organisé par les refuges via des transporteurs agréés — vous n'avez pas à vous déplacer en Roumanie. Répondez à notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> pour découvrir les chiens compatibles avec votre mode de vie, et consultez notre <a href="https://adoptly.fr/actualites/adopter-chien-roumanie-france-guide-complet">guide complet de l'adoption d'un chien de Roumanie</a>.</p>`,
+<p>Le transport vers la France ou la Belgique est organisé par les refuges via des transporteurs agréés — vous n'avez pas à vous déplacer en Roumanie. Répondez à notre <a href="https://www.adoptly.fr/adoptant/register">questionnaire gratuit</a> pour découvrir les chiens compatibles avec votre mode de vie, et consultez notre <a href="https://www.adoptly.fr/actualites/adopter-chien-roumanie-france-guide-complet">guide complet de l'adoption d'un chien de Roumanie</a>.</p>`,
   },
   {
     slug: 'petit-chien-a-adopter',
@@ -604,7 +604,7 @@ const SEO_SEGMENTS = [
     title: c => `Petit chien à adopter — ${c} petits chiens en refuge | Adoptly`,
     desc: c => `${c} petits chiens disponibles à l'adoption dans nos refuges partenaires en Europe. Idéal en appartement. Adoption via un service gratuit avec matching de compatibilité.`,
     intro: `<p>Vous cherchez un chien de petit gabarit, adapté à un appartement ou à une vie citadine ? Les refuges regorgent de petits chiens pleins de vie qui attendent leur famille — souvent plus longtemps que les autres, car on pense rarement à eux en premier.</p>
-<p>Chaque profil ci-dessous est réel et à jour. Pour savoir lesquels correspondent vraiment à votre quotidien, faites notre <a href="https://adoptly.fr/adoptant/register">test de compatibilité gratuit</a> : logement, rythme de vie, expérience — on analyse 14 critères.</p>`,
+<p>Chaque profil ci-dessous est réel et à jour. Pour savoir lesquels correspondent vraiment à votre quotidien, faites notre <a href="https://www.adoptly.fr/adoptant/register">test de compatibilité gratuit</a> : logement, rythme de vie, expérience — on analyse 14 critères.</p>`,
   },
   {
     slug: 'grand-chien-a-adopter',
@@ -614,7 +614,7 @@ const SEO_SEGMENTS = [
     title: c => `Grand chien à adopter — ${c} grands chiens en refuge | Adoptly`,
     desc: c => `${c} chiens de grande taille disponibles à l'adoption dans nos refuges partenaires en Europe. Bergers, croisés et grands gabarits. Service d'adoption gratuit.`,
     intro: `<p>Les grands chiens sont souvent les derniers adoptés en refuge : ils impressionnent, prennent de la place... et pourtant ce sont fréquemment les plus doux. Bergers, croisés de grande taille, gardiens au grand cœur — ils attendent une famille avec un peu d'espace et beaucoup d'amour.</p>
-<p>Avant d'adopter un grand gabarit, vérifiez la compatibilité avec votre logement et votre rythme de vie grâce à notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a>.</p>`,
+<p>Avant d'adopter un grand gabarit, vérifiez la compatibilité avec votre logement et votre rythme de vie grâce à notre <a href="https://www.adoptly.fr/adoptant/register">questionnaire gratuit</a>.</p>`,
   },
   {
     slug: 'chien-senior-a-adopter',
@@ -624,7 +624,7 @@ const SEO_SEGMENTS = [
     title: c => `Chien senior à adopter — ${c} chiens de 7 ans et plus | Adoptly`,
     desc: c => `${c} chiens seniors (7 ans et plus) attendent une famille dans nos refuges partenaires. Calmes, éduqués et affectueux : l'adoption d'un senior change deux vies. Service gratuit.`,
     intro: `<p>Adopter un chien senior, c'est offrir une retraite douce à un animal qui a souvent tout connu — et recevoir en échange un compagnon calme, posé, généralement propre et éduqué. Les seniors sont les grands oubliés des refuges, alors que ce sont souvent les adoptions les plus faciles à vivre au quotidien.</p>
-<p>Chaque chien ci-dessous a 7 ans ou plus et attend une famille. Découvrez ceux qui correspondent à votre mode de vie avec notre <a href="https://adoptly.fr/adoptant/register">test de compatibilité gratuit</a>.</p>`,
+<p>Chaque chien ci-dessous a 7 ans ou plus et attend une famille. Découvrez ceux qui correspondent à votre mode de vie avec notre <a href="https://www.adoptly.fr/adoptant/register">test de compatibilité gratuit</a>.</p>`,
   },
   {
     slug: 'adopter-un-chien-en-belgique',
@@ -634,7 +634,7 @@ const SEO_SEGMENTS = [
     title: c => `Adopter un chien en Belgique — ${c} chiens disponibles | Adoptly`,
     desc: c => `${c} chiens disponibles à l'adoption pour les familles en Belgique. Refuges partenaires en Belgique et en Europe, transport organisé, passeport européen. Service d'adoption gratuit.`,
     intro: `<p>Vous habitez en Belgique et souhaitez adopter un chien ? Tous les chiens ci-dessous sont adoptables depuis la Belgique : certains se trouvent dans des refuges belges, d'autres chez nos refuges partenaires européens qui organisent le transport jusqu'à chez vous — chiens identifiés, vaccinés, stérilisés, avec passeport européen.</p>
-<p>L'adoption suit les règles belges du bien-être animal : les refuges vérifient chaque famille avant de confier un animal. Notre <a href="https://adoptly.fr/adoptant/register">questionnaire gratuit</a> facilite cette étape en présentant votre profil directement au refuge. Pour les démarches détaillées, consultez notre <a href="https://adoptly.fr/actualites/adopter-animal-belgique-refuges-demarches">guide de l'adoption en Belgique</a>.</p>`,
+<p>L'adoption suit les règles belges du bien-être animal : les refuges vérifient chaque famille avant de confier un animal. Notre <a href="https://www.adoptly.fr/adoptant/register">questionnaire gratuit</a> facilite cette étape en présentant votre profil directement au refuge. Pour les démarches détaillées, consultez notre <a href="https://www.adoptly.fr/actualites/adopter-animal-belgique-refuges-demarches">guide de l'adoption en Belgique</a>.</p>`,
   },
   {
     slug: 'adopter-un-chien-en-france',
@@ -644,7 +644,7 @@ const SEO_SEGMENTS = [
     title: c => `Adopter un chien en France — ${c} chiens disponibles | Adoptly`,
     desc: c => `${c} chiens disponibles à l'adoption pour les familles en France. Refuges partenaires en France et en Europe, transport organisé, passeport européen. Service d'adoption gratuit.`,
     intro: `<p>Vous habitez en France et cherchez un chien à adopter ? Tous les chiens ci-dessous sont adoptables depuis la France : certains sont dans des refuges et familles d'accueil françaises, d'autres chez nos refuges partenaires européens qui organisent le transport — chiens identifiés, vaccinés, stérilisés, avec passeport européen conforme à la réglementation.</p>
-<p>Chaque adoption passe par le refuge, qui valide votre famille. Pour gagner du temps, remplissez notre <a href="https://adoptly.fr/adoptant/register">questionnaire de compatibilité gratuit</a> : il présente votre mode de vie au refuge et vous propose les chiens qui vous correspondent.</p>`,
+<p>Chaque adoption passe par le refuge, qui valide votre famille. Pour gagner du temps, remplissez notre <a href="https://www.adoptly.fr/adoptant/register">questionnaire de compatibilité gratuit</a> : il présente votre mode de vie au refuge et vous propose les chiens qui vous correspondent.</p>`,
   },
 ];
 
@@ -737,22 +737,22 @@ router.get('/sitemap.xml', async (_req, res) => {
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
     for (const p of staticPages) {
-      xml += `  <url><loc>https://adoptly.fr${p.loc}</loc><changefreq>${p.freq}</changefreq><priority>${p.priority}</priority><lastmod>${today}</lastmod></url>\n`;
+      xml += `  <url><loc>https://www.adoptly.fr${p.loc}</loc><changefreq>${p.freq}</changefreq><priority>${p.priority}</priority><lastmod>${today}</lastmod></url>\n`;
     }
 
     for (const a of (animals || [])) {
       const mod = a.created_at?.split('T')[0] || today;
-      xml += `  <url><loc>https://adoptly.fr/animal/${a.id}</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${mod}</lastmod></url>\n`;
+      xml += `  <url><loc>https://www.adoptly.fr/animal/${a.id}</loc><changefreq>weekly</changefreq><priority>0.7</priority><lastmod>${mod}</lastmod></url>\n`;
     }
 
     for (const s of (shelters || [])) {
       const mod = s.created_at?.split('T')[0] || today;
-      xml += `  <url><loc>https://adoptly.fr/refuges/${s.id}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${mod}</lastmod></url>\n`;
+      xml += `  <url><loc>https://www.adoptly.fr/refuges/${s.id}</loc><changefreq>weekly</changefreq><priority>0.6</priority><lastmod>${mod}</lastmod></url>\n`;
     }
 
     for (const ar of (articles || [])) {
       const mod = ar.updated_at?.split('T')[0] || today;
-      xml += `  <url><loc>https://adoptly.fr/actualites/${ar.slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority><lastmod>${mod}</lastmod></url>\n`;
+      xml += `  <url><loc>https://www.adoptly.fr/actualites/${ar.slug}</loc><changefreq>monthly</changefreq><priority>0.6</priority><lastmod>${mod}</lastmod></url>\n`;
     }
 
     xml += `</urlset>`;
