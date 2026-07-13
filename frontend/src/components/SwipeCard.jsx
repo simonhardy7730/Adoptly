@@ -10,6 +10,14 @@ const SPECIES_EMOJI = {
   other: '🐾',
 };
 
+// Drapeau du pays d'origine (animaux internationaux)
+const COUNTRY_FLAG = {
+  'Roumanie': '🇷🇴', 'Canada': '🇨🇦', 'Espagne': '🇪🇸', 'Grèce': '🇬🇷',
+  'Portugal': '🇵🇹', 'Albanie': '🇦🇱', 'Serbie': '🇷🇸', 'Guadeloupe': '🇬🇵',
+  'France': '🇫🇷', 'Belgique': '🇧🇪', 'Bulgarie': '🇧🇬', 'Italie': '🇮🇹',
+};
+const flagFor = (country) => COUNTRY_FLAG[country] || '🌍';
+
 const TEMPERAMENT_LABEL = {
   calm: 'Calme',
   playful: 'Joueur',
@@ -235,7 +243,7 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
           {animal.is_international ? (
             <div className="absolute top-4 right-4 bg-blue-600/80 text-white text-xs font-semibold
                             px-2.5 py-1 rounded-full backdrop-blur-sm pointer-events-none">
-              🌍 {animal.origin_country || 'Étranger'}
+              {flagFor(animal.origin_country)} {animal.origin_country || 'Étranger'}
             </div>
           ) : animal.distance != null && (
             <div className="absolute top-4 right-4 bg-black/40 text-white text-xs font-semibold
