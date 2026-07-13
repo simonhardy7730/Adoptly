@@ -18,8 +18,9 @@ function timeAgo(isoString) {
 
 const FILTERS = [
   { key: 'all',    label: 'Tout' },
-  { key: 'refuge', label: 'Nos refuges' },
+  { key: 'race',   label: 'Guides des races' },
   { key: 'guide',  label: "Guides d'adoption" },
+  { key: 'refuge', label: 'Nos refuges' },
 ];
 
 export default function ArticleList() {
@@ -37,11 +38,12 @@ export default function ArticleList() {
     return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
   }, []);
 
-  const filtered = filter === 'all'
-    ? articles
-    : filter === 'refuge'
-      ? articles.filter(a => a.shelter_id)
-      : articles.filter(a => !a.shelter_id);
+  const isRace = (a) => (a.slug || '').endsWith('-race');
+  const filtered =
+    filter === 'all'    ? articles
+    : filter === 'race'   ? articles.filter(isRace)
+    : filter === 'refuge' ? articles.filter(a => a.shelter_id)
+    : /* guides d'adoption */ articles.filter(a => !a.shelter_id && !isRace(a));
 
   return (
     <div className="min-h-screen bg-bg-light">
