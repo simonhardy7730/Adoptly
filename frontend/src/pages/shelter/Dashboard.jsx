@@ -143,7 +143,7 @@ function PendingContactsModal({ onClose, t }) {
           <div>
             <h3 className="font-bold text-gray-800">Contacts en attente</h3>
             <p className="text-gray-400 text-xs mt-0.5">
-              {contacts.length} {contacts.length > 1 ? 'adoptants attendent votre réponse' : 'adoptant attend votre réponse'}
+              {contacts.length} {contacts.length > 1 ? 'personnes ont eu un coup de cœur pour vos animaux' : 'personne a eu un coup de cœur pour vos animaux'}
             </p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
@@ -154,7 +154,7 @@ function PendingContactsModal({ onClose, t }) {
             <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
           ) : contacts.length === 0 ? (
             <div className="text-center py-8 text-gray-400 text-sm">
-              🎉 Aucun contact en attente !
+              🎉 Aucun coup de cœur en attente !
             </div>
           ) : (
             contacts.map((c) => {
@@ -172,7 +172,7 @@ function PendingContactsModal({ onClose, t }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-700 text-sm truncate">{name}</p>
                     <p className="text-gray-400 text-xs truncate">
-                      Pour <span className="font-medium text-primary">{c.animal_name}</span>
+                      💚 Coup de cœur pour <span className="font-medium text-primary">{c.animal_name}</span>
                     </p>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-2">
@@ -182,9 +182,9 @@ function PendingContactsModal({ onClose, t }) {
                         onClose();
                         navigate(`/shelter/chat/${c.match_id}`);
                       }}
-                      className="text-sm font-medium text-white bg-secondary hover:bg-primary px-3 py-1.5 rounded-lg transition-colors"
+                      className="text-sm font-medium text-white bg-secondary hover:bg-primary px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                     >
-                      💬
+                      💬 Écrire
                     </button>
                   </div>
                 </div>
