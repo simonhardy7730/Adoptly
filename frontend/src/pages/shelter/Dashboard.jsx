@@ -141,7 +141,7 @@ function PendingContactsModal({ onClose, t }) {
       >
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
           <div>
-            <h3 className="font-bold text-gray-800">{t('pending_title') || 'Contacts en attente'}</h3>
+            <h3 className="font-bold text-gray-800">Contacts en attente</h3>
             <p className="text-gray-400 text-xs mt-0.5">
               {contacts.length} {contacts.length > 1 ? 'adoptants attendent votre réponse' : 'adoptant attend votre réponse'}
             </p>
@@ -172,7 +172,7 @@ function PendingContactsModal({ onClose, t }) {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-700 text-sm truncate">{name}</p>
                     <p className="text-gray-400 text-xs truncate">
-                      {t('pending_for') || 'Pour'} <span className="font-medium text-primary">{c.animal_name}</span>
+                      Pour <span className="font-medium text-primary">{c.animal_name}</span>
                     </p>
                   </div>
                   <div className="flex-shrink-0 flex items-center gap-2">
