@@ -36,6 +36,7 @@ import CookieBanner         from './components/CookieBanner';
 import AdoptantMessages      from './pages/adoptant/AdoptantMessages';
 import Chat                 from './pages/Chat';
 import ShelterChat          from './pages/ShelterChat';
+import MagicLogin           from './pages/auth/MagicLogin';
 import ShelterMessages      from './pages/shelter/ShelterMessages';
 
 function PrivateRoute({ children, requiredRole }) {
@@ -109,6 +110,9 @@ function AppRoutes() {
       <Route path="/chat/:match_id" element={
         <PrivateRoute requiredRole="adoptant"><Chat /></PrivateRoute>
       }/>
+
+      {/* Connexion par lien magique (depuis les emails de notification) */}
+      <Route path="/magic" element={<MagicLogin />} />
 
       {/* Pages protégées — famille d'accueil */}
       <Route path="/famille-accueil/questionnaire" element={

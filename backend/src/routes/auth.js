@@ -4,12 +4,35 @@ import jwt     from 'jsonwebtoken';
 import crypto  from 'crypto';
 import { supabase }          from '../lib/supabase.js';
 import { sendWelcomeEmail, sendAdminNewAdoptantEmail, sendShelterWelcomeEmail, sendAdminNewShelterEmail, sendPasswordResetEmail } from '../lib/email.js';
+import { verifyMagicToken } from '../lib/magic.js';
 
 const router = express.Router();
 
 function makeToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
 }
+
+// ── Lien magique — connexion adoptant en 1 clic depuis un email ────────────────
+router.post('/magic', async (req, res) => {
+  const { token } = req.body;
+  if (!token) return res.status(400).json({ error: 'Token manquant' });
+  try {
+    const decoded = verifyMagicToken(token);
+    const { data: adoptant, error } = await supabase
+      .from('adoptants')
+      .select('id, email, first_name, last_name, created_at')
+      .eq('id', decoded.adoptantId)
+      .single();
+    if (error || !adoptant) return res.status(404).json({ error: 'Compte introuvable' });
+
+    const sessionToken = makeToken({ id: adoptant.id, email: adoptant.email, role: 'adoptant' });
+    res.json({ token: sessionToken, user: adoptant, role: 'adoptant', matchId: decoded.matchId || null });
+  } catch {
+    // 400 (et non 401) : un 401 déclencherait l'intercepteur global du front
+    // qui déconnecte + redirige. Ici on veut afficher la page « lien expiré ».
+    res.status(400).json({ error: 'Lien expiré ou invalide' });
+  }
+});
 
 // ── Adoptant — inscription ────────────────────────────────────────────────────
 

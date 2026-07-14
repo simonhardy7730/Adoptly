@@ -1243,8 +1243,10 @@ export async function sendNewMessageNotificationEmail({
 }
 
 export async function sendAdoptantMessageNotificationEmail({
-  adoptantEmail, adoptantName, shelterName, animalName, messagePreview,
+  adoptantEmail, adoptantName, shelterName, animalName, messagePreview, magicUrl,
 }) {
+  // Lien magique = connexion en 1 clic ; sinon fallback vers la page de connexion
+  const ctaUrl = magicUrl || 'https://www.adoptly.fr/adoptant/login';
   const html = `
 <!DOCTYPE html>
 <html lang="fr">
@@ -1286,13 +1288,13 @@ export async function sendAdoptantMessageNotificationEmail({
         </div>
 
         <div style="text-align:center;margin:32px 0 0;">
-          <a href="https://adoptly.fr/adoptant/dashboard"
+          <a href="${ctaUrl}"
              style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;
                     font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;">
-            Lire et répondre sur Adoptly →
+            Lire et répondre en 1 clic →
           </a>
           <p style="color:#9CA3AF;font-size:12px;margin:12px 0 0;">
-            Connectez-vous pour voir le message complet et discuter avec le refuge.
+            Un seul clic ouvre la conversation — pas besoin de mot de passe.
           </p>
         </div>
 

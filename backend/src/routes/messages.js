@@ -5,6 +5,7 @@ import { selectIn } from '../lib/db.js';
 import { sendPushToUser } from '../lib/push.js';
 import { authenticate } from '../middleware/auth.js';
 import { sendNewMessageNotificationEmail, sendAdoptantMessageNotificationEmail } from '../lib/email.js';
+import { makeMagicToken } from '../lib/magic.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -383,12 +384,16 @@ router.post('/:match_id', authenticate, async (req, res) => {
           const preview = content.trim().length > 150 ? content.trim().slice(0, 150) + '…' : content.trim();
 
           if (adoptant?.email) {
+            // Lien magique : connexion en 1 clic, directement dans la conversation
+            const magicToken = makeMagicToken({ adoptantId: match.adoptant_id, matchId: match_id });
+            const magicUrl = `https://www.adoptly.fr/magic?token=${magicToken}`;
             await sendAdoptantMessageNotificationEmail({
               adoptantEmail:  adoptant.email,
               adoptantName,
               shelterName:    animal?.shelters?.name || 'Un refuge',
               animalName:     animal?.name || 'votre animal',
               messagePreview: preview,
+              magicUrl,
             });
           }
 
