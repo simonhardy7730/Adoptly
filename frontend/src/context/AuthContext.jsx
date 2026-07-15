@@ -3,29 +3,37 @@ import { createContext, useContext, useState, useCallback } from 'react';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  // Lit d'abord localStorage (persistant ~30j), sinon sessionStorage (session courante)
+  const readInit = (key) => localStorage.getItem(key) ?? sessionStorage.getItem(key);
+
+  const [token, setToken] = useState(() => readInit('token'));
   const [user, setUser] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem('user') || 'null');
+      return JSON.parse(readInit('user') || 'null');
     } catch {
       return null;
     }
   });
-  const [role, setRole] = useState(() => localStorage.getItem('role'));
+  const [role, setRole] = useState(() => readInit('role'));
 
-  const login = useCallback((tokenVal, userData, roleVal) => {
-    localStorage.setItem('token', tokenVal);
-    localStorage.setItem('user', JSON.stringify(userData));
-    localStorage.setItem('role', roleVal);
+  // remember=true → localStorage (reste connecté) ; false → sessionStorage (déconnexion à la fermeture du navigateur)
+  const login = useCallback((tokenVal, userData, roleVal, remember = true) => {
+    const store = remember ? localStorage : sessionStorage;
+    const other = remember ? sessionStorage : localStorage;
+    store.setItem('token', tokenVal);
+    store.setItem('user', JSON.stringify(userData));
+    store.setItem('role', roleVal);
+    ['token', 'user', 'role'].forEach((k) => other.removeItem(k));
     setToken(tokenVal);
     setUser(userData);
     setRole(roleVal);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('role');
+    ['token', 'user', 'role'].forEach((k) => {
+      localStorage.removeItem(k);
+      sessionStorage.removeItem(k);
+    });
     setToken(null);
     setUser(null);
     setRole(null);

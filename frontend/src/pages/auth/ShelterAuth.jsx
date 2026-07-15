@@ -25,6 +25,7 @@ export default function ShelterAuth({ mode = 'login' }) {
   const [error,      setError]      = useState('');
   const [loading,    setLoading]    = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [remember,   setRemember]   = useState(true);
 
   function detectLocation() {
     if (!navigator.geolocation) return;
@@ -46,7 +47,7 @@ export default function ShelterAuth({ mode = 'login' }) {
       const endpoint = mode === 'login' ? '/auth/shelter/login' : '/auth/shelter/register';
       const payload  = mode === 'login' ? { email: form.email, password: form.password } : form;
       const { data } = await api.post(endpoint, payload);
-      login(data.token, data.user, 'shelter');
+      login(data.token, data.user, 'shelter', remember);
       // GA4 tracking
       if (typeof window.gtag === 'function' && mode === 'register') {
         window.gtag('event', 'sign_up', { method: 'email', role: 'shelter' });
@@ -104,6 +105,8 @@ export default function ShelterAuth({ mode = 'login' }) {
               <input
                 type="email"
                 required
+                name="email"
+                autoComplete="email"
                 className="input-field"
                 placeholder="contact@monrefuge.fr"
                 value={form.email}
@@ -127,6 +130,8 @@ export default function ShelterAuth({ mode = 'login' }) {
               <PasswordInput
                 required
                 minLength={6}
+                name="password"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -191,6 +196,18 @@ export default function ShelterAuth({ mode = 'login' }) {
                   )}
                 </button>
               </>
+            )}
+
+            {mode === 'login' && (
+              <label className="flex items-center gap-2 text-sm text-gray-600 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                Rester connecté
+              </label>
             )}
 
             {error && (

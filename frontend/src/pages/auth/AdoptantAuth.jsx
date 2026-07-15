@@ -42,9 +42,10 @@ export default function AdoptantAuth({ mode = 'login' }) {
   const navigate  = useNavigate();
   const { login } = useAuth();
   const { t } = useLanguage();
-  const [form,    setForm]    = useState({ email: '', password: '' });
-  const [error,   setError]   = useState('');
-  const [loading, setLoading] = useState(false);
+  const [form,     setForm]     = useState({ email: '', password: '' });
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [remember, setRemember] = useState(true);
 
   // ── Connexion email/mot de passe ──────────────────────────────
   async function handleSubmit(e) {
@@ -54,7 +55,7 @@ export default function AdoptantAuth({ mode = 'login' }) {
     try {
       const endpoint = mode === 'login' ? '/auth/adoptant/login' : '/auth/adoptant/register';
       const { data } = await api.post(endpoint, form);
-      login(data.token, data.user, 'adoptant');
+      login(data.token, data.user, 'adoptant', remember);
       // GA4 tracking
       if (typeof window.gtag === 'function' && mode === 'register') {
         window.gtag('event', 'sign_up', { method: 'email', role: 'adoptant' });
@@ -144,6 +145,8 @@ export default function AdoptantAuth({ mode = 'login' }) {
               <input
                 type="email"
                 required
+                name="email"
+                autoComplete="email"
                 className="input-field"
                 placeholder="vous@exemple.com"
                 value={form.email}
@@ -167,6 +170,8 @@ export default function AdoptantAuth({ mode = 'login' }) {
               <PasswordInput
                 required
                 minLength={6}
+                name="password"
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 placeholder="••••••••"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -190,6 +195,18 @@ export default function AdoptantAuth({ mode = 'login' }) {
                 );
               })()}
             </div>
+
+            {mode === 'login' && (
+              <label className="flex items-center gap-2 text-sm text-gray-600 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                Rester connecté
+              </label>
+            )}
 
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-2xl">
