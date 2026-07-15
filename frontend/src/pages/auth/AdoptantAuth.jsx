@@ -7,6 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../lib/supabase';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import PasswordInput from '../../components/PasswordInput';
+import AuthRoleToggle from '../../components/AuthRoleToggle';
 
 // Icône Google SVG
 function GoogleIcon() {
@@ -123,6 +124,9 @@ export default function AdoptantAuth({ mode = 'login' }) {
               {mode === 'login' ? t('ad_login_sub') : t('ad_register_sub')}
             </p>
           </div>
+
+          {/* Bascule adoptant / refuge */}
+          <AuthRoleToggle active="adoptant" mode={mode} />
 
           {/* Bouton Google */}
           <button type="button" onClick={handleGoogleAuth} disabled={loading} className="btn-google mb-4">

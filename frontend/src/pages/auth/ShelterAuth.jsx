@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import PasswordInput from '../../components/PasswordInput';
+import AuthRoleToggle from '../../components/AuthRoleToggle';
 
 export default function ShelterAuth({ mode = 'login' }) {
   const navigate  = useNavigate();
@@ -93,6 +94,9 @@ export default function ShelterAuth({ mode = 'login' }) {
               {mode === 'login' ? t('auth_login_sub') : t('auth_register_sub')}
             </p>
           </div>
+
+          {/* Bascule adoptant / refuge */}
+          <AuthRoleToggle active="shelter" mode={mode} />
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
