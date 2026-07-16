@@ -210,6 +210,156 @@ router.get('/pending-contacts', authenticate, async (req, res) => {
   }
 });
 
+// ── Pipeline de suivi des adoptions ──────────────────────
+// Regroupe les adoptants intéressés par étape (dérivé des données existantes).
+router.get('/pipeline', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data: animals } = await supabase
+      .from('animals')
+      .select('id, name, photos, status')
+      .eq('shelter_id', req.user.id);
+
+    const animalIds = (animals || []).map((a) => a.id);
+    const empty = { interested: [], discussion: [], visit: [], adopted: [] };
+    if (animalIds.length === 0) return res.json(empty);
+
+    const matches = await selectIn(
+      'matches',
+      'id, timestamp, contacted, status, pipeline_stage, adoptant_id, animal_id',
+      'animal_id',
+      animalIds,
+      (q) => q.eq('swipe_direction', 'right')
+    );
+
+    const adoptantIds = [...new Set((matches || []).map((m) => m.adoptant_id))];
+    let adoptants = [];
+    if (adoptantIds.length > 0) {
+      adoptants = await selectIn('adoptants', 'id, email, first_name, last_name', 'id', adoptantIds);
+    }
+
+    const groups = { interested: [], discussion: [], visit: [], adopted: [] };
+    for (const m of matches || []) {
+      const ad = adoptants.find((a) => a.id === m.adoptant_id) || {};
+      const animal = animals.find((a) => a.id === m.animal_id) || {};
+      const name = [ad.first_name, ad.last_name].filter(Boolean).join(' ') || ad.email || 'Adoptant';
+      const card = {
+        match_id:     m.id,
+        animal_id:    m.animal_id,
+        adoptant_name: name,
+        adoptant_email: ad.email,
+        animal_name:  animal.name,
+        animal_photo: animal.photos?.[0] || null,
+        timestamp:    m.timestamp,
+      };
+      // Étape : adopté > visite/visio prévue > en discussion > intéressé
+      let stage;
+      if (animal.status === 'adopted' || m.status === 'adopted') stage = 'adopted';
+      else if (m.pipeline_stage === 'visit') stage = 'visit';
+      else if (m.contacted) stage = 'discussion';
+      else stage = 'interested';
+      groups[stage].push(card);
+    }
+    for (const k of Object.keys(groups)) {
+      groups[k].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    }
+    res.json(groups);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Déplacer une carte du pipeline (intéressé / en discussion / visite-visio)
+router.patch('/matches/:id/stage', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter') return res.status(403).json({ error: 'Forbidden' });
+  const { stage } = req.body;
+  if (!['interested', 'discussion', 'visit'].includes(stage))
+    return res.status(400).json({ error: 'Étape invalide' });
+  try {
+    const { data: match } = await supabase.from('matches').select('id, animal_id').eq('id', req.params.id).single();
+    if (!match) return res.status(404).json({ error: 'Introuvable' });
+    const { data: animal } = await supabase.from('animals').select('id').eq('id', match.animal_id).eq('shelter_id', req.user.id).single();
+    if (!animal) return res.status(403).json({ error: 'Forbidden' });
+
+    const update = stage === 'visit'      ? { contacted: true,  pipeline_stage: 'visit' }
+                 : stage === 'discussion' ? { contacted: true,  pipeline_stage: null }
+                 :                          { contacted: false, pipeline_stage: null };
+    const { error } = await supabase.from('matches').update(update).eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true, stage });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Rappels santé ─────────────────────────────────────────
+const REMINDER_TYPES = ['vaccin', 'sterilisation', 'vermifuge', 'visite'];
+
+// Liste simple des animaux du refuge (pour le formulaire de rappel)
+router.get('/animals-simple', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data } = await supabase
+      .from('animals').select('id, name, photos, status')
+      .eq('shelter_id', req.user.id).order('created_at', { ascending: false });
+    res.json({ animals: (data || []).map((a) => ({ id: a.id, name: a.name, photo: a.photos?.[0] || null })) });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/reminders', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data: reminders } = await supabase
+      .from('animal_reminders')
+      .select('id, animal_id, type, label, due_date, done')
+      .eq('shelter_id', req.user.id).eq('done', false)
+      .order('due_date', { ascending: true });
+    const animalIds = [...new Set((reminders || []).map((r) => r.animal_id))];
+    let animals = [];
+    if (animalIds.length) animals = await selectIn('animals', 'id, name, photos', 'id', animalIds);
+    const result = (reminders || []).map((r) => {
+      const a = animals.find((x) => x.id === r.animal_id) || {};
+      return { ...r, animal_name: a.name, animal_photo: a.photos?.[0] || null };
+    });
+    res.json({ reminders: result });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.post('/reminders', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter') return res.status(403).json({ error: 'Forbidden' });
+  const { animal_id, type, label, due_date } = req.body;
+  if (!animal_id || !type || !due_date) return res.status(400).json({ error: 'Animal, type et date requis' });
+  if (!REMINDER_TYPES.includes(type)) return res.status(400).json({ error: 'Type invalide' });
+  try {
+    const { data: animal } = await supabase.from('animals').select('id').eq('id', animal_id).eq('shelter_id', req.user.id).single();
+    if (!animal) return res.status(403).json({ error: 'Animal introuvable' });
+    const { data, error } = await supabase.from('animal_reminders')
+      .insert({ animal_id, shelter_id: req.user.id, type, label: label || null, due_date })
+      .select().single();
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.patch('/reminders/:id', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data, error } = await supabase.from('animal_reminders')
+      .update({ done: req.body.done === true })
+      .eq('id', req.params.id).eq('shelter_id', req.user.id).select().single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.delete('/reminders/:id', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { error } = await supabase.from('animal_reminders').delete().eq('id', req.params.id).eq('shelter_id', req.user.id);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ── Adoptants intéressés par un animal ───────────────────
 
 router.get('/animals/:id/interested', authenticate, async (req, res) => {

@@ -453,6 +453,19 @@ export default function Dashboard() {
               </Link>
             </div>
 
+            {/* Accès à la page dédiée "Suivi des adoptions" (opt-in) */}
+            <Link
+              to="/shelter/suivi"
+              className="card p-4 flex items-center gap-3 hover:shadow-md transition-shadow group"
+            >
+              <span className="text-2xl">📋</span>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-800 text-sm">Suivi quotidien</p>
+                <p className="text-gray-500 text-xs">Adoptions et santé de vos animaux, jour après jour</p>
+              </div>
+              <span className="text-secondary group-hover:translate-x-0.5 transition-transform">→</span>
+            </Link>
+
             {/* Onboarding — affiché seulement si aucun animal */}
             {data?.stats?.total_animals === 0 && (
               <motion.div

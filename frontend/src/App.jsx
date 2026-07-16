@@ -38,6 +38,7 @@ import Chat                 from './pages/Chat';
 import ShelterChat          from './pages/ShelterChat';
 import MagicLogin           from './pages/auth/MagicLogin';
 import ShelterMessages      from './pages/shelter/ShelterMessages';
+import SuiviAdoptions       from './pages/shelter/SuiviAdoptions';
 
 function PrivateRoute({ children, requiredRole }) {
   const { token, role } = useAuth();
@@ -140,6 +141,9 @@ function AppRoutes() {
       }/>
       <Route path="/shelter/messages" element={
         <PrivateRoute requiredRole="shelter"><ShelterMessages /></PrivateRoute>
+      }/>
+      <Route path="/shelter/suivi" element={
+        <PrivateRoute requiredRole="shelter"><SuiviAdoptions /></PrivateRoute>
       }/>
       <Route path="/shelter/chat/:match_id" element={
         <PrivateRoute requiredRole="shelter"><ShelterChat /></PrivateRoute>
