@@ -455,6 +455,28 @@ router.patch('/animals/:id/reactivate', authenticate, async (req, res) => {
   }
 });
 
+// ── Réserver / rendre disponible un animal ───────────────
+// Un animal "réservé" (adoption en cours) est retiré du matching et des annonces
+// (elles filtrent status='active'), sans être marqué adopté.
+router.patch('/animals/:id/reserve', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  const reserved = req.body.reserved === true;
+  try {
+    const { data, error } = await supabase
+      .from('animals')
+      .update({ status: reserved ? 'reserved' : 'active' })
+      .eq('id', req.params.id)
+      .eq('shelter_id', req.user.id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Animals CRUD ──────────────────────────────────────────
 
 router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCount: 5 }, { name: 'video', maxCount: 1 }]), async (req, res) => {

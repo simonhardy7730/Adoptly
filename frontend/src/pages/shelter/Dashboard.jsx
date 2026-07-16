@@ -424,8 +424,22 @@ export default function Dashboard() {
     setMarkingAdopted(null);
   }
 
+  async function toggleReserved(animal) {
+    const reserved = animal.status !== 'reserved';
+    setMarkingAdopted(animal.id);
+    try {
+      await api.patch(`/shelter/animals/${animal.id}/reserve`, { reserved });
+      setData((d) => ({
+        ...d,
+        animals: d.animals.map((a) => a.id === animal.id ? { ...a, status: reserved ? 'reserved' : 'active' } : a),
+      }));
+    } catch {}
+    setMarkingAdopted(null);
+  }
+
   const STATUS_COLOR = {
     active: 'bg-green-100 text-green-700',
+    reserved: 'bg-amber-100 text-amber-700',
     adopted: 'bg-purple-100 text-purple-700',
   };
 
@@ -570,7 +584,7 @@ export default function Dashboard() {
                             <span
                               className={`badge text-xs flex-shrink-0 ${STATUS_COLOR[animal.status] || STATUS_COLOR.active}`}
                             >
-                              {animal.status === 'adopted' ? t('dash_status_adopted') : t('dash_status_active')}
+                              {animal.status === 'adopted' ? t('dash_status_adopted') : animal.status === 'reserved' ? 'Réservé' : t('dash_status_active')}
                             </span>
                           </div>
                           <p className="text-gray-500 text-xs mt-0.5">
@@ -606,6 +620,15 @@ export default function Dashboard() {
                           >
                             {t('dash_edit')}
                           </Link>
+                          {animal.status !== 'adopted' && (
+                            <button
+                              onClick={() => toggleReserved(animal)}
+                              disabled={markingAdopted === animal.id}
+                              className="text-xs font-medium text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg transition-colors"
+                            >
+                              {animal.status === 'reserved' ? '🔓 Rendre disponible' : '🔖 Réserver'}
+                            </button>
+                          )}
                           {animal.status !== 'adopted' ? (
                             <button
                               onClick={() => markAdopted(animal)}
