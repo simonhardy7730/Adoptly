@@ -11,6 +11,7 @@ import adminRoutes   from './routes/admin.js';
 import messagesRouter from './routes/messages.js';
 import articlesRouter from './routes/articles.js';
 import pushRouter     from './routes/push.js';
+import { refreshAges } from './lib/ages.js';
 
 dotenv.config();
 
@@ -72,6 +73,22 @@ app.use('/api/articles', articlesRouter);
 app.use('/api/push', pushRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
+// ── Âges évolutifs — recalcule `age` depuis la date de naissance ──────────
+// Appelé chaque nuit par cron-job.org, et au démarrage du serveur.
+app.get('/api/cron/refresh-ages', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { scanned, updated } = await refreshAges();
+    console.log(`[Ages] ${updated} âge(s) mis à jour sur ${scanned} animal(aux) daté(s)`);
+    res.json({ scanned, updated });
+  } catch (err) {
+    console.error('[Ages] Erreur:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Pages SEO + sitemap accessibles à la racine ─────────
 app.use(publicRoutes);
@@ -451,4 +468,9 @@ app.get('/api/cron/reminder-j3-shelter', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // Filet de sécurité : même si le cron nocturne saute, les âges se remettent
+  // à jour à chaque redémarrage (fréquent sur le plan gratuit de Render).
+  refreshAges()
+    .then(({ scanned, updated }) => console.log(`[Ages] Démarrage : ${updated} âge(s) mis à jour sur ${scanned} daté(s)`))
+    .catch((e) => console.error('[Ages] Démarrage — erreur:', e.message));
 });

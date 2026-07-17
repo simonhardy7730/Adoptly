@@ -5,6 +5,7 @@ import { selectIn } from '../lib/db.js';
 import { authenticate } from '../middleware/auth.js';
 import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendEmailsThrottled, sendShelterFeedbackEmail } from '../lib/email.js';
 import { passesHardFilters } from '../lib/matching.js';
+import { birthDateFromAge } from '../lib/ages.js';
 
 const router = express.Router();
 const upload = multer({
@@ -504,6 +505,9 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
         species,
         breed: breed || null,
         age: age ? parseInt(age) : null,
+        // L'âge saisi vaut « aujourd'hui » : on en déduit la date de naissance,
+        // qui permettra ensuite de faire vieillir l'animal tout seul.
+        birth_date: birthDateFromAge(age),
         size: size || null,
         temperament,
         special_needs: special_needs || null,
@@ -573,6 +577,9 @@ router.put('/animals/:id', authenticate, uploadMiddleware([{ name: 'photos', max
         species,
         breed: breed || null,
         age: age ? parseInt(age) : null,
+        // Le refuge corrige l'âge « tel qu'il est aujourd'hui » : on ré-ancre
+        // la date de naissance dessus pour repartir sur une base juste.
+        birth_date: birthDateFromAge(age),
         size: size || null,
         temperament,
         special_needs: special_needs || null,

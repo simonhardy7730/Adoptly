@@ -13,8 +13,7 @@ function ageLabel(months) {
   if (!months && months !== 0) return 'Âge inconnu';
   if (months < 12) return `${months} mois`;
   const y = Math.floor(months / 12);
-  const m = months % 12;
-  return m > 0 ? `${y} an${y > 1 ? 's' : ''} ${m} mois` : `${y} an${y > 1 ? 's' : ''}`;
+  return `${y} an${y > 1 ? 's' : ''}`;
 }
 
 function ShareBar({ animal }) {
