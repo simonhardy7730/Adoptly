@@ -12,6 +12,7 @@ import messagesRouter from './routes/messages.js';
 import articlesRouter from './routes/articles.js';
 import pushRouter     from './routes/push.js';
 import { refreshAges } from './lib/ages.js';
+import { runMatchDigests } from './lib/match-digests.js';
 
 dotenv.config();
 
@@ -73,6 +74,24 @@ app.use('/api/articles', articlesRouter);
 app.use('/api/push', pushRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
+// ── Récaps de matchs — regroupe les emails « X attend ton message » ───────
+// Appelé toutes les ~15 min par cron-job.org. Remplace l'envoi d'un email
+// par swipe (spam pour l'adoptant + saturation du quota Resend/Brevo).
+app.get('/api/cron/match-digests', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { adopterEmails, shelterEmails } = await runMatchDigests();
+    if (adopterEmails || shelterEmails)
+      console.log(`[Digests] ${adopterEmails} récap(s) adoptant, ${shelterEmails} récap(s) refuge`);
+    res.json({ adopterEmails, shelterEmails });
+  } catch (err) {
+    console.error('[Digests] Erreur:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Âges évolutifs — recalcule `age` depuis la date de naissance ──────────
 // Appelé chaque nuit par cron-job.org, et au démarrage du serveur.

@@ -1,7 +1,6 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendMatchNotificationEmail, sendMatchEncouragementEmail } from '../lib/email.js';
 import { haversineKm, passesHardFilters, scoreAnimal } from '../lib/matching.js';
 
 const router = express.Router();
@@ -150,32 +149,9 @@ router.post('/swipe', authenticate, async (req, res) => {
         .eq('id', animal_id)
         .single();
 
-      // Notifier le refuge par email (non-bloquant)
-      if (animal?.shelters?.email) {
-        const { data: adoptantInfo } = await supabase
-          .from('adoptants')
-          .select('email, first_name, last_name')
-          .eq('id', req.user.id)
-          .single();
-
-        sendMatchNotificationEmail({
-          shelterEmail:      animal.shelters.email,
-          shelterName:       animal.shelters.name,
-          animalName:        animal.name,
-          adoptantEmail:     adoptantInfo?.email || req.user.email,
-          adoptantFirstName: adoptantInfo?.first_name,
-          adoptantLastName:  adoptantInfo?.last_name,
-        }).catch(() => {});
-
-        sendMatchEncouragementEmail({
-          adoptantEmail:  adoptantInfo?.email || req.user.email,
-          adoptantName:   adoptantInfo?.first_name || '',
-          animalName:     animal.name,
-          animalPhoto:    animal.photos?.[0] || null,
-          shelterName:    animal.shelters.name,
-          matchId:        match.id,
-        }).catch(() => {});
-      }
+      // Les emails ne sont plus envoyés ici, à chaque swipe (spam + quota) :
+      // le match reste `adoptant_notified=false` / `shelter_notified=false`,
+      // et le cron /api/cron/match-digests envoie UN récap groupé par session.
 
       return res.json({ match, animal, isMatch: true });
     }

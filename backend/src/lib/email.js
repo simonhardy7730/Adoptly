@@ -371,6 +371,110 @@ export async function sendMatchNotificationEmail({
 }
 
 /**
+ * Récap groupé vers un REFUGE : plusieurs adoptants intéressés d'un coup,
+ * au lieu d'un email par swipe. items = [{ animalName, adoptantName, adoptantEmail }].
+ */
+export async function sendMatchNotificationDigestEmail({ shelterEmail, shelterName, items }) {
+  if (!items?.length) return;
+  const n = items.length;
+  const rows = items.map((it) => `
+    <tr>
+      <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;">
+        <span style="color:#1B4F8A;font-weight:700;font-size:15px;">${it.animalName}</span>
+        <span style="color:#9CA3AF;font-size:13px;"> — intéressé(e) : </span>
+        <a href="mailto:${it.adoptantEmail}" style="color:#F07A2A;font-size:14px;text-decoration:none;font-weight:600;">${it.adoptantName || it.adoptantEmail}</a>
+      </td>
+    </tr>`).join('');
+
+  const html = `
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:36px 32px;text-align:center;">
+        <span style="color:#fff;font-weight:900;font-size:22px;">Adoptly</span>
+      </div>
+      <div style="padding:36px 32px;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="display:inline-block;background:#FFF3E0;border-radius:50px;padding:10px 22px;">
+            <span style="font-size:24px;">💚</span>
+            <span style="color:#F07A2A;font-weight:800;font-size:17px;margin-left:8px;vertical-align:middle;">${n} nouvel${n > 1 ? 's' : ''} intéressé${n > 1 ? 's' : ''} !</span>
+          </div>
+        </div>
+        <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px;text-align:center;">
+          Des adoptant(e)s compatibles ont craqué pour vos animaux. Vous pouvez les contacter directement.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">${rows}</table>
+        <div style="text-align:center;">
+          <a href="https://adoptly.fr/shelter/dashboard" style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;">Voir mon tableau de bord →</a>
+        </div>
+      </div>
+      <div style="border-top:1px solid #F3F4F6;padding:20px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">© ${new Date().getFullYear()} Adoptly · <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a></p>
+      </div>
+    </div>
+  </div>
+</body></html>`.trim();
+
+  await sendEmail({
+    to:      shelterEmail,
+    subject: `💚 ${n} adoptant${n > 1 ? 's' : ''} intéressé${n > 1 ? 's' : ''} par vos animaux`,
+    html,
+  });
+}
+
+/**
+ * Récap groupé vers un ADOPTANT : tous les animaux likés dans sa session,
+ * au lieu d'un email par swipe. items = [{ animalName, animalPhoto, shelterName }].
+ */
+export async function sendMatchEncouragementDigestEmail({ adoptantEmail, adoptantName, items }) {
+  if (!items?.length) return;
+  const n = items.length;
+  const salut = adoptantName ? `${adoptantName}, tu` : 'Tu';
+  const rows = items.map((it) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #F3F4F6;" valign="middle">
+        ${it.animalPhoto ? `<img src="${it.animalPhoto}" alt="${it.animalName}" width="48" height="48" style="width:48px;height:48px;border-radius:12px;object-fit:cover;vertical-align:middle;margin-right:12px;">` : ''}
+        <span style="color:#1B4F8A;font-weight:700;font-size:15px;vertical-align:middle;">${it.animalName}</span>
+        <span style="color:#9CA3AF;font-size:13px;vertical-align:middle;"> — ${it.shelterName}</span>
+      </td>
+    </tr>`).join('');
+
+  const html = `
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:36px 32px;text-align:center;">
+        <span style="color:#fff;font-weight:900;font-size:22px;">Adoptly</span>
+      </div>
+      <div style="padding:36px 32px;">
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 12px;text-align:center;">
+          ${salut} as craqué pour ${n} anima${n > 1 ? 'ux' : 'l'} 🐾
+        </h1>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 20px;text-align:center;">
+          ${n > 1 ? 'Ces refuges peuvent' : 'Ce refuge peut'} voir ton intérêt, mais ${n > 1 ? 'attendent' : 'attend'} un petit message de ta part pour démarrer la conversation.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">${rows}</table>
+        <div style="text-align:center;">
+          <a href="https://adoptly.fr/adoptant/matches" style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;">Écrire aux refuges →</a>
+        </div>
+      </div>
+      <div style="border-top:1px solid #F3F4F6;padding:20px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">© ${new Date().getFullYear()} Adoptly · <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a></p>
+      </div>
+    </div>
+  </div>
+</body></html>`.trim();
+
+  await sendEmail({
+    to:      adoptantEmail,
+    subject: n > 1 ? `🐾 ${n} animaux attendent ton message !` : `🐾 ${items[0].animalName} attend ton message !`,
+    html,
+  });
+}
+
+/**
  * Envoie un email de réinitialisation de mot de passe.
  * @param {{ email: string, resetUrl: string, role: 'adoptant'|'shelter' }} params
  */
