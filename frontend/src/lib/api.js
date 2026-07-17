@@ -1,7 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  // En prod, ne jamais dépendre de la variable Vercel : si elle manque au build,
+  // tout le site pointerait vers localhost (panne du 17/07/2026).
+  baseURL: import.meta.env.VITE_API_URL
+    || (import.meta.env.PROD ? 'https://adoptly-backend-p2os.onrender.com/api' : 'http://localhost:3001/api'),
 });
 
 api.interceptors.request.use((config) => {
