@@ -349,7 +349,7 @@ export default function AnimalForm() {
             <label className="block text-sm font-semibold text-gray-700">
               🎥 Vidéo de l'animal <span className="text-gray-400 font-normal">(optionnel)</span>
             </label>
-            <p className="text-xs text-gray-400">MP4, MOV ou WEBM · 80 Mo max</p>
+            <p className="text-xs text-gray-400">MP4, MOV ou WEBM · 25 Mo max (≈ 30-60 secondes filmées au téléphone)</p>
 
             {videoPreview ? (
               <div className="relative">
@@ -385,6 +385,11 @@ export default function AnimalForm() {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+                if (file.size > 25 * 1024 * 1024) {
+                  alert("Cette vidéo dépasse 25 Mo. Astuce : filmez en 720p ou raccourcissez-la (30 à 60 secondes suffisent largement pour présenter l'animal).");
+                  e.target.value = '';
+                  return;
+                }
                 setVideoFile(file);
                 setVideoPreview(URL.createObjectURL(file));
               }}

@@ -1,5 +1,6 @@
 import express from 'express';
 import multer from 'multer';
+import sharp from 'sharp';
 import { supabase } from '../lib/supabase.js';
 import { selectIn } from '../lib/db.js';
 import { authenticate } from '../middleware/auth.js';
@@ -740,9 +741,22 @@ async function uploadPhotos(files, shelterId) {
   const urls = [];
   for (const file of files) {
     const path = `${shelterId}/${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`;
+    // Compression systématique : les photos de téléphone font 4-5 Mo et
+    // l'egress Supabase (5 Go/mois en gratuit) part en fumée sinon.
+    let buffer = file.buffer, contentType = file.mimetype;
+    try {
+      buffer = await sharp(file.buffer)
+        .rotate()
+        .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80, mozjpeg: true })
+        .toBuffer();
+      contentType = 'image/jpeg';
+    } catch {
+      // format non reconnu par sharp : on uploade l'original
+    }
     const { error } = await supabase.storage
       .from('animal-photos')
-      .upload(path, file.buffer, { contentType: file.mimetype });
+      .upload(path, buffer, { contentType });
     if (!error) {
       const { data } = supabase.storage.from('animal-photos').getPublicUrl(path);
       urls.push(data.publicUrl);
@@ -751,8 +765,16 @@ async function uploadPhotos(files, shelterId) {
   return urls;
 }
 
+// Plafond vidéo : au-delà, chaque lecture coûte trop d'egress Supabase
+// (le quota gratuit est de 5 Go/mois — une vidéo de 45 Mo le vide en ~110 vues).
+const VIDEO_MAX_BYTES = 25 * 1024 * 1024;
+
 async function uploadVideo(file, shelterId) {
   if (!file) return null;
+  if (file.mimetype?.startsWith('video') && file.size > VIDEO_MAX_BYTES) {
+    console.warn(`[uploadVideo] refusée: ${(file.size/1024/1024).toFixed(0)} Mo > 25 Mo (shelter ${shelterId})`);
+    return null;
+  }
   const ext  = file.originalname.split('.').pop().toLowerCase();
   const path = `${shelterId}/${Date.now()}_video.${ext}`;
   const { error } = await supabase.storage
