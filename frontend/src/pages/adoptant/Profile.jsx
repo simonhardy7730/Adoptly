@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
 
 // Clés de préférences à afficher
@@ -39,6 +40,7 @@ const CHILDREN_AGE_KEY = { '<6': 'lbl_lt6', '6-12': 'lbl_6to12', '12+': 'lbl_12p
 export default function Profile() {
   const navigate = useNavigate();
   const { t }    = useLanguage();
+  const { logout } = useAuth();
 
   const [profile, setProfile]         = useState(null);
   const [loading, setLoading]         = useState(true);
@@ -49,6 +51,9 @@ export default function Profile() {
   const [saved, setSaved]             = useState(false);
   const [resetting, setResetting]    = useState(false);
   const [resetDone, setResetDone]    = useState(false);
+  const [emailsOn, setEmailsOn]      = useState(true);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [deleting, setDeleting]      = useState(false);
 
   useEffect(() => {
     api.get('/adoptant/profile')
@@ -56,10 +61,38 @@ export default function Profile() {
         setProfile(data);
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
+        setEmailsOn(data.questionnaire_answers?.email_notifications !== false);
       })
       .catch(() => navigate('/adoptant/swipe'))
       .finally(() => setLoading(false));
   }, [navigate]);
+
+  async function toggleEmails() {
+    const next = !emailsOn;
+    setEmailsOn(next);           // maj optimiste
+    setEmailSaving(true);
+    try {
+      await api.patch('/adoptant/email-preferences', { email_notifications: next });
+    } catch {
+      setEmailsOn(!next);        // rollback si échec
+    } finally {
+      setEmailSaving(false);
+    }
+  }
+
+  async function deleteAccount() {
+    if (!confirm('Supprimer définitivement votre compte ? Cette action est irréversible : vos données, vos matchs et vos conversations seront effacés.')) return;
+    if (!confirm('Êtes-vous vraiment sûr(e) ? Il n\'y a pas de retour en arrière.')) return;
+    setDeleting(true);
+    try {
+      await api.delete('/adoptant/account');
+      logout();
+      navigate('/');
+    } catch {
+      alert('Une erreur est survenue. Réessayez ou contactez-nous à info@adoptly.fr.');
+      setDeleting(false);
+    }
+  }
 
   async function saveName() {
     setSaving(true);
@@ -270,6 +303,45 @@ export default function Profile() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* Notifications email */}
+        <div className="card p-5 space-y-3">
+          <h2 className="font-bold text-gray-700">✉️ Notifications par email</h2>
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-gray-500 text-sm flex-1">
+              Recevoir un email quand un animal compatible est disponible ou attend votre message.
+            </p>
+            <button
+              onClick={toggleEmails}
+              disabled={emailSaving}
+              role="switch"
+              aria-checked={emailsOn}
+              className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${emailsOn ? 'bg-secondary' : 'bg-gray-300'}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${emailsOn ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+          {!emailsOn && (
+            <p className="text-gray-400 text-xs">
+              Vous ne recevrez plus d'emails de notification. Votre compte reste actif.
+            </p>
+          )}
+        </div>
+
+        {/* Zone de danger — suppression du compte */}
+        <div className="card p-5 space-y-3 border border-red-100">
+          <h2 className="font-bold text-gray-700">Supprimer mon compte</h2>
+          <p className="text-gray-500 text-sm">
+            Suppression définitive de votre compte et de toutes vos données (matchs, conversations). Cette action est irréversible.
+          </p>
+          <button
+            onClick={deleteAccount}
+            disabled={deleting}
+            className="w-full py-3 text-sm font-semibold rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+          >
+            {deleting ? <LoadingSpinner size="sm" /> : '🗑 Supprimer définitivement mon compte'}
+          </button>
         </div>
 
       </div>

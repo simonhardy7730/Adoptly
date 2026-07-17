@@ -38,8 +38,10 @@ export async function runMatchDigests() {
     if (newest > cutoff) continue; // session encore en cours
 
     const ids = rows.map((r) => r.id);
-    const { data: ad } = await supabase.from('adoptants').select('email, first_name').eq('id', adoptantId).single();
-    if (!ad?.email) { await supabase.from('matches').update({ adoptant_notified: true }).in('id', ids); continue; }
+    const { data: ad } = await supabase.from('adoptants').select('email, first_name, questionnaire_answers').eq('id', adoptantId).single();
+    // Pas d'email, ou désabonné : on marque notifié pour ne plus le retraiter.
+    const unsubscribed = ad?.questionnaire_answers?.email_notifications === false;
+    if (!ad?.email || unsubscribed) { await supabase.from('matches').update({ adoptant_notified: true }).in('id', ids); continue; }
 
     const { data: animals } = await supabase
       .from('animals').select('id, name, photos, shelters(name)')

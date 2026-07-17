@@ -222,4 +222,42 @@ router.patch('/matches/:id/contacted', authenticate, async (req, res) => {
   }
 });
 
+// Activer / couper les emails de notification (désabonnement en libre-service)
+router.patch('/email-preferences', authenticate, async (req, res) => {
+  if (req.user.role !== 'adoptant')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const enabled = req.body.email_notifications === true;
+    const { data: current } = await supabase
+      .from('adoptants').select('questionnaire_answers').eq('id', req.user.id).single();
+    const answers = current?.questionnaire_answers || {};
+    answers.email_notifications = enabled;
+    const { error } = await supabase
+      .from('adoptants').update({ questionnaire_answers: answers }).eq('id', req.user.id);
+    if (error) throw error;
+    res.json({ email_notifications: enabled });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Suppression définitive de son propre compte (droit à l'effacement — RGPD)
+router.delete('/account', authenticate, async (req, res) => {
+  if (req.user.role !== 'adoptant')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const uid = req.user.id;
+    // 1) messages liés à ses matchs, 2) ses matchs, 3) son compte
+    const { data: matches } = await supabase.from('matches').select('id').eq('adoptant_id', uid);
+    const matchIds = (matches || []).map((m) => m.id);
+    if (matchIds.length) await supabase.from('messages').delete().in('match_id', matchIds);
+    await supabase.from('matches').delete().eq('adoptant_id', uid);
+    const { error } = await supabase.from('adoptants').delete().eq('id', uid);
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
