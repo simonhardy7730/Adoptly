@@ -51,8 +51,6 @@ export default function Profile() {
   const [saved, setSaved]             = useState(false);
   const [resetting, setResetting]    = useState(false);
   const [resetDone, setResetDone]    = useState(false);
-  const [emailsOn, setEmailsOn]      = useState(true);
-  const [emailSaving, setEmailSaving] = useState(false);
   const [deleting, setDeleting]      = useState(false);
 
   useEffect(() => {
@@ -61,24 +59,10 @@ export default function Profile() {
         setProfile(data);
         setFirstName(data.first_name || '');
         setLastName(data.last_name || '');
-        setEmailsOn(data.questionnaire_answers?.email_notifications !== false);
       })
       .catch(() => navigate('/adoptant/swipe'))
       .finally(() => setLoading(false));
   }, [navigate]);
-
-  async function toggleEmails() {
-    const next = !emailsOn;
-    setEmailsOn(next);           // maj optimiste
-    setEmailSaving(true);
-    try {
-      await api.patch('/adoptant/email-preferences', { email_notifications: next });
-    } catch {
-      setEmailsOn(!next);        // rollback si échec
-    } finally {
-      setEmailSaving(false);
-    }
-  }
 
   async function deleteAccount() {
     if (!confirm('Supprimer définitivement votre compte ? Cette action est irréversible : vos données, vos matchs et vos conversations seront effacés.')) return;
@@ -302,30 +286,6 @@ export default function Profile() {
                 {t('prof_complete')}
               </button>
             </div>
-          )}
-        </div>
-
-        {/* Notifications email */}
-        <div className="card p-5 space-y-3">
-          <h2 className="font-bold text-gray-700">✉️ Notifications par email</h2>
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-gray-500 text-sm flex-1">
-              Recevoir un email quand un animal compatible est disponible ou attend votre message.
-            </p>
-            <button
-              onClick={toggleEmails}
-              disabled={emailSaving}
-              role="switch"
-              aria-checked={emailsOn}
-              className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${emailsOn ? 'bg-secondary' : 'bg-gray-300'}`}
-            >
-              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${emailsOn ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-          {!emailsOn && (
-            <p className="text-gray-400 text-xs">
-              Vous ne recevrez plus d'emails de notification. Votre compte reste actif.
-            </p>
           )}
         </div>
 

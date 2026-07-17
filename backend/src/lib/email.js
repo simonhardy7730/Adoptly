@@ -427,7 +427,7 @@ export async function sendMatchNotificationDigestEmail({ shelterEmail, shelterNa
  * Récap groupé vers un ADOPTANT : tous les animaux likés dans sa session,
  * au lieu d'un email par swipe. items = [{ animalName, animalPhoto, shelterName }].
  */
-export async function sendMatchEncouragementDigestEmail({ adoptantEmail, adoptantName, items }) {
+export async function sendMatchEncouragementDigestEmail({ adoptantEmail, adoptantId, adoptantName, items }) {
   if (!items?.length) return;
   const n = items.length;
   const salut = adoptantName ? `${adoptantName}, tu` : 'Tu';
@@ -461,7 +461,10 @@ export async function sendMatchEncouragementDigestEmail({ adoptantEmail, adoptan
         </div>
       </div>
       <div style="border-top:1px solid #F3F4F6;padding:20px 32px;text-align:center;">
-        <p style="color:#9CA3AF;font-size:12px;margin:0;">© ${new Date().getFullYear()} Adoptly · <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a></p>
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">© ${new Date().getFullYear()} Adoptly · <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a></p>${adoptantId ? `
+        <p style="margin:8px 0 0;">
+          <a href="https://adoptly-backend-p2os.onrender.com/api/unsubscribe/${adoptantId}" style="color:#C4C9D2;font-size:11px;text-decoration:underline;">Ne plus recevoir ces emails</a>
+        </p>` : ''}
       </div>
     </div>
   </div>

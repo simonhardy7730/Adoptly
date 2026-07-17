@@ -50,7 +50,7 @@ export async function runMatchDigests() {
       animalName: a.name, animalPhoto: a.photos?.[0] || null, shelterName: a.shelters?.name || 'un refuge',
     }));
     if (items.length) {
-      try { await sendMatchEncouragementDigestEmail({ adoptantEmail: ad.email, adoptantName: ad.first_name || '', items }); adopterEmails++; }
+      try { await sendMatchEncouragementDigestEmail({ adoptantEmail: ad.email, adoptantId, adoptantName: ad.first_name || '', items }); adopterEmails++; }
       catch (e) { console.error('[Digest adoptant]', e.message); continue; }
     }
     await supabase.from('matches').update({ adoptant_notified: true }).in('id', ids);

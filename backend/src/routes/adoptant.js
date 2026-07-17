@@ -222,25 +222,6 @@ router.patch('/matches/:id/contacted', authenticate, async (req, res) => {
   }
 });
 
-// Activer / couper les emails de notification (désabonnement en libre-service)
-router.patch('/email-preferences', authenticate, async (req, res) => {
-  if (req.user.role !== 'adoptant')
-    return res.status(403).json({ error: 'Forbidden' });
-  try {
-    const enabled = req.body.email_notifications === true;
-    const { data: current } = await supabase
-      .from('adoptants').select('questionnaire_answers').eq('id', req.user.id).single();
-    const answers = current?.questionnaire_answers || {};
-    answers.email_notifications = enabled;
-    const { error } = await supabase
-      .from('adoptants').update({ questionnaire_answers: answers }).eq('id', req.user.id);
-    if (error) throw error;
-    res.json({ email_notifications: enabled });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Suppression définitive de son propre compte (droit à l'effacement — RGPD)
 router.delete('/account', authenticate, async (req, res) => {
   if (req.user.role !== 'adoptant')
