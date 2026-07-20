@@ -541,19 +541,19 @@ export default function LandingPage() {
       <section className="max-w-3xl mx-auto px-6 py-16 text-center">
         <motion.div {...fadeUpView()} className="space-y-6">
           <div className="inline-block bg-accent-light border border-orange-100 text-accent font-bold text-3xl md:text-4xl px-6 py-3 rounded-2xl">
-            1 adoption sur 4
+            Le coup de cœur ne suffit pas
           </div>
           <h2 className="text-2xl md:text-3xl font-extrabold text-primary">
-            revient au refuge dans les 12 mois.
+            Adopter, c'est s'engager pour 10 ou 15 ans.
           </h2>
           <p className="text-gray-500 text-lg leading-relaxed max-w-xl mx-auto">
-            Pas par mauvaise volonté — mais par mauvaise compatibilité.
+            Un animal merveilleux dans le mauvais foyer, ça fait deux malheureux.
           </p>
           <p className="text-gray-600 leading-relaxed max-w-xl mx-auto">
             Adoptly part d'une conviction simple : un animal heureux, c'est un animal dans le bon
             foyer. Pas juste le foyer le plus rapide. Nous analysons votre mode de vie pour vous
-            présenter les animaux qui vous correspondent réellement — et réduire les adoptions
-            ratées.
+            présenter les animaux qui vous correspondent réellement — et préparer, avec les
+            refuges, des adoptions qui durent.
           </p>
         </motion.div>
       </section>
