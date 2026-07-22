@@ -145,7 +145,7 @@ export default function ShelterChat() {
     : '…';
 
   return (
-    <div className="flex flex-col h-screen bg-bg-light">
+    <div className="flex flex-col h-[100svh] bg-bg-light">
       {/* Header */}
       <div className="bg-white border-b border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <button
