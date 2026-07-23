@@ -207,6 +207,9 @@ export default function SuiviAdoptions() {
                                 <div className="min-w-0">
                                   <p className="font-bold text-gray-800 text-sm truncate">{c.animal_name}</p>
                                   <p className="text-gray-500 text-xs truncate">{c.adoptant_name}</p>
+                                  {c.adoptant_email && (
+                                    <a href={`mailto:${c.adoptant_email}`} className="text-secondary text-[11px] truncate block hover:underline">{c.adoptant_email}</a>
+                                  )}
                                 </div>
                               </div>
                               {col.key !== 'adopted' && (
@@ -217,6 +220,15 @@ export default function SuiviAdoptions() {
                                   </select>
                                   <button onClick={() => navigate(`/shelter/chat/${c.match_id}`)}
                                           className="text-xs font-semibold text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg whitespace-nowrap">💬</button>
+                                  <button title="Retirer ce contact"
+                                          onClick={async () => {
+                                            if (!window.confirm(`Retirer la demande de ${c.adoptant_name} pour ${c.animal_name} ?`)) return;
+                                            try {
+                                              await api.patch(`/shelter/matches/${c.match_id}/dismiss`);
+                                              setGroups((g) => ({ ...g, [col.key]: g[col.key].filter((x) => x.match_id !== c.match_id) }));
+                                            } catch { alert('Erreur, réessayez.'); }
+                                          }}
+                                          className="text-xs text-gray-300 hover:text-red-500 hover:bg-red-50 px-1.5 py-1 rounded-lg">✕</button>
                                 </div>
                               )}
                               <p className="text-[11px] text-gray-400">{timeAgo(c.timestamp)}</p>

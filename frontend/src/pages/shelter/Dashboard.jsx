@@ -79,15 +79,32 @@ function InterestedModal({ animal, onClose, t }) {
                     {person.contacted && (
                       <p className="text-blue-400 text-xs">{t('interested_contacted')}</p>
                     )}
-                    <button
-                      onClick={() => {
-                        onClose();
-                        navigate(`/shelter/chat/${person.match_id}`);
-                      }}
-                      className="text-xs font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
-                    >
-                      💬
-                    </button>
+                    <div className="flex items-center gap-1 justify-end">
+                      <button
+                        onClick={() => {
+                          onClose();
+                          navigate(`/shelter/chat/${person.match_id}`);
+                        }}
+                        className="text-xs font-medium text-secondary hover:text-primary bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
+                      >
+                        💬
+                      </button>
+                      <button
+                        title="Retirer ce contact"
+                        onClick={async () => {
+                          if (!window.confirm('Retirer ce contact de la liste ? Il disparaîtra aussi du suivi quotidien.')) return;
+                          try {
+                            await api.patch(`/shelter/matches/${person.match_id}/dismiss`);
+                            setInterested((prev) => prev.filter((p) => p.match_id !== person.match_id));
+                          } catch {
+                            alert('Erreur, réessayez.');
+                          }
+                        }}
+                        className="text-xs text-gray-300 hover:text-red-500 hover:bg-red-50 px-2 py-1 rounded-lg transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

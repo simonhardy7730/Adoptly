@@ -232,7 +232,7 @@ router.get('/pipeline', authenticate, async (req, res) => {
       'id, timestamp, contacted, status, pipeline_stage, adoptant_id, animal_id',
       'animal_id',
       animalIds,
-      (q) => q.eq('swipe_direction', 'right')
+      (q) => q.eq('swipe_direction', 'right').neq('status', 'closed') // sans les contacts retirés
     );
 
     const adoptantIds = [...new Set((matches || []).map((m) => m.adoptant_id))];
@@ -383,6 +383,7 @@ router.get('/animals/:id/interested', authenticate, async (req, res) => {
       .select('id, timestamp, contacted, adoptant_id')
       .eq('animal_id', req.params.id)
       .eq('swipe_direction', 'right')
+      .neq('status', 'closed') // contacts retirés par le refuge
       .order('timestamp', { ascending: false });
 
     if (error) throw error;
@@ -407,6 +408,33 @@ router.get('/animals/:id/interested', authenticate, async (req, res) => {
     });
 
     res.json({ animal, interested: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Retirer un contact en attente (demande des refuges bêta) ─────────────
+// Le refuge ne souhaite pas donner suite (ex: l'adoptant a liké 12 animaux
+// mais la conversation se fait sur un seul) : on ferme le match, il disparaît
+// de la liste des intéressés et du pipeline. La conversation reste accessible.
+router.patch('/matches/:id/dismiss', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data: match } = await supabase
+      .from('matches')
+      .select('id, animals(shelter_id)')
+      .eq('id', req.params.id)
+      .single();
+    if (!match || match.animals?.shelter_id !== req.user.id)
+      return res.status(404).json({ error: 'Contact introuvable' });
+
+    const { error } = await supabase
+      .from('matches')
+      .update({ status: 'closed' })
+      .eq('id', req.params.id);
+    if (error) throw error;
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
