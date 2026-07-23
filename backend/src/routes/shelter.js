@@ -53,7 +53,7 @@ router.get('/dashboard', authenticate, async (req, res) => {
     const animalIds = (animals || []).map((a) => a.id);
     let allMatches = [];
     if (animalIds.length > 0) {
-      allMatches = await selectIn('matches', 'animal_id, swipe_direction, contacted, timestamp', 'animal_id', animalIds);
+      allMatches = await selectIn('matches', 'animal_id, swipe_direction, contacted, status, timestamp', 'animal_id', animalIds);
     }
 
     const thisMonthStart = new Date();
@@ -87,7 +87,7 @@ router.get('/dashboard', authenticate, async (req, res) => {
         (m) => m.swipe_direction === 'right' && new Date(m.timestamp) >= thisMonthStart
       ).length,
       pending_contacts: allMatches.filter(
-        (m) => m.swipe_direction === 'right' && !m.contacted
+        (m) => m.swipe_direction === 'right' && !m.contacted && m.status !== 'closed'
       ).length,
       weekly: weeklyStats,
     };
@@ -182,9 +182,8 @@ router.get('/pending-contacts', authenticate, async (req, res) => {
       'id, timestamp, contacted, adoptant_id, animal_id',
       'animal_id',
       animalIds,
-      (q) => q.eq('swipe_direction', 'right').eq('contacted', false)
+      (q) => q.eq('swipe_direction', 'right').eq('contacted', false).neq('status', 'closed')
     );
-    matches.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     const adoptantIds = [...new Set(matches.map((m) => m.adoptant_id))];
     let adoptants = [];
@@ -195,6 +194,8 @@ router.get('/pending-contacts', authenticate, async (req, res) => {
     const contacts = (matches || []).map((m) => {
       const a = adoptants.find((ad) => ad.id === m.adoptant_id) || {};
       const animal = animals.find((an) => an.id === m.animal_id) || {};
+      const first = a.first_name || '';
+      const last  = a.last_name  || '';
       return {
         match_id:     m.id,
         timestamp:    m.timestamp,
@@ -203,8 +204,17 @@ router.get('/pending-contacts', authenticate, async (req, res) => {
         last_name:    a.last_name,
         animal_name:  animal.name,
         animal_photo: animal.photos?.[0] || null,
+        _sortKey:     `${last} ${first}`.trim().toLowerCase(),
       };
     });
+
+    // Trier par personne : les contacts d'un même adoptant (ex. Laurence qui a
+    // liké 7 chats) se retrouvent côte à côte pour un nettoyage rapide.
+    contacts.sort((a, b) => {
+      if (a._sortKey !== b._sortKey) return a._sortKey < b._sortKey ? -1 : 1;
+      return new Date(b.timestamp) - new Date(a.timestamp);
+    });
+    contacts.forEach((c) => delete c._sortKey);
 
     res.json({ contacts });
   } catch (err) {

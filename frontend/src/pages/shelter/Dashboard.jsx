@@ -131,10 +131,11 @@ function StatCard({ value, label, emoji, onClick }) {
   );
 }
 
-function PendingContactsModal({ onClose, t }) {
+function PendingContactsModal({ onClose, onDismissed, t }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [contacts, setContacts] = useState([]);
+  const [dismissing, setDismissing] = useState(null);
 
   useEffect(() => {
     api.get('/shelter/pending-contacts')
@@ -142,6 +143,19 @@ function PendingContactsModal({ onClose, t }) {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  async function dismiss(matchId) {
+    setDismissing(matchId);
+    try {
+      await api.patch(`/shelter/matches/${matchId}/dismiss`);
+      setContacts((prev) => prev.filter((c) => c.match_id !== matchId));
+      onDismissed?.();
+    } catch {
+      alert('Impossible de retirer ce contact. Réessayez.');
+    } finally {
+      setDismissing(null);
+    }
+  }
 
   return (
     <motion.div
@@ -194,17 +208,27 @@ function PendingContactsModal({ onClose, t }) {
                       💚 Coup de cœur pour <span className="font-medium text-primary">{c.animal_name}</span>
                     </p>
                   </div>
-                  <div className="flex-shrink-0 flex items-center gap-2">
+                  <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
                     <span className="text-gray-300 text-xs">{date}</span>
-                    <button
-                      onClick={() => {
-                        onClose();
-                        navigate(`/shelter/chat/${c.match_id}`);
-                      }}
-                      className="text-sm font-medium text-white bg-secondary hover:bg-primary px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                    >
-                      💬 Écrire
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => dismiss(c.match_id)}
+                        disabled={dismissing === c.match_id}
+                        title="Retirer ce contact de la liste"
+                        className="text-xs font-medium text-gray-500 bg-gray-100 hover:bg-red-50 hover:text-red-600 px-2.5 py-1.5 rounded-lg transition-colors whitespace-nowrap disabled:opacity-50"
+                      >
+                        {dismissing === c.match_id ? '…' : '✕ Retirer'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          onClose();
+                          navigate(`/shelter/chat/${c.match_id}`);
+                        }}
+                        className="text-sm font-medium text-white bg-secondary hover:bg-primary px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                      >
+                        💬 Écrire
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -729,7 +753,17 @@ export default function Dashboard() {
           <FeedbackModal onClose={() => setShowFeedback(false)} />
         )}
         {showPending && (
-          <PendingContactsModal onClose={() => setShowPending(false)} t={t} />
+          <PendingContactsModal
+            onClose={() => setShowPending(false)}
+            onDismissed={() =>
+              setData((d) =>
+                d?.stats
+                  ? { ...d, stats: { ...d.stats, pending_contacts: Math.max(0, (d.stats.pending_contacts ?? 0) - 1) } }
+                  : d
+              )
+            }
+            t={t}
+          />
         )}
       </AnimatePresence>
     </div>
