@@ -238,7 +238,7 @@ function WeeklyChart({ weeks }) {
   );
 }
 
-function ConfirmModal({ name, onConfirm, onCancel, t }) {
+function ConfirmModal({ name, isAdopted, onConfirm, onCancel, t }) {
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-6"
@@ -258,6 +258,13 @@ function ConfirmModal({ name, onConfirm, onCancel, t }) {
           <div className="text-4xl">🗑️</div>
           <h3 className="font-bold text-gray-800 text-lg">{t('confirm_delete_title', { name })}</h3>
           <p className="text-gray-500 text-sm">{t('confirm_delete_body')}</p>
+          {isAdopted && (
+            <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+              ⚠️ {name} fait partie de vos <strong>adoptions réussies</strong> et compte dans vos
+              statistiques. Si c'est un doublon, supprimez — sinon, il vaut mieux le garder dans
+              « Ils ont trouvé leur famille ».
+            </p>
+          )}
         </div>
         <div className="flex gap-3">
           <button onClick={onCancel} className="btn-secondary flex-1 text-sm py-3">
@@ -705,6 +712,7 @@ export default function Dashboard() {
         {deleting && (
           <ConfirmModal
             name={deleting.name}
+            isAdopted={deleting.status === 'adopted'}
             onConfirm={() => deleteAnimal(deleting.id)}
             onCancel={() => setDeleting(null)}
             t={t}

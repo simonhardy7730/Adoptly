@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import { supabase } from '../lib/supabase.js';
 import { selectIn } from '../lib/db.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendEmailsThrottled, sendShelterFeedbackEmail } from '../lib/email.js';
+import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendAdminAnimalDeletedEmail, sendEmailsThrottled, sendShelterFeedbackEmail } from '../lib/email.js';
 import { passesHardFilters } from '../lib/matching.js';
 import { birthDateFromAge } from '../lib/ages.js';
 
@@ -640,6 +640,16 @@ router.delete('/animals/:id', authenticate, async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   try {
+    // Photographier la fiche avant suppression : Simon est alerté par email
+    // avec toutes les données, pour pouvoir restaurer une adoption supprimée
+    // par erreur (les photos restent dans le storage, rien n'est perdu).
+    const { data: snapshot } = await supabase
+      .from('animals')
+      .select('*, shelters(name, email)')
+      .eq('id', req.params.id)
+      .eq('shelter_id', req.user.id)
+      .single();
+
     const { error } = await supabase
       .from('animals')
       .delete()
@@ -647,6 +657,11 @@ router.delete('/animals/:id', authenticate, async (req, res) => {
       .eq('shelter_id', req.user.id);
     if (error) throw error;
     res.json({ success: true });
+
+    if (snapshot) {
+      sendAdminAnimalDeletedEmail({ animal: snapshot }).catch((e) =>
+        console.error('[Delete] Alerte admin échouée:', e.message));
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

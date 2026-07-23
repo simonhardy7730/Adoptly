@@ -1432,6 +1432,51 @@ export async function sendAdoptantMessageNotificationEmail({
 /**
  * Notifie l'admin (Simon) qu'un refuge vient d'ajouter un animal.
  */
+/**
+ * Alerte Simon quand un refuge SUPPRIME un animal, avec la fiche complète
+ * en copie : si c'était une adoption supprimée par erreur (et pas un doublon),
+ * il peut la restaurer — les photos restent dans le storage.
+ */
+export async function sendAdminAnimalDeletedEmail({ animal }) {
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  const species = { dog:'Chien', cat:'Chat', rabbit:'Lapin', guinea_pig:'Cobaye', other:'Autre' }[animal.species] || animal.species;
+  const etaitAdopte = animal.status === 'adopted';
+  const deletedAt = new Date().toLocaleString('fr-BE', { timeZone:'Europe/Brussels', dateStyle:'full', timeStyle:'short' });
+
+  const html = `
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:20px;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;">
+    <h2 style="color:${etaitAdopte ? '#B45309' : '#1B4F8A'};font-size:18px;margin:0 0 4px;">
+      ${etaitAdopte ? '⚠️ Un animal ADOPTÉ a été supprimé' : '🗑️ Animal supprimé par un refuge'}
+    </h2>
+    <p style="color:#6B7280;font-size:13px;margin:0 0 16px;">${deletedAt}</p>
+    ${etaitAdopte ? `<p style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:10px 14px;color:#92400E;font-size:14px;margin:0 0 16px;">
+      Cet animal comptait dans les <strong>statistiques d'adoption</strong>. Si ce n'était pas un doublon, à restaurer avec les données ci-dessous.
+    </p>` : ''}
+    <table style="width:100%;font-size:14px;color:#374151;border-collapse:collapse;">
+      <tr><td style="padding:4px 0;color:#9CA3AF;">Refuge</td><td>${animal.shelters?.name || '?'} (${animal.shelters?.email || '?'})</td></tr>
+      <tr><td style="padding:4px 0;color:#9CA3AF;">Animal</td><td><strong>${animal.name}</strong> — ${species}${animal.breed ? ' · ' + animal.breed : ''}</td></tr>
+      <tr><td style="padding:4px 0;color:#9CA3AF;">Statut</td><td>${animal.status}</td></tr>
+      <tr><td style="padding:4px 0;color:#9CA3AF;">Naissance</td><td>${animal.birth_date || '?'} (${animal.age ?? '?'} mois)</td></tr>
+      <tr><td style="padding:4px 0;color:#9CA3AF;">Taille / caractère</td><td>${animal.size || '?'} · ${animal.temperament || '?'}</td></tr>
+    </table>
+    ${animal.photos?.length ? `<p style="font-size:13px;color:#6B7280;margin:14px 0 4px;">Photos (toujours dans le storage) :</p>
+      ${animal.photos.map(p => `<a href="${p}" style="font-size:12px;color:#1B4F8A;display:block;">${p}</a>`).join('')}` : ''}
+    ${animal.story ? `<p style="font-size:13px;color:#6B7280;margin:14px 0 4px;">Histoire :</p>
+      <pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;background:#F9FAFB;border-radius:10px;padding:12px;color:#374151;">${animal.story}</pre>` : ''}
+  </div>
+</body></html>`.trim();
+
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject: etaitAdopte
+      ? `⚠️ Animal ADOPTÉ supprimé : ${animal.name} (${animal.shelters?.name || '?'})`
+      : `🗑️ Animal supprimé : ${animal.name} (${animal.shelters?.name || '?'})`,
+    html,
+  });
+}
+
 export async function sendAdminNewAnimalEmail({ shelterName, shelterEmail, animalName, animalSpecies, animalBreed, photoUrl }) {
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
   const species = { dog:'Chien', cat:'Chat', rabbit:'Lapin', guinea_pig:'Cobaye', other:'Autre' }[animalSpecies] || animalSpecies;
