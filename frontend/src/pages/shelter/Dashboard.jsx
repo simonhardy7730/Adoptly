@@ -116,6 +116,8 @@ function InterestedModal({ animal, onClose, t }) {
   );
 }
 
+const SPECIES_FR = { dog: 'Chien', cat: 'Chat', rabbit: 'Lapin', guinea_pig: 'Cobaye', other: 'Autre' };
+
 function StatCard({ value, label, emoji, onClick }) {
   return (
     <div
@@ -573,11 +575,20 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {data.animals.map((animal, i) => {
+                  {[...data.animals].sort((a, b) => (a.status === 'adopted') - (b.status === 'adopted')).map((animal, i, arr) => {
                     const photo = animal.photos?.[0];
+                    const isFirstAdopted = animal.status === 'adopted' && arr[i - 1]?.status !== 'adopted';
                     return (
+                      <div key={animal.id}>
+                        {isFirstAdopted && (
+                          <div className="mt-6 mb-3">
+                            <h2 className="font-bold text-gray-700">🎉 Ils ont trouvé leur famille</h2>
+                            <p className="text-gray-400 text-xs mt-0.5">
+                              Vos belles histoires restent ici et comptent dans vos statistiques — inutile de les supprimer.
+                            </p>
+                          </div>
+                        )}
                       <motion.div
-                        key={animal.id}
                         className="card p-4 flex gap-4"
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -605,7 +616,7 @@ export default function Dashboard() {
                             </span>
                           </div>
                           <p className="text-gray-500 text-xs mt-0.5">
-                            {animal.species}{animal.breed ? ` · ${animal.breed}` : ''}
+                            {SPECIES_FR[animal.species] || animal.species}{animal.breed ? ` · ${animal.breed}` : ''}
                           </p>
                           <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-400">
                             <span>💚 {animal.match_count} {animal.match_count > 1 ? t('dash_matches') : t('dash_match')}</span>
@@ -671,6 +682,7 @@ export default function Dashboard() {
                           </button>
                         </div>
                       </motion.div>
+                      </div>
                     );
                   })}
                 </div>
