@@ -27,6 +27,10 @@ const allowedOrigins = [
   'https://www.adoptly.fr',
   'https://adoptly-teal.vercel.app',
   'https://adoptly-eta.vercel.app',
+  // Le backend lui-même : le kit Facebook est servi depuis ce domaine et
+  // fait des POST vers /api/public/kit-facebook-7h2p/published (même origine,
+  // mais le navigateur envoie quand même l'en-tête Origin sur un POST).
+  'https://adoptly-backend-p2os.onrender.com',
 ];
 
 app.use(
