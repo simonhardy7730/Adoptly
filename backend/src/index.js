@@ -19,6 +19,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Render place l'app derrière un proxy : sans ça, express-rate-limit voit
+// TOUS les visiteurs avec la même IP (celle du proxy) → la limite anti-brute-force
+// devient GLOBALE et bloque tout le monde ensemble. On fait confiance à 1 saut
+// de proxy pour que req.ip = la vraie IP du visiteur (X-Forwarded-For).
+app.set('trust proxy', 1);
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -50,7 +56,7 @@ app.use(express.json({ limit: '10mb' }));
 // ── Rate limiting — protection anti-brute-force ───────────
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,                   // max 10 tentatives par IP
+  max: 20,                   // max 20 tentatives par IP réelle (grâce à trust proxy)
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop de tentatives. Veuillez réessayer dans 15 minutes.' },
