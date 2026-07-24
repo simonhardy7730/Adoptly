@@ -352,7 +352,7 @@ export default function AnimalCatalog() {
             <div className="flex-1 text-center sm:text-left">
               <p className="font-bold text-sm text-green-800">
                 {compatCount > 0
-                  ? `${compatCount} animal${compatCount > 1 ? 'x' : ''} compatible${compatCount > 1 ? 's' : ''} avec toi`
+                  ? `${compatCount} ${compatCount > 1 ? 'animaux compatibles' : 'animal compatible'} avec toi`
                   : 'Aucun animal 100% compatible sur ce filtre'}
               </p>
               <p className="text-green-700/70 text-xs mt-0.5">
