@@ -210,9 +210,25 @@ router.post('/animals/:id/interest', authenticate, async (req, res) => {
   try {
     const { data: adoptant } = await supabase
       .from('adoptants')
-      .select('swiped_animals')
+      .select('questionnaire_answers, swiped_animals')
       .eq('id', req.user.id)
       .single();
+
+    // Garde de compatibilité : on ne crée un match QUE si l'animal correspond
+    // (pas de match "forcé" sur un animal incompatible). Le bouton n'apparaît
+    // déjà pas côté front, ceci est la sécurité côté serveur.
+    const prefs = adoptant?.questionnaire_answers;
+    if (!prefs) return res.status(400).json({ error: 'no_profile' });
+
+    const { data: animal, error: animalErr } = await supabase
+      .from('animals')
+      .select('*, shelters(id, latitude, longitude)')
+      .eq('id', animal_id)
+      .single();
+    if (animalErr || !animal) return res.status(404).json({ error: 'Animal introuvable' });
+
+    if (!passesHardFilters(animal, animal.shelters, prefs))
+      return res.status(400).json({ error: 'incompatible' });
 
     const swiped = [...(adoptant?.swiped_animals || [])];
 

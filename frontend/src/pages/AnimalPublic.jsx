@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Navbar from '../components/Navbar';
 import api from '../lib/api';
 import { setCanonical, resetCanonical } from '../lib/seo';
 
@@ -120,9 +121,10 @@ function Lightbox({ photos, startIdx, onClose }) {
   );
 }
 
-// CTA pour un adoptant connecté : compatibilité instantanée (profil déjà rempli)
-// + bouton "m'intéresse" qui enregistre l'intérêt SANS ouvrir le chat.
-function AdoptantCta({ animal, compat, interestState, onInterest }) {
+// CTA pour un adoptant connecté : compatibilité instantanée (profil déjà rempli).
+// - Compatible → bouton "m'intéresse" PUIS confirmation avant d'ajouter aux matchs.
+// - Pas compatible → aucun match proposé (juste la raison + redirection swipe).
+function AdoptantCta({ animal, compat, interestState, onStartConfirm, onCancelConfirm, onConfirm }) {
   if (compat === null) {
     return (
       <div className="card p-6 flex justify-center">
@@ -146,52 +148,82 @@ function AdoptantCta({ animal, compat, interestState, onInterest }) {
     );
   }
 
-  const done = interestState === 'done';
+  // ── Pas compatible : on ne propose PAS de match ──
+  if (!compat.compatible) {
+    return (
+      <div className="card p-6 text-center space-y-3">
+        <div className="text-4xl">🙅</div>
+        <h2 className="font-bold text-gray-700 text-lg">{animal.name} ne correspond pas à ton profil</h2>
+        <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+          {compat.reason || `${animal.name} ne correspond pas à ton mode de vie.`}
+        </p>
+        <p className="text-gray-400 text-xs">
+          On préfère te proposer les animaux vraiment faits pour toi.
+        </p>
+        <Link to="/adoptant/swipe" className="btn-primary w-full py-3.5 text-base inline-block">
+          Voir les animaux faits pour moi →
+        </Link>
+      </div>
+    );
+  }
+
+  // ── Compatible ──
+  const done       = interestState === 'done';
+  const confirming = interestState === 'confirming';
+  const sending    = interestState === 'sending';
 
   return (
     <div className="card p-6 text-center space-y-4">
-      {compat.compatible ? (
-        <div className="space-y-1">
-          <div className="text-4xl">✅</div>
-          <h2 className="font-bold text-green-700 text-lg">Vous êtes compatibles !</h2>
-          <p className="text-gray-500 text-sm">{animal.name} correspond à ton profil et ton mode de vie.</p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          <div className="text-4xl">🤔</div>
-          <h2 className="font-bold text-amber-700 text-lg">À regarder de près</h2>
-          <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-            {compat.reason || `${animal.name} pourrait ne pas correspondre parfaitement à ton profil.`}
-          </p>
-          <p className="text-gray-400 text-xs pt-1">
-            Tu restes libre de te lancer — c'est le refuge qui validera avec toi.
-          </p>
-        </div>
-      )}
+      <div className="space-y-1">
+        <div className="text-4xl">✅</div>
+        <h2 className="font-bold text-green-700 text-lg">Vous êtes compatibles !</h2>
+        <p className="text-gray-500 text-sm">{animal.name} correspond à ton profil et ton mode de vie.</p>
+      </div>
 
       {done ? (
         <div className="space-y-2">
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
             <p className="text-green-700 text-sm font-semibold">
-              C'est noté ! 💚 Tu retrouveras {animal.name} dans tes matchs.
+              C'est noté ! 💚 {animal.name} est dans tes matchs.
             </p>
           </div>
           <Link to="/adoptant/matches" className="btn-primary w-full py-3.5 text-base inline-block">
             Voir mes matchs →
           </Link>
         </div>
+      ) : confirming || sending ? (
+        <div className="space-y-2">
+          <p className="text-gray-600 text-sm font-medium">
+            Tu confirmes vouloir matcher avec {animal.name} ? Il rejoindra tes matchs.
+          </p>
+          <button
+            onClick={onConfirm}
+            disabled={sending}
+            className="btn-primary w-full py-4 text-base disabled:opacity-60"
+          >
+            {sending ? 'Un instant…' : `✓ Oui, je match avec ${animal.name} !`}
+          </button>
+          <button
+            onClick={onCancelConfirm}
+            disabled={sending}
+            className="w-full py-2.5 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Annuler
+          </button>
+        </div>
       ) : (
-        <button
-          onClick={onInterest}
-          disabled={interestState === 'sending'}
-          className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2 disabled:opacity-60"
-        >
-          {interestState === 'sending' ? 'Un instant…' : `❤️ ${animal.name} m'intéresse`}
-        </button>
+        <>
+          <button
+            onClick={onStartConfirm}
+            className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2"
+          >
+            ❤️ {animal.name} m'intéresse
+          </button>
+          <p className="text-gray-400 text-xs">
+            On ne t'envoie pas direct dans la conversation : tu écriras au refuge quand tu veux, depuis tes matchs.
+          </p>
+        </>
       )}
-      <p className="text-gray-400 text-xs">
-        On ne t'envoie pas direct dans la conversation : tu écriras au refuge quand tu veux, depuis tes matchs.
-      </p>
     </div>
   );
 }
@@ -234,13 +266,16 @@ export default function AnimalPublic() {
       .catch(() => {});
   }, [id, isAdoptant]);
 
+  function startConfirm()  { setInterestState('confirming'); }
+  function cancelConfirm() { setInterestState('idle'); }
+
   async function handleInterest() {
     setInterestState('sending');
     try {
       await api.post(`/adoptant/animals/${id}/interest`);
       setInterestState('done');
     } catch {
-      setInterestState('idle');
+      setInterestState('confirming');
       alert('Une erreur est survenue. Réessaie dans un instant.');
     }
   }
@@ -273,23 +308,27 @@ export default function AnimalPublic() {
   return (
     <div className="min-h-screen bg-bg-light">
 
-      {/* Header minimal */}
-      <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between max-w-lg mx-auto">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center group-hover:bg-primary-dark transition-colors">
-            <span className="text-white font-black text-sm select-none">A</span>
+      {/* En-tête : menu d'app si connecté, sinon en-tête public */}
+      {isAdoptant ? (
+        <Navbar />
+      ) : (
+        <div className="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between max-w-lg mx-auto">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center group-hover:bg-primary-dark transition-colors">
+              <span className="text-white font-black text-sm select-none">A</span>
+            </div>
+            <span className="font-black text-primary text-lg tracking-tight">Adoptly</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/animaux" className="text-gray-400 text-sm hover:text-primary transition-colors">
+              Voir tous les animaux
+            </Link>
+            <Link to="/adoptant/register" className="text-secondary text-sm font-medium hover:underline">
+              Créer un compte →
+            </Link>
           </div>
-          <span className="font-black text-primary text-lg tracking-tight">Adoptly</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link to="/animaux" className="text-gray-400 text-sm hover:text-primary transition-colors">
-            Voir tous les animaux
-          </Link>
-          <Link to="/adoptant/register" className="text-secondary text-sm font-medium hover:underline">
-            Créer un compte →
-          </Link>
         </div>
-      </div>
+      )}
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
 
@@ -454,7 +493,9 @@ export default function AnimalPublic() {
             animal={animal}
             compat={compat}
             interestState={interestState}
-            onInterest={handleInterest}
+            onStartConfirm={startConfirm}
+            onCancelConfirm={cancelConfirm}
+            onConfirm={handleInterest}
           />
         ) : (
           <div className="card p-6 text-center space-y-3">

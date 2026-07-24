@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import NotificationPrompt from './NotificationPrompt';
+import InstallPrompt from './InstallPrompt';
 import api from '../lib/api';
 
 export default function Navbar() {
@@ -38,6 +38,7 @@ export default function Navbar() {
 
   const adoptantLinks = [
     { to: '/adoptant/swipe', label: t('nav_discover'), icon: '🐾' },
+    { to: '/animaux', label: 'Tous les animaux', icon: '🔍' },
     { to: '/adoptant/matches', label: t('nav_matches'), icon: '💚' },
     { to: '/adoptant/messages', label: '💬 Messages', icon: null, badge: true },
     { to: '/adoptant/profile', label: t('nav_profile'), icon: '👤' },
@@ -151,7 +152,7 @@ export default function Navbar() {
         )}
       </AnimatePresence>
     </nav>
-    <NotificationPrompt />
+    <InstallPrompt />
     </>
   );
 }

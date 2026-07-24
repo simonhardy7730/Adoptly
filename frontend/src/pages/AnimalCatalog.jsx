@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Navbar from '../components/Navbar';
+import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 import { setCanonical, resetCanonical } from '../lib/seo';
 
@@ -89,6 +91,9 @@ export default function AnimalCatalog() {
   const [loading, setLoading] = useState(true);
   const species = searchParams.get('espece') || 'all';
 
+  const { token, role } = useAuth();
+  const loggedInAdoptant = (token || localStorage.getItem('token')) && (role || localStorage.getItem('role')) === 'adoptant';
+
   useEffect(() => () => resetCanonical(), []);
 
   useEffect(() => {
@@ -114,23 +119,27 @@ export default function AnimalCatalog() {
 
   return (
     <div className="min-h-screen bg-bg-light">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center group-hover:bg-primary-dark transition-colors">
-              <span className="text-white font-black text-sm select-none">A</span>
-            </div>
-            <span className="font-black text-primary text-lg tracking-tight">Adoptly</span>
-          </Link>
-          <Link
-            to="/adoptant/register"
-            className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-primary-dark transition-colors"
-          >
-            Créer un compte gratuit
-          </Link>
+      {/* En-tête : menu d'app si connecté, sinon en-tête public */}
+      {loggedInAdoptant ? (
+        <Navbar />
+      ) : (
+        <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
+          <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center group-hover:bg-primary-dark transition-colors">
+                <span className="text-white font-black text-sm select-none">A</span>
+              </div>
+              <span className="font-black text-primary text-lg tracking-tight">Adoptly</span>
+            </Link>
+            <Link
+              to="/adoptant/register"
+              className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-full hover:bg-primary-dark transition-colors"
+            >
+              Créer un compte gratuit
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Titre */}
@@ -163,22 +172,24 @@ export default function AnimalCatalog() {
           ))}
         </div>
 
-        {/* Bannière matching */}
-        <div className="mb-8 bg-gradient-to-r from-primary to-primary-dark rounded-2xl p-5 text-white flex flex-col sm:flex-row items-center gap-4">
-          <div className="text-3xl flex-shrink-0">🧩</div>
-          <div className="flex-1 text-center sm:text-left">
-            <p className="font-bold text-sm">Parcourir c'est bien. Matcher c'est mieux.</p>
-            <p className="text-white/80 text-xs mt-0.5">
-              Notre algorithme analyse 14 critères pour vous proposer les animaux vraiment compatibles avec votre mode de vie.
-            </p>
+        {/* Bannière matching — uniquement pour les visiteurs non connectés */}
+        {!loggedInAdoptant && (
+          <div className="mb-8 bg-gradient-to-r from-primary to-primary-dark rounded-2xl p-5 text-white flex flex-col sm:flex-row items-center gap-4">
+            <div className="text-3xl flex-shrink-0">🧩</div>
+            <div className="flex-1 text-center sm:text-left">
+              <p className="font-bold text-sm">Parcourir c'est bien. Matcher c'est mieux.</p>
+              <p className="text-white/80 text-xs mt-0.5">
+                Notre algorithme analyse 14 critères pour vous proposer les animaux vraiment compatibles avec votre mode de vie.
+              </p>
+            </div>
+            <Link
+              to="/adoptant/register"
+              className="bg-white text-primary font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-gray-50 transition-colors flex-shrink-0"
+            >
+              Faire le test →
+            </Link>
           </div>
-          <Link
-            to="/adoptant/register"
-            className="bg-white text-primary font-semibold text-sm px-5 py-2.5 rounded-full hover:bg-gray-50 transition-colors flex-shrink-0"
-          >
-            Faire le test →
-          </Link>
-        </div>
+        )}
 
         {/* Grille */}
         {loading ? (
@@ -201,8 +212,8 @@ export default function AnimalCatalog() {
           </div>
         )}
 
-        {/* CTA bas de page */}
-        {!loading && animals.length > 0 && (
+        {/* CTA bas de page — uniquement pour les visiteurs non connectés */}
+        {!loading && animals.length > 0 && !loggedInAdoptant && (
           <div className="mt-12 text-center bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
             <h2 className="text-xl font-bold text-gray-800 mb-2">
               Trouvez votre compagnon idéal
