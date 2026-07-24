@@ -212,11 +212,11 @@ export async function syncFbKit() {
   let lastSpecies = null;
   items.forEach((it, i) => {
     if (it.species !== lastSpecies) {
-      cards += `\n  <h3 class="section">${it.species === 'dog' ? `🐶 Chiens (${nbDogs})` : `🐱 Chats (${nbCats})`}</h3>\n`;
+      cards += `\n  <h3 class="section" data-species="${it.species}">${it.species === 'dog' ? `🐶 Chiens (${nbDogs})` : `🐱 Chats (${nbCats})`}</h3>\n`;
       lastSpecies = it.species;
     }
     cards += `
-  <div class="card" data-id="${it.id}" data-name="${esc(it.name.toLowerCase())}">
+  <div class="card" data-id="${it.id}" data-species="${it.species}" data-name="${esc(it.name.toLowerCase())}">
     <a href="${it.img}" target="_blank"><img src="${it.img}" alt="${esc(it.name)}" loading="lazy"/></a>
     <div class="body">
       <h2>${esc(it.name.toUpperCase())}</h2>
@@ -254,6 +254,9 @@ export async function syncFbKit() {
   .search-wrap { position: sticky; top: 0; z-index: 20; background: #f0f4fa; padding: 8px 0 12px; max-width: 1100px; margin: 0 auto; }
   #search { width: 100%; padding: 13px 16px; font-size: 16px; border: 2px solid #dde5f0; border-radius: 12px; outline: none; }
   #search:focus { border-color: #1B4F8A; }
+  .tabs { display: flex; gap: 8px; margin-top: 8px; }
+  .tab { flex: 1; padding: 11px 8px; border-radius: 12px; border: 2px solid #dde5f0; background: #fff; color: #1B4F8A; font-weight: 700; font-size: 15px; cursor: pointer; transition: all .15s; }
+  .tab.active { background: #1B4F8A; color: #fff; border-color: #1B4F8A; }
   .aucun { text-align: center; color: #889; padding: 30px; display: none; }
   .card.fait { opacity: 0.45; }
   .card.fait img { filter: grayscale(1); }
@@ -269,25 +272,34 @@ export async function syncFbKit() {
   <strong>3.</strong> Une fois publiée, touche « Publication faite » — l'animal est barré et la coche est <strong>partagée</strong> : tu vois aussi ce que les autres ont déjà publié.</p>
 </header>
 <div class="search-wrap">
-  <input id="search" type="search" placeholder="🔍 Rechercher un animal par son nom…" oninput="rechercher(this.value)" autocomplete="off"/>
+  <input id="search" type="search" placeholder="🔍 Rechercher un animal par son nom…" oninput="appliquer()" autocomplete="off"/>
+  <div class="tabs">
+    <button class="tab active" onclick="filtrerEspece('all', this)">🐾 Tous</button>
+    <button class="tab" onclick="filtrerEspece('dog', this)">🐶 Chiens (${nbDogs})</button>
+    <button class="tab" onclick="filtrerEspece('cat', this)">🐱 Chats (${nbCats})</button>
+  </div>
 </div>
 <p class="aucun" id="aucun">Aucun animal ne correspond à cette recherche.</p>
 <div class="grid">
 ${cards}
 </div>
 <script>
-function rechercher(q) {
-  q = q.trim().toLowerCase();
-  const cards = document.querySelectorAll('.card');
-  let visibles = 0;
-  cards.forEach(c => {
-    const ok = !q || c.dataset.name.includes(q);
+var filtreEspece = 'all';
+function appliquer() {
+  var q = (document.getElementById('search').value || '').trim().toLowerCase();
+  var cards = document.querySelectorAll('.card');
+  var visibles = 0;
+  cards.forEach(function (c) {
+    var okSp = filtreEspece === 'all' || c.dataset.species === filtreEspece;
+    var okQ = !q || c.dataset.name.includes(q);
+    var ok = okSp && okQ;
     c.style.display = ok ? '' : 'none';
     if (ok) visibles++;
   });
-  // Masquer un titre de section si aucun animal visible en dessous
-  document.querySelectorAll('.section').forEach(sec => {
-    let el = sec.nextElementSibling, anyVisible = false;
+  // Titres de section : masqués si leur espèce est filtrée, ou si plus aucune carte visible dessous
+  document.querySelectorAll('.section').forEach(function (sec) {
+    if (filtreEspece !== 'all' && sec.dataset.species !== filtreEspece) { sec.style.display = 'none'; return; }
+    var el = sec.nextElementSibling, anyVisible = false;
     while (el && !el.classList.contains('section')) {
       if (el.classList.contains('card') && el.style.display !== 'none') { anyVisible = true; break; }
       el = el.nextElementSibling;
@@ -295,6 +307,12 @@ function rechercher(q) {
     sec.style.display = anyVisible ? '' : 'none';
   });
   document.getElementById('aucun').style.display = visibles === 0 ? 'block' : 'none';
+}
+function filtrerEspece(sp, btn) {
+  filtreEspece = sp;
+  document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  appliquer();
 }
 function copie(i, btn) {
   navigator.clipboard.writeText(document.getElementById('t' + i).textContent).then(() => {
