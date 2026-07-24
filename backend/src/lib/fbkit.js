@@ -266,7 +266,7 @@ export async function syncFbKit() {
   <h1>🐾 Kit publications Facebook — ${nbDogs} chiens et ${nbCats} chats</h1>
   <p><strong>1.</strong> Touche une photo pour l'ouvrir, puis appuie longuement dessus pour l'enregistrer.<br/>
   <strong>2.</strong> Touche « Copier le texte » et colle-le dans ta publication Facebook.<br/>
-  <strong>3.</strong> Une fois publiée, touche « Publication faite » — l'animal sera barré pour t'y retrouver.</p>
+  <strong>3.</strong> Une fois publiée, touche « Publication faite » — l'animal est barré et la coche est <strong>partagée</strong> : tu vois aussi ce que les autres ont déjà publié.</p>
 </header>
 <div class="search-wrap">
   <input id="search" type="search" placeholder="🔍 Rechercher un animal par son nom…" oninput="rechercher(this.value)" autocomplete="off"/>
@@ -303,31 +303,61 @@ function copie(i, btn) {
     setTimeout(() => { btn.textContent = '📋 Copier le texte'; btn.classList.remove('ok'); }, 2000);
   });
 }
-function faits() {
-  try { return JSON.parse(localStorage.getItem('fbkit-faits') || '[]'); } catch { return []; }
+// État "Publication faite" PARTAGÉ (stocké côté serveur). Affichage instantané
+// depuis un cache local, puis synchro serveur + rafraîchissement périodique
+// pour que Simon et Coralie voient les mêmes coches.
+var PUB_API = '/api/public/kit-facebook-7h2p/published';
+var faitsSet = new Set();
+
+function cacheGet() { try { return JSON.parse(localStorage.getItem('fbkit-faits') || '[]'); } catch { return []; } }
+function cacheSet(arr) { try { localStorage.setItem('fbkit-faits', JSON.stringify(arr)); } catch {} }
+
+function applyFaits() {
+  document.querySelectorAll('.card').forEach(function (card) {
+    var done = faitsSet.has(card.dataset.id);
+    card.classList.toggle('fait', done);
+    var btn = card.querySelector('.done-btn');
+    if (btn) btn.textContent = done ? '✅ Publiée — annuler' : '☑️ Publication faite';
+  });
 }
+
+function syncFaits() {
+  fetch(PUB_API, { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) return;
+      faitsSet = new Set(d.ids || []);
+      cacheSet(Array.from(faitsSet));
+      applyFaits();
+    })
+    .catch(function () {});
+}
+
 function basculeFait(id, btn) {
-  let list = faits();
-  const card = btn.closest('.card');
-  if (list.includes(id)) {
-    list = list.filter(x => x !== id);
-    card.classList.remove('fait');
-    btn.textContent = '☑️ Publication faite';
-  } else {
-    list.push(id);
-    card.classList.add('fait');
-    btn.textContent = '✅ Publiée — annuler';
-  }
-  localStorage.setItem('fbkit-faits', JSON.stringify(list));
+  var done = !faitsSet.has(id);
+  if (done) faitsSet.add(id); else faitsSet.delete(id);   // optimiste
+  cacheSet(Array.from(faitsSet));
+  applyFaits();
+  fetch(PUB_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, done: done }),
+  })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) return;
+      faitsSet = new Set(d.ids || []);
+      cacheSet(Array.from(faitsSet));
+      applyFaits();
+    })
+    .catch(function () {});
 }
-// Restaurer l'état au chargement
-faits().forEach(id => {
-  const card = document.querySelector('.card[data-id="' + id + '"]');
-  if (card) {
-    card.classList.add('fait');
-    card.querySelector('.done-btn').textContent = '✅ Publiée — annuler';
-  }
-});
+
+// Affichage immédiat depuis le cache, puis synchro serveur
+faitsSet = new Set(cacheGet());
+applyFaits();
+syncFaits();
+setInterval(syncFaits, 20000);
 </script>
 </body>
 </html>`;

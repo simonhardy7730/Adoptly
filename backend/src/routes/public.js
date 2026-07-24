@@ -740,6 +740,52 @@ router.get('/kit-facebook-7h2p', async (_req, res) => {
   }
 });
 
+// ── État partagé "Publication faite" du kit Facebook ────────
+// Stocké dans un simple JSON du Storage (pas de table à migrer). Permet à
+// Simon et Coralie de voir les mêmes coches : quand l'un marque un animal
+// publié, l'autre le voit (page servie sur la même origine → pas de CORS).
+const KIT_PUBLISHED_FILE = 'fb-kit-7h2p/published.json';
+
+async function readKitPublished() {
+  const { data, error } = await supabase.storage.from('animal-photos').download(KIT_PUBLISHED_FILE);
+  if (error || !data) return [];
+  try {
+    const arr = JSON.parse(Buffer.from(await data.arrayBuffer()).toString('utf-8'));
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+
+async function writeKitPublished(ids) {
+  await supabase.storage.from('animal-photos').upload(
+    KIT_PUBLISHED_FILE,
+    Buffer.from(JSON.stringify(ids)),
+    { contentType: 'application/json', upsert: true }
+  );
+}
+
+router.get('/kit-facebook-7h2p/published', async (_req, res) => {
+  try {
+    res.json({ ids: await readKitPublished() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/kit-facebook-7h2p/published', async (req, res) => {
+  try {
+    const { id, done } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'id requis' });
+    let ids = await readKitPublished();
+    const has = ids.includes(id);
+    if (done && !has) ids.push(id);
+    else if (!done && has) ids = ids.filter((x) => x !== id);
+    await writeKitPublished(ids);
+    res.json({ ids });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Sitemap dynamique ────────────────────────────────────
 router.get('/sitemap.xml', async (_req, res) => {
   try {
