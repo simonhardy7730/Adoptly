@@ -1,7 +1,6 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
 import { selectIn } from '../lib/db.js';
-import { passesHardFilters, scoreAnimal } from '../lib/matching.js';
 
 const router = express.Router();
 
@@ -76,48 +75,6 @@ router.get('/animals', async (req, res) => {
     });
 
     res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── Compatibilité depuis le catalogue (mini-test, sans compte) ──
-// Prend les réponses d'un mini-questionnaire et renvoie, pour chaque animal
-// actif, s'il est compatible + un score. Réutilise l'algo du swipe.
-// Les champs absents (géoloc, etc.) désactivent d'eux-mêmes leur filtre :
-// on annote la compatibilité "foyer" (espèce, enfants, autres animaux, jardin,
-// énergie…) sans masquer les animaux éloignés du catalogue.
-router.post('/animals/compatibility', async (req, res) => {
-  try {
-    const prefs = req.body?.prefs || {};
-    const { species } = req.body || {};
-
-    let query = supabase
-      .from('animals')
-      .select('id, species, size, temperament, age, special_needs, requirements, is_international, origin_country, shelter_id')
-      .eq('status', 'active');
-
-    if (species && species !== 'all') {
-      if (species === 'small_animal') query = query.in('species', ['rabbit', 'guinea_pig', 'other']);
-      else query = query.eq('species', species);
-    }
-
-    const { data: animals, error } = await query;
-    if (error) throw error;
-
-    const shelterIds = [...new Set((animals || []).map((a) => a.shelter_id))];
-    const shelters = shelterIds.length
-      ? await selectIn('shelters', 'id, latitude, longitude', 'id', shelterIds)
-      : [];
-    const shelterMap = Object.fromEntries((shelters || []).map((s) => [s.id, s]));
-
-    const result = (animals || []).map((a) => {
-      const shelter = shelterMap[a.shelter_id] || {};
-      const compatible = passesHardFilters(a, shelter, prefs);
-      return { id: a.id, compatible, score: compatible ? scoreAnimal(a, prefs) : 0 };
-    });
-
-    res.json({ results: result, compatible_count: result.filter((r) => r.compatible).length });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -16,6 +16,12 @@ function ageLabel(months) {
   return `${y} an${y > 1 ? 's' : ''}`;
 }
 
+function getAuth() {
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const role  = localStorage.getItem('role')  || sessionStorage.getItem('role');
+  return { token, role, isAdoptant: !!token && role === 'adoptant' };
+}
+
 function ShareBar({ animal }) {
   const [copied, setCopied] = useState(false);
   const shareUrl = `https://adoptly.fr/share/animal/${animal.id}`;
@@ -114,6 +120,82 @@ function Lightbox({ photos, startIdx, onClose }) {
   );
 }
 
+// CTA pour un adoptant connecté : compatibilité instantanée (profil déjà rempli)
+// + bouton "m'intéresse" qui enregistre l'intérêt SANS ouvrir le chat.
+function AdoptantCta({ animal, compat, interestState, onInterest }) {
+  if (compat === null) {
+    return (
+      <div className="card p-6 flex justify-center">
+        <LoadingSpinner size="md" />
+      </div>
+    );
+  }
+
+  if (compat.hasProfile === false) {
+    return (
+      <div className="card p-6 text-center space-y-3">
+        <div className="text-4xl">🧩</div>
+        <h2 className="font-bold text-gray-800 text-lg">Complète ton profil</h2>
+        <p className="text-gray-500 text-sm">
+          Réponds au questionnaire pour savoir si {animal.name} correspond à ton mode de vie.
+        </p>
+        <Link to="/adoptant/questionnaire" className="btn-primary w-full py-4 text-base inline-block">
+          Compléter mon profil →
+        </Link>
+      </div>
+    );
+  }
+
+  const done = interestState === 'done';
+
+  return (
+    <div className="card p-6 text-center space-y-4">
+      {compat.compatible ? (
+        <div className="space-y-1">
+          <div className="text-4xl">✅</div>
+          <h2 className="font-bold text-green-700 text-lg">Vous êtes compatibles !</h2>
+          <p className="text-gray-500 text-sm">{animal.name} correspond à ton profil et ton mode de vie.</p>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          <div className="text-4xl">🤔</div>
+          <h2 className="font-bold text-amber-700 text-lg">À regarder de près</h2>
+          <p className="text-amber-700 text-sm bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+            {compat.reason || `${animal.name} pourrait ne pas correspondre parfaitement à ton profil.`}
+          </p>
+          <p className="text-gray-400 text-xs pt-1">
+            Tu restes libre de te lancer — c'est le refuge qui validera avec toi.
+          </p>
+        </div>
+      )}
+
+      {done ? (
+        <div className="space-y-2">
+          <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+            <p className="text-green-700 text-sm font-semibold">
+              C'est noté ! 💚 Tu retrouveras {animal.name} dans tes matchs.
+            </p>
+          </div>
+          <Link to="/adoptant/matches" className="btn-primary w-full py-3.5 text-base inline-block">
+            Voir mes matchs →
+          </Link>
+        </div>
+      ) : (
+        <button
+          onClick={onInterest}
+          disabled={interestState === 'sending'}
+          className="btn-primary w-full py-4 text-base flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          {interestState === 'sending' ? 'Un instant…' : `❤️ ${animal.name} m'intéresse`}
+        </button>
+      )}
+      <p className="text-gray-400 text-xs">
+        On ne t'envoie pas direct dans la conversation : tu écriras au refuge quand tu veux, depuis tes matchs.
+      </p>
+    </div>
+  );
+}
+
 export default function AnimalPublic() {
   const { id } = useParams();
   const [animal,  setAnimal]  = useState(null);
@@ -122,6 +204,10 @@ export default function AnimalPublic() {
   const [showVideo, setShowVideo] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [lightbox, setLightbox] = useState(false);
+
+  const { isAdoptant } = getAuth();
+  const [compat, setCompat] = useState(null);            // { hasProfile, compatible, reason, alreadyInterested }
+  const [interestState, setInterestState] = useState('idle'); // idle | sending | done
 
   useEffect(() => {
     api.get(`/public/animals/${id}`)
@@ -136,6 +222,28 @@ export default function AnimalPublic() {
       .finally(() => setLoading(false));
     return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
   }, [id]);
+
+  // Adoptant connecté : on connaît déjà son profil → compatibilité instantanée
+  useEffect(() => {
+    if (!isAdoptant) return;
+    api.get(`/adoptant/animals/${id}/compatibility`)
+      .then(({ data }) => {
+        setCompat(data);
+        if (data.alreadyInterested) setInterestState('done');
+      })
+      .catch(() => {});
+  }, [id, isAdoptant]);
+
+  async function handleInterest() {
+    setInterestState('sending');
+    try {
+      await api.post(`/adoptant/animals/${id}/interest`);
+      setInterestState('done');
+    } catch {
+      setInterestState('idle');
+      alert('Une erreur est survenue. Réessaie dans un instant.');
+    }
+  }
 
   if (loading) return (
     <div className="min-h-screen bg-bg-light flex items-center justify-center">
@@ -330,7 +438,25 @@ export default function AnimalPublic() {
         )}
 
         {/* CTA */}
-        {!adopted ? (
+        {adopted ? (
+          <div className="card p-6 text-center space-y-3">
+            <div className="text-4xl">🎉</div>
+            <h2 className="font-bold text-gray-700 text-lg">{animal.name} a trouvé sa famille !</h2>
+            <p className="text-gray-500 text-sm">
+              Mais de nombreux animaux attendent encore leur famille idéale.
+            </p>
+            <Link to="/adoptant/register" className="btn-primary w-full py-4 text-base">
+              Découvrir d'autres animaux →
+            </Link>
+          </div>
+        ) : isAdoptant ? (
+          <AdoptantCta
+            animal={animal}
+            compat={compat}
+            interestState={interestState}
+            onInterest={handleInterest}
+          />
+        ) : (
           <div className="card p-6 text-center space-y-3">
             <div className="text-4xl">🧩</div>
             <h2 className="font-bold text-gray-800 text-lg">
@@ -354,17 +480,6 @@ export default function AnimalPublic() {
               Déjà membre ?{' '}
               <Link to="/adoptant/login" className="text-secondary hover:underline">Se connecter</Link>
             </p>
-          </div>
-        ) : (
-          <div className="card p-6 text-center space-y-3">
-            <div className="text-4xl">🎉</div>
-            <h2 className="font-bold text-gray-700 text-lg">{animal.name} a trouvé sa famille !</h2>
-            <p className="text-gray-500 text-sm">
-              Mais de nombreux animaux attendent encore leur famille idéale.
-            </p>
-            <Link to="/adoptant/register" className="btn-primary w-full py-4 text-base">
-              Découvrir d'autres animaux →
-            </Link>
           </div>
         )}
 

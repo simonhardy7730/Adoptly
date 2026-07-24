@@ -103,6 +103,62 @@ export function passesHardFilters(animal, shelter, prefs) {
   return true;
 }
 
+// Version "explicative" de passesHardFilters : renvoie la 1re raison FR pour
+// laquelle un animal ne colle pas au profil (ou null s'il est compatible).
+// Sert à afficher un message honnête sur la fiche d'un adoptant connecté.
+export function hardFilterReason(animal, shelter, prefs) {
+  if (animal.is_international) {
+    if (prefs.accepts_international === false)
+      return "Tu as indiqué ne pas souhaiter d'animal venant de l'étranger.";
+    const animalNorthAmerica = isNorthAmerica(animal.origin_country);
+    const adopterNorthAmerica = prefs.longitude < -30;
+    if (animalNorthAmerica !== adopterNorthAmerica)
+      return "Cet animal n'est pas dans ta zone d'adoption.";
+  } else if (prefs.latitude && prefs.longitude && shelter?.latitude && shelter?.longitude) {
+    const dist = haversineKm(prefs.latitude, prefs.longitude, shelter.latitude, shelter.longitude);
+    const max = prefs.search_radius_km || 50;
+    if (dist > max)
+      return `Ce refuge est à environ ${Math.round(dist)} km de chez toi, au-delà de ton rayon de ${max} km.`;
+  }
+
+  if (prefs.preferred_animal !== 'both') {
+    if (prefs.preferred_animal === 'small_animal' && !['rabbit', 'guinea_pig', 'other'].includes(animal.species))
+      return 'Tu cherches plutôt un petit animal (NAC).';
+    if (prefs.preferred_animal !== 'small_animal' && animal.species !== prefs.preferred_animal)
+      return "Ce n'est pas le type d'animal que tu recherches.";
+  }
+
+  const req = animal.requirements || {};
+  if (prefs.has_children) {
+    const ca = prefs.children_age;
+    if (req.children_compatible === 'no')
+      return "Cet animal ne convient pas à un foyer avec enfants.";
+    if (req.children_compatible === '12+' && (ca === '<6' || ca === '6-12'))
+      return "Cet animal convient aux enfants de 12 ans et plus.";
+    if (req.children_compatible === '6+' && ca === '<6')
+      return "Cet animal convient aux enfants de 6 ans et plus.";
+  }
+
+  const existingPets = prefs.existing_pets || 'none';
+  if ((existingPets === 'cat' || existingPets === 'both') && req.cats_compatible === 'no')
+    return "Cet animal ne s'entend pas avec les chats.";
+  if ((existingPets === 'dog' || existingPets === 'both') && req.dogs_compatible === 'no')
+    return "Cet animal ne s'entend pas avec les chiens.";
+
+  if (req.needs_garden === 'yes' && prefs.has_garden === 'no')
+    return "Cet animal a besoin d'un jardin.";
+  if (req.daily_outdoor_time === 'yes' && prefs.works_outdoor === 'no')
+    return "Cet animal a besoin de sorties quotidiennes en journée.";
+
+  const SMALL_SIZES = ['small', 'medium'];
+  if (req.spacious_home === 'yes' && SMALL_SIZES.includes(prefs.housing_size))
+    return "Cet animal a besoin d'un grand logement.";
+  if (req.spacious_home === 'yes' && prefs.housing_type === 'apartment')
+    return "Cet animal a besoin d'un logement spacieux (pas d'appartement).";
+
+  return null;
+}
+
 export function passesHardFiltersFoster(animal, shelter, prefs) {
   // Animaux internationaux — distance ignorée.
   // undefined = ancien compte → on affiche par défaut.

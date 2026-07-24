@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../lib/supabase.js';
 import { authenticate } from '../middleware/auth.js';
-import { haversineKm, passesHardFilters, scoreAnimal } from '../lib/matching.js';
+import { haversineKm, passesHardFilters, scoreAnimal, hardFilterReason } from '../lib/matching.js';
 
 const router = express.Router();
 
@@ -157,6 +157,95 @@ router.post('/swipe', authenticate, async (req, res) => {
     }
 
     res.json({ match, isMatch: false });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Compatibilité d'un connecté avec UN animal précis (depuis sa fiche) ──
+// Réutilise son questionnaire déjà rempli : aucune question à reposer.
+router.get('/animals/:id/compatibility', authenticate, async (req, res) => {
+  if (req.user.role !== 'adoptant')
+    return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const { data: adoptant } = await supabase
+      .from('adoptants')
+      .select('questionnaire_answers, swiped_animals')
+      .eq('id', req.user.id)
+      .single();
+
+    if (!adoptant?.questionnaire_answers)
+      return res.json({ hasProfile: false });
+
+    const { data: animal, error } = await supabase
+      .from('animals')
+      .select('*, shelters(id, latitude, longitude)')
+      .eq('id', req.params.id)
+      .single();
+    if (error || !animal) return res.status(404).json({ error: 'Animal introuvable' });
+
+    const prefs = adoptant.questionnaire_answers;
+    const compatible = passesHardFilters(animal, animal.shelters, prefs);
+    const alreadyInterested = (adoptant.swiped_animals || [])
+      .some((s) => s.animal_id === req.params.id && s.direction === 'right');
+
+    res.json({
+      hasProfile: true,
+      compatible,
+      score: scoreAnimal(animal, prefs),
+      reason: compatible ? null : hardFilterReason(animal, animal.shelters, prefs),
+      alreadyInterested,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── "Cet animal m'intéresse" depuis la fiche ────────────────────────────
+// Enregistre l'intérêt (comme un swipe droit) SANS ouvrir le chat. Idempotent.
+router.post('/animals/:id/interest', authenticate, async (req, res) => {
+  if (req.user.role !== 'adoptant')
+    return res.status(403).json({ error: 'Forbidden' });
+  const animal_id = req.params.id;
+  try {
+    const { data: adoptant } = await supabase
+      .from('adoptants')
+      .select('swiped_animals')
+      .eq('id', req.user.id)
+      .single();
+
+    const swiped = [...(adoptant?.swiped_animals || [])];
+
+    // Déjà un match "intéressé" pour cet animal ? → ne rien dupliquer.
+    const { data: existing } = await supabase
+      .from('matches')
+      .select('id')
+      .eq('adoptant_id', req.user.id)
+      .eq('animal_id', animal_id)
+      .eq('swipe_direction', 'right')
+      .limit(1);
+
+    if (existing && existing.length) {
+      if (!swiped.some((s) => s.animal_id === animal_id)) {
+        swiped.push({ animal_id, direction: 'right', timestamp: new Date().toISOString() });
+        await supabase.from('adoptants').update({ swiped_animals: swiped }).eq('id', req.user.id);
+      }
+      return res.json({ alreadyInterested: true, created: false });
+    }
+
+    swiped.push({ animal_id, direction: 'right', timestamp: new Date().toISOString() });
+    await supabase.from('adoptants').update({ swiped_animals: swiped }).eq('id', req.user.id);
+
+    const { error } = await supabase.from('matches').insert({
+      adoptant_id: req.user.id,
+      animal_id,
+      swipe_direction: 'right',
+      status: 'interested',
+    });
+    if (error) throw error;
+
+    // Pas d'email ici : le cron /api/cron/match-digests enverra un récap groupé.
+    res.json({ alreadyInterested: false, created: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
