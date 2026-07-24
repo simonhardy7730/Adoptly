@@ -746,26 +746,38 @@ router.get('/kit-facebook-7h2p', async (_req, res) => {
 // publié, l'autre le voit (page servie sur la même origine → pas de CORS).
 const KIT_PUBLISHED_FILE = 'fb-kit-7h2p/published.json';
 
-async function readKitPublished() {
+// Copie en mémoire qui fait autorité. Les lectures de Supabase Storage sont
+// mises en cache (~1-2 min) → un GET juste après un POST renvoyait une version
+// périmée, d'où la coche qui "revenait". On garde donc l'état vivant en RAM
+// (instance unique sur Render) et le Storage sert de sauvegarde durable.
+let kitPublishedCache = null;
+
+async function loadKitPublished() {
+  if (kitPublishedCache) return kitPublishedCache;
   const { data, error } = await supabase.storage.from('animal-photos').download(KIT_PUBLISHED_FILE);
-  if (error || !data) return [];
+  if (error || !data) return []; // non mis en cache → on réessaiera au prochain appel
   try {
     const arr = JSON.parse(Buffer.from(await data.arrayBuffer()).toString('utf-8'));
-    return Array.isArray(arr) ? arr : [];
-  } catch { return []; }
+    kitPublishedCache = Array.isArray(arr) ? arr : [];
+  } catch {
+    kitPublishedCache = [];
+  }
+  return kitPublishedCache;
 }
 
-async function writeKitPublished(ids) {
-  await supabase.storage.from('animal-photos').upload(
+async function persistKitPublished(ids) {
+  kitPublishedCache = ids; // source de vérité immédiate
+  const { error } = await supabase.storage.from('animal-photos').upload(
     KIT_PUBLISHED_FILE,
     Buffer.from(JSON.stringify(ids)),
-    { contentType: 'application/json', upsert: true }
+    { contentType: 'application/json', upsert: true, cacheControl: '0' }
   );
+  if (error) throw new Error(error.message);
 }
 
 router.get('/kit-facebook-7h2p/published', async (_req, res) => {
   try {
-    res.json({ ids: await readKitPublished() });
+    res.json({ ids: await loadKitPublished() });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -775,11 +787,12 @@ router.post('/kit-facebook-7h2p/published', async (req, res) => {
   try {
     const { id, done } = req.body || {};
     if (!id) return res.status(400).json({ error: 'id requis' });
-    let ids = await readKitPublished();
+    const current = await loadKitPublished();
+    let ids = [...current];
     const has = ids.includes(id);
     if (done && !has) ids.push(id);
     else if (!done && has) ids = ids.filter((x) => x !== id);
-    await writeKitPublished(ids);
+    await persistKitPublished(ids);
     res.json({ ids });
   } catch (err) {
     res.status(500).json({ error: err.message });
