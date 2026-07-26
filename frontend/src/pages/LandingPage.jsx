@@ -1036,6 +1036,27 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* Liens SEO — aident Google à découvrir les pages catégories
+              (en <a> et non <Link> : ces pages sont servies par le backend) */}
+          <div className="border-t border-gray-100 mt-8 pt-6">
+            <p className="text-gray-400 text-xs font-semibold mb-3 text-center md:text-left">
+              Trouver un animal à adopter
+            </p>
+            <div className="flex flex-wrap justify-center md:justify-start gap-x-5 gap-y-2 text-xs">
+              <a href="/animaux-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Tous les animaux à adopter</a>
+              <a href="/chiens-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Chiens à adopter</a>
+              <a href="/chats-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Chats à adopter</a>
+              <a href="/chiots-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Chiots à adopter</a>
+              <a href="/petit-chien-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Petit chien à adopter</a>
+              <a href="/grand-chien-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Grand chien à adopter</a>
+              <a href="/chien-senior-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Chien senior à adopter</a>
+              <a href="/chiens-de-roumanie-a-adopter" className="text-gray-400 hover:text-primary transition-colors">Chiens de Roumanie à adopter</a>
+              <a href="/adopter-un-chien-en-belgique" className="text-gray-400 hover:text-primary transition-colors">Adopter un chien en Belgique</a>
+              <a href="/adopter-un-chien-en-france" className="text-gray-400 hover:text-primary transition-colors">Adopter un chien en France</a>
+              <Link to="/preparer-adoption" className="text-gray-400 hover:text-primary transition-colors">Préparer son adoption</Link>
+            </div>
+          </div>
+
           <div className="border-t border-gray-100 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
             <p className="text-gray-300 text-xs">
               © {new Date().getFullYear()} Adoptly · 100 % gratuit pour les associations

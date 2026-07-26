@@ -7,4 +7,4 @@ Disallow: /adoptant/matches
 Disallow: /shelter/dashboard
 Disallow: /shelter/animals/
 
-Sitemap: https://adoptly.fr/sitemap.xml
+Sitemap: https://www.adoptly.fr/sitemap.xml
