@@ -235,25 +235,44 @@ export default function AnimalPublic() {
   const [imgIdx,  setImgIdx]  = useState(0);
   const [showVideo, setShowVideo] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);     // erreur transitoire (serveur qui se réveille)
+  const [reloadKey, setReloadKey] = useState(0);         // pour relancer le chargement
   const [lightbox, setLightbox] = useState(false);
 
   const { isAdoptant } = getAuth();
   const [compat, setCompat] = useState(null);            // { hasProfile, compatible, reason, alreadyInterested }
   const [interestState, setInterestState] = useState('idle'); // idle | sending | done
 
+  // Chargement de l'animal AVEC réessais : le backend (Render gratuit) se met en
+  // veille et met quelques secondes à se réveiller. Sans ça, un lien de partage
+  // affichait "Animal introuvable" à tort le temps du réveil. On ne montre
+  // "introuvable" que sur un vrai 404 ; sinon on réessaie, puis on propose de relancer.
   useEffect(() => {
-    api.get(`/public/animals/${id}`)
-      .then(({ data }) => {
-        setAnimal(data);
-        document.title = `${data.name} cherche une famille | Adoptly`;
-        setCanonical(`/animal/${id}`);
-      })
-      .catch((err) => {
-        if (err.response?.status === 404) setNotFound(true);
-      })
-      .finally(() => setLoading(false));
-    return () => { document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
-  }, [id]);
+    let cancelled = false;
+    setLoading(true); setNotFound(false); setLoadError(false);
+    (async () => {
+      for (let attempt = 0; attempt < 4 && !cancelled; attempt++) {
+        try {
+          const { data } = await api.get(`/public/animals/${id}`, { timeout: 30000 });
+          if (cancelled) return;
+          setAnimal(data);
+          document.title = `${data.name} cherche une famille | Adoptly`;
+          setCanonical(`/animal/${id}`);
+          setLoading(false);
+          return;
+        } catch (err) {
+          if (err.response?.status === 404) {
+            if (!cancelled) { setNotFound(true); setLoading(false); }
+            return;
+          }
+          // Erreur réseau / serveur qui se réveille → on patiente et on réessaie
+          if (attempt < 3 && !cancelled) await new Promise((r) => setTimeout(r, 3000));
+        }
+      }
+      if (!cancelled) { setLoadError(true); setLoading(false); }
+    })();
+    return () => { cancelled = true; document.title = 'Adoptly — Adopter un chien ou un chat en refuge'; resetCanonical(); };
+  }, [id, reloadKey]);
 
   // Adoptant connecté : on connaît déjà son profil → compatibilité instantanée
   useEffect(() => {
@@ -283,6 +302,21 @@ export default function AnimalPublic() {
   if (loading) return (
     <div className="min-h-screen bg-bg-light flex items-center justify-center">
       <LoadingSpinner size="lg" />
+    </div>
+  );
+
+  // Erreur transitoire (serveur qui se réveille, réseau) → proposer de réessayer,
+  // et surtout NE PAS dire "introuvable" (l'animal existe peut-être très bien).
+  if (loadError && !animal) return (
+    <div className="min-h-screen bg-bg-light flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="text-5xl">⏳</div>
+      <h1 className="text-2xl font-bold text-gray-700">Chargement impossible pour le moment</h1>
+      <p className="text-gray-400 text-sm max-w-sm">
+        Notre serveur se réveille peut-être. Patiente quelques secondes puis réessaie.
+      </p>
+      <button onClick={() => setReloadKey((k) => k + 1)} className="btn-primary px-6 py-3 mt-2">
+        Réessayer
+      </button>
     </div>
   );
 
