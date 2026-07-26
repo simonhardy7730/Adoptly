@@ -1477,6 +1477,45 @@ export async function sendAdminAnimalDeletedEmail({ animal }) {
   });
 }
 
+// Alerte de surveillance : envoyée quand le monitoring détecte une panne
+// (connexion cassée, base injoignable…) ou quand tout est rétabli.
+export async function sendAdminMonitorAlertEmail({ failures = [], recovered = false }) {
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
+  const when = new Date().toLocaleString('fr-BE', { timeZone: 'Europe/Brussels', dateStyle: 'full', timeStyle: 'short' });
+
+  const html = recovered
+    ? `
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:20px;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;">
+    <h2 style="color:#15803D;font-size:18px;margin:0 0 4px;">✅ Adoptly est de nouveau opérationnel</h2>
+    <p style="color:#6B7280;font-size:13px;margin:0 0 16px;">${when}</p>
+    <p style="color:#374151;font-size:14px;">Le problème détecté précédemment est résolu. Les visiteurs peuvent de nouveau se connecter et s'inscrire normalement.</p>
+  </div>
+</body></html>`.trim()
+    : `
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:20px;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;">
+    <h2 style="color:#B91C1C;font-size:18px;margin:0 0 4px;">🚨 Problème détecté sur Adoptly</h2>
+    <p style="color:#6B7280;font-size:13px;margin:0 0 16px;">${when}</p>
+    <p style="background:#FEE2E2;border:1px solid #FCA5A5;border-radius:10px;padding:10px 14px;color:#991B1B;font-size:14px;margin:0 0 16px;">
+      La surveillance automatique a détecté un souci. Des visiteurs peuvent être bloqués — à vérifier vite.
+    </p>
+    <ul style="color:#374151;font-size:14px;padding-left:18px;">
+      ${failures.map((f) => `<li>${f}</li>`).join('')}
+    </ul>
+    <p style="font-size:13px;color:#6B7280;margin-top:16px;">Vérifie : <a href="https://adoptly.fr" style="color:#1B4F8A;">adoptly.fr</a></p>
+  </div>
+</body></html>`.trim();
+
+  await sendEmail({
+    to: ADMIN_EMAIL,
+    subject: recovered ? '✅ Adoptly rétabli' : '🚨 Adoptly : problème détecté (connexion/inscription)',
+    html,
+  });
+}
+
 export async function sendAdminNewAnimalEmail({ shelterName, shelterEmail, animalName, animalSpecies, animalBreed, photoUrl }) {
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'info@adoptly.fr';
   const species = { dog:'Chien', cat:'Chat', rabbit:'Lapin', guinea_pig:'Cobaye', other:'Autre' }[animalSpecies] || animalSpecies;

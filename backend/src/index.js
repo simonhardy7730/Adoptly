@@ -13,6 +13,8 @@ import articlesRouter from './routes/articles.js';
 import pushRouter     from './routes/push.js';
 import { refreshAges } from './lib/ages.js';
 import { runMatchDigests } from './lib/match-digests.js';
+import { supabase } from './lib/supabase.js';
+import { sendAdminMonitorAlertEmail } from './lib/email.js';
 
 dotenv.config();
 
@@ -84,6 +86,54 @@ app.use('/api/articles', articlesRouter);
 app.use('/api/push', pushRouter);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
+// ── Surveillance automatique — appelée toutes les ~10 min par cron-job.org ──
+// Teste les points critiques (base + connexion) et envoie un email d'alerte à
+// l'admin en cas de panne (et un email de rétablissement au retour à la normale).
+// N'alerte que sur les TRANSITIONS pour ne pas spammer.
+let monitorLastOk = true;
+app.get('/api/cron/monitor', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  const failures = [];
+
+  // 1) Base de données joignable ?
+  try {
+    const { error } = await supabase.from('adoptants').select('id', { count: 'exact', head: true });
+    if (error) failures.push(`Base de données injoignable : ${error.message}`);
+  } catch (e) {
+    failures.push(`Base de données : ${e.message}`);
+  }
+
+  // 2) La connexion répond-elle normalement ? (identifiants bidon → doit renvoyer 401,
+  //    pas 429 « bloqué » ni 500 « cassé »). On teste le vrai endpoint via HTTP.
+  try {
+    const r = await fetch(`http://127.0.0.1:${PORT}/api/auth/adoptant/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'monitor@invalid.test', password: 'x' }),
+    });
+    if (r.status === 429) failures.push('Connexion BLOQUÉE : le limiteur renvoie 429 (les visiteurs ne peuvent plus se connecter).');
+    else if (r.status !== 401) failures.push(`Connexion anormale : HTTP ${r.status} (401 attendu).`);
+  } catch (e) {
+    failures.push(`Endpoint de connexion injoignable : ${e.message}`);
+  }
+
+  const ok = failures.length === 0;
+
+  // Alerte email uniquement sur transition (OK→PANNE ou PANNE→OK)
+  try {
+    if (!ok && monitorLastOk) await sendAdminMonitorAlertEmail({ failures });
+    else if (ok && !monitorLastOk) await sendAdminMonitorAlertEmail({ recovered: true });
+  } catch (e) {
+    console.error('[Monitor] Envoi alerte échoué:', e.message);
+  }
+  monitorLastOk = ok;
+
+  if (!ok) console.error('[Monitor] PANNE:', failures.join(' | '));
+  res.status(ok ? 200 : 500).json({ ok, failures, checkedAt: new Date().toISOString() });
+});
 
 // ── Récaps de matchs — regroupe les emails « X attend ton message » ───────
 // Appelé toutes les ~15 min par cron-job.org. Remplace l'envoi d'un email
