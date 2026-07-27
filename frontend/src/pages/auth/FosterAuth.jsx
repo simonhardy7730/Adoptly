@@ -102,6 +102,10 @@ export default function FosterAuth({ mode = 'login' }) {
               <input
                 type="email"
                 required
+                autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="input-field"
                 placeholder="vous@exemple.com"
                 value={form.email}

@@ -157,6 +157,9 @@ export default function AdoptantAuth({ mode = 'login' }) {
                 required
                 name="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="input-field"
                 placeholder="vous@exemple.com"
                 value={form.email}

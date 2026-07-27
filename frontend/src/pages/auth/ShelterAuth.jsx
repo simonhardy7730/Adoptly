@@ -118,6 +118,9 @@ export default function ShelterAuth({ mode = 'login' }) {
                 required
                 name="email"
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 className="input-field"
                 placeholder="contact@monrefuge.fr"
                 value={form.email}

@@ -27,10 +27,13 @@ const LOGIN_ENDPOINTS = {
 // dernier 401 (message « Email ou mot de passe incorrect »). Toute autre erreur
 // (500, réseau…) est propagée immédiatement, sans tenter les rôles suivants.
 export async function loginAnyRole({ email, password }, order = ['adoptant', 'shelter', 'foster']) {
+  // Email insensible à la casse / aux espaces : sur mobile le clavier met souvent
+  // une majuscule à la 1re lettre ou ajoute un espace, ce qui bloquait la connexion.
+  const cleanEmail = (email || '').trim().toLowerCase();
   let lastAuthError = null;
   for (const role of order) {
     try {
-      const { data } = await authClient.post(LOGIN_ENDPOINTS[role], { email, password });
+      const { data } = await authClient.post(LOGIN_ENDPOINTS[role], { email: cleanEmail, password });
       return { ...data, role: data.role || role };
     } catch (err) {
       if (err.response?.status === 401) {

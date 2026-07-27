@@ -12,6 +12,15 @@ function makeToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30d' });
 }
 
+// Normalise un email : minuscules + sans espaces superflus. Indispensable — sur
+// mobile le clavier met souvent une majuscule à la 1re lettre ou ajoute un
+// espace, ce qui faisait échouer la connexion (« email ou mot de passe
+// incorrect ») alors que le mot de passe était bon. Appliqué à la lecture ET à
+// l'écriture pour que tout soit cohérent en base.
+function normEmail(email) {
+  return (email || '').trim().toLowerCase();
+}
+
 // ── Lien magique — connexion adoptant en 1 clic depuis un email ────────────────
 router.post('/magic', async (req, res) => {
   const { token } = req.body;
@@ -37,7 +46,8 @@ router.post('/magic', async (req, res) => {
 // ── Adoptant — inscription ────────────────────────────────────────────────────
 
 router.post('/adoptant/register', async (req, res) => {
-  const { email, password, first_name } = req.body;
+  const { password, first_name } = req.body;
+  const email = normEmail(req.body.email);
   if (!email || !password)
     return res.status(400).json({ error: 'Email et mot de passe requis' });
 
@@ -71,7 +81,8 @@ router.post('/adoptant/register', async (req, res) => {
 // ── Adoptant — connexion ──────────────────────────────────────────────────────
 
 router.post('/adoptant/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = normEmail(req.body.email);
   try {
     const { data: adoptant } = await supabase
       .from('adoptants')
@@ -111,7 +122,7 @@ router.post('/google', async (req, res) => {
       return res.status(401).json({ error: 'Token Google invalide' });
 
     const supaUser = await supaRes.json();
-    const { email } = supaUser;
+    const email = normEmail(supaUser.email);
     const googleName = supaUser.user_metadata?.full_name || supaUser.user_metadata?.name || '';
     const googleFirstName = supaUser.user_metadata?.given_name || googleName.split(' ')[0] || '';
 
@@ -161,7 +172,8 @@ router.post('/google', async (req, res) => {
 // ── Refuge — inscription ──────────────────────────────────────────────────────
 
 router.post('/shelter/register', async (req, res) => {
-  const { email, password, name, phone, address, latitude, longitude } = req.body;
+  const { password, name, phone, address, latitude, longitude } = req.body;
+  const email = normEmail(req.body.email);
   if (!email || !password || !name)
     return res.status(400).json({ error: 'Email, mot de passe et nom requis' });
 
@@ -200,7 +212,8 @@ router.post('/shelter/register', async (req, res) => {
 // ── Refuge — connexion ────────────────────────────────────────────────────────
 
 router.post('/shelter/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = normEmail(req.body.email);
   try {
     const { data: shelter } = await supabase
       .from('shelters')
@@ -222,7 +235,8 @@ router.post('/shelter/login', async (req, res) => {
 // ── Famille d'accueil — inscription ──────────────────────────────────────────
 
 router.post('/foster/register', async (req, res) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = normEmail(req.body.email);
   if (!email || !password)
     return res.status(400).json({ error: 'Email et mot de passe requis' });
 
@@ -250,7 +264,8 @@ router.post('/foster/register', async (req, res) => {
 // ── Famille d'accueil — connexion ─────────────────────────────────────────────
 
 router.post('/foster/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = normEmail(req.body.email);
   try {
     const { data: foster } = await supabase
       .from('fosters')
@@ -272,7 +287,8 @@ router.post('/foster/login', async (req, res) => {
 // ── Mot de passe oublié ───────────────────────────────────────────────────────
 
 router.post('/forgot-password', async (req, res) => {
-  const { email, role } = req.body; // role: 'adoptant' | 'shelter' | 'foster'
+  const { role } = req.body; // role: 'adoptant' | 'shelter' | 'foster'
+  const email = normEmail(req.body.email);
   if (!email || !role)
     return res.status(400).json({ error: 'Email et rôle requis' });
 
