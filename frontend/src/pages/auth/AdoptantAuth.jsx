@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../../lib/api';
+import { loginAnyRole, loginRedirectPath } from '../../lib/authLogin';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../lib/supabase';
@@ -53,11 +54,20 @@ export default function AdoptantAuth({ mode = 'login' }) {
     setError('');
     setLoading(true);
     try {
-      const endpoint = mode === 'login' ? '/auth/adoptant/login' : '/auth/adoptant/register';
-      const { data } = await api.post(endpoint, form);
+      if (mode === 'login') {
+        // Connexion « intelligente » : si l'email/mdp ne correspond pas à un
+        // compte adoptant, on essaie automatiquement refuge puis famille
+        // d'accueil — pour qu'un refuge tombé ici par erreur atterrisse quand
+        // même sur son tableau de bord au lieu d'être renvoyé à l'accueil.
+        const data = await loginAnyRole(form, ['adoptant', 'shelter', 'foster']);
+        login(data.token, data.user, data.role, remember);
+        navigate(loginRedirectPath(data));
+        return;
+      }
+      const { data } = await api.post('/auth/adoptant/register', form);
       login(data.token, data.user, 'adoptant', remember);
       // GA4 tracking
-      if (typeof window.gtag === 'function' && mode === 'register') {
+      if (typeof window.gtag === 'function') {
         window.gtag('event', 'sign_up', { method: 'email', role: 'adoptant' });
       }
       navigate(data.user.questionnaire_answers ? '/adoptant/swipe' : '/adoptant/questionnaire');

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../../lib/api';
+import { loginAnyRole, loginRedirectPath } from '../../lib/authLogin';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -44,12 +45,22 @@ export default function ShelterAuth({ mode = 'login' }) {
     setError('');
     setLoading(true);
     try {
-      const endpoint = mode === 'login' ? '/auth/shelter/login' : '/auth/shelter/register';
-      const payload  = mode === 'login' ? { email: form.email, password: form.password } : form;
-      const { data } = await api.post(endpoint, payload);
+      if (mode === 'login') {
+        // Connexion « intelligente » : refuge d'abord, puis adoptant / famille
+        // d'accueil en repli — pour qu'un adoptant tombé sur ce formulaire soit
+        // quand même connecté au bon espace au lieu d'être renvoyé à l'accueil.
+        const data = await loginAnyRole(
+          { email: form.email, password: form.password },
+          ['shelter', 'adoptant', 'foster'],
+        );
+        login(data.token, data.user, data.role, remember);
+        navigate(loginRedirectPath(data));
+        return;
+      }
+      const { data } = await api.post('/auth/shelter/register', form);
       login(data.token, data.user, 'shelter', remember);
       // GA4 tracking
-      if (typeof window.gtag === 'function' && mode === 'register') {
+      if (typeof window.gtag === 'function') {
         window.gtag('event', 'sign_up', { method: 'email', role: 'shelter' });
       }
       navigate('/shelter/dashboard');

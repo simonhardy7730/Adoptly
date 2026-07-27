@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../../lib/api';
+import { loginAnyRole, loginRedirectPath } from '../../lib/authLogin';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -37,8 +38,15 @@ export default function FosterAuth({ mode = 'login' }) {
     setError('');
     setLoading(true);
     try {
-      const endpoint = mode === 'login' ? '/auth/foster/login' : '/auth/foster/register';
-      const { data } = await api.post(endpoint, form);
+      if (mode === 'login') {
+        // Connexion « intelligente » : famille d'accueil d'abord, puis adoptant /
+        // refuge en repli, pour ne jamais bloquer quelqu'un sur le mauvais formulaire.
+        const data = await loginAnyRole(form, ['foster', 'adoptant', 'shelter']);
+        login(data.token, data.user, data.role);
+        navigate(loginRedirectPath(data));
+        return;
+      }
+      const { data } = await api.post('/auth/foster/register', form);
       login(data.token, data.user, 'foster');
       navigate(data.user.questionnaire_answers ? '/famille-accueil/swipe' : '/famille-accueil/questionnaire');
     } catch (err) {
