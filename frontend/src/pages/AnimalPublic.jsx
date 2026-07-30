@@ -457,6 +457,7 @@ export default function AnimalPublic() {
               </h1>
               <p className="text-gray-500 text-sm mt-0.5">
                 {speciesName}
+                {animal.sex ? ` · ${animal.sex === 'male' ? '♂ Mâle' : '♀ Femelle'}` : ''}
                 {animal.breed ? ` · ${animal.breed}` : ''}
                 {animal.age != null ? ` · ${ageLabel(animal.age)}` : ''}
                 {animal.size ? ` · ${SIZE_LABEL[animal.size] || animal.size}` : ''}

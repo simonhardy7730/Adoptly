@@ -90,6 +90,7 @@ export default function AnimalForm() {
     breed: existing?.breed || '',
     age: existing?.age || '',
     size: existing?.size || 'medium',
+    sex: existing?.sex || '',
     temperament: existing?.temperament || 'playful',
     special_needs: existing?.special_needs || '',
     story: existing?.story || '',
@@ -188,6 +189,7 @@ export default function AnimalForm() {
       formData.append('breed', form.breed);
       formData.append('age', form.age);
       formData.append('size', form.size);
+      formData.append('sex', form.sex);
       formData.append('temperament', form.temperament);
       formData.append('special_needs', form.special_needs);
       formData.append('story', form.story);
@@ -220,6 +222,7 @@ export default function AnimalForm() {
           breed: '',
           age: '',
           size: 'medium',
+          sex: '',
           temperament: 'playful',
           special_needs: '',
           story: '',
@@ -422,6 +425,17 @@ export default function AnimalForm() {
               onChange={(v) => setField('species', v)}
             />
 
+            <RadioGroup
+              label="Sexe"
+              name="sex"
+              options={[
+                { value: 'male',   label: '♂ Mâle'    },
+                { value: 'female', label: '♀ Femelle' },
+              ]}
+              value={form.sex}
+              onChange={(v) => setField('sex', form.sex === v ? '' : v)}
+            />
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">{t('form_breed')}</label>
               <input
@@ -501,13 +515,13 @@ export default function AnimalForm() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-sm font-medium text-gray-700">{t('form_story')}</label>
-                <span className={`text-xs ${storyLength > 900 ? 'text-orange-500' : 'text-gray-400'}`}>
-                  {storyLength}/1000
+                <span className={`text-xs ${storyLength > 2800 ? 'text-orange-500' : 'text-gray-400'}`}>
+                  {storyLength}/3000
                 </span>
               </div>
               <textarea
                 className="input-field resize-none h-44"
-                maxLength={1000}
+                maxLength={3000}
                 placeholder={t('form_story_ph')}
                 value={form.story}
                 onChange={(e) => setField('story', e.target.value)}

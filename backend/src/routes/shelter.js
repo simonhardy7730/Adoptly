@@ -533,7 +533,7 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
 
     const photoUrls = await uploadPhotos(req.files?.photos || [], req.user.id);
     const videoUrl  = await uploadVideo(req.files?.video?.[0] || null, req.user.id);
-    const { name, species, breed, age, size, temperament, special_needs, story, requirements,
+    const { name, species, breed, age, size, sex, temperament, special_needs, story, requirements,
             is_international, origin_country } = req.body;
 
     const { data, error } = await supabase
@@ -548,6 +548,7 @@ router.post('/animals', authenticate, uploadMiddleware([{ name: 'photos', maxCou
         // qui permettra ensuite de faire vieillir l'animal tout seul.
         birth_date: birthDateFromAge(age),
         size: size || null,
+        sex: sex || null,
         temperament,
         special_needs: special_needs || null,
         story: story || null,
@@ -606,7 +607,7 @@ router.put('/animals/:id', authenticate, uploadMiddleware([{ name: 'photos', max
     const newVideoUrl    = await uploadVideo(req.files?.video?.[0] || null, req.user.id);
     const videoUrl       = newVideoUrl || req.body.existing_video_url || null;
 
-    const { name, species, breed, age, size, temperament, special_needs, story, requirements, status,
+    const { name, species, breed, age, size, sex, temperament, special_needs, story, requirements, status,
             is_international, origin_country } = req.body;
 
     const { data, error } = await supabase
@@ -620,6 +621,7 @@ router.put('/animals/:id', authenticate, uploadMiddleware([{ name: 'photos', max
         // la date de naissance dessus pour repartir sur une base juste.
         birth_date: birthDateFromAge(age),
         size: size || null,
+        sex: sex || null,
         temperament,
         special_needs: special_needs || null,
         story: story || null,

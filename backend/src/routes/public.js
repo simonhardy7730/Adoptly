@@ -86,7 +86,7 @@ router.get('/animals/:id', async (req, res) => {
   try {
     const { data: animal, error } = await supabase
       .from('animals')
-      .select('id, name, species, breed, age, size, temperament, special_needs, story, photos, video_url, status, shelter_id')
+      .select('id, name, species, breed, age, size, sex, temperament, special_needs, story, photos, video_url, status, shelter_id')
       .eq('id', req.params.id)
       .single();
 
