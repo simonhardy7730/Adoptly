@@ -417,26 +417,26 @@ export default function LandingPage() {
                 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-tight mb-5"
                 {...fadeUp(0)}
               >
-                Votre prochain compagnon
+                Adopter, ce n'est pas trier des annonces.
                 <br />
-                <span className="text-orange-300">vous attend déjà.</span>
+                <span className="text-orange-300">C'est trouver le bon.</span>
               </motion.h1>
 
               <motion.p
                 className="text-lg md:text-xl text-blue-100 mb-3 leading-relaxed max-w-lg mx-auto md:mx-0"
                 {...fadeUp(0.12)}
               >
-                Dites-nous qui vous êtes.
+                Dites-nous qui vous êtes —
                 <br className="hidden md:block" />
-                On s'occupe du reste.
+                logement, rythme, famille.
               </motion.p>
 
               <motion.p
                 className="text-blue-200/80 text-sm mb-8 max-w-md mx-auto md:mx-0 leading-relaxed"
                 {...fadeUp(0.22)}
               >
-                Découvrez des animaux adaptés à votre mode de vie — sélectionnés par notre
-                algorithme de compatibilité, pas au hasard.
+                On vous présente les animaux vraiment compatibles avec votre vie —
+                pas 500 fiches à éplucher au hasard.
               </motion.p>
 
               <motion.div
