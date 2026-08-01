@@ -419,7 +419,7 @@ export default function LandingPage() {
               >
                 Adopter, ce n'est pas trier des annonces.
                 <br />
-                <span className="text-orange-300">C'est trouver le bon.</span>
+                <span className="text-orange-300">C'est trouver le bon compagnon.</span>
               </motion.h1>
 
               <motion.p
