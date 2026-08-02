@@ -81,7 +81,7 @@ function compatLine(req) {
   return out.length ? `🤝 Entente : ${out.join(' · ')}` : '';
 }
 
-function caption(d, shelterNames = []) {
+function caption(d, shelterNames = [], shelterName = '') {
   const name = d.name.trim().replace(/\s+/g, ' ');
   const displayName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   const female = isFemale(d.story);
@@ -119,6 +119,7 @@ function caption(d, shelterNames = []) {
   if (story) blocks.push(`📖 Son histoire : ${story}`);
   if (compat) blocks.push(compat);
   blocks.push(`${female ? 'Elle' : 'Il'} ne demande qu'une chose : une famille qui lui donnera sa chance. 🧡`);
+  if (shelterName) blocks.push(`🏠 Proposé par ${shelterName}.`);
   blocks.push(`💙 Son profil complet est ici :\nhttps://adoptly.fr/animal/${d.id}`);
   blocks.push(tags);
 
@@ -155,20 +156,48 @@ async function brandedImage(d) {
 export async function syncFbKit() {
   const { data: dogs, error: dogsErr } = await supabase
     .from('animals')
-    .select('id, name, breed, age, size, temperament, photos, species, story, requirements, created_at')
+    .select('id, name, breed, age, size, temperament, photos, species, story, requirements, created_at, shelter_id')
     .eq('status', 'active').in('species', ['dog', 'cat'])
     .not('photos', 'is', null)
     .order('created_at', { ascending: false });
   if (dogsErr) throw new Error(dogsErr.message);
 
   // Noms des refuges (pour filtrer leurs mentions dans les histoires)
-  const { data: shelters } = await supabase.from('shelters').select('name');
+  const { data: shelters } = await supabase.from('shelters').select('id, name');
   const shelterNames = (shelters || [])
     .map(s => s.name.replace(/[^\p{L}\s']/gu, '').replace(/\s+/g, ' ').trim().toLowerCase())
     .filter(n => n.length > 3);
+  const shelterById = Object.fromEntries((shelters || []).map(s => [s.id, s.name.trim()]));
+
+  // Intérêt par animal (nb de swipes « j'aime ») — pour pousser en priorité
+  // ceux que personne n'a encore repérés.
+  const { data: matchRows } = await supabase
+    .from('matches').select('animal_id').eq('swipe_direction', 'right');
+  const interest = {};
+  for (const m of matchRows || []) interest[m.animal_id] = (interest[m.animal_id] || 0) + 1;
+
+  // Animaux déjà publiés sur Facebook (état partagé Simon/Coralie) : ils passent
+  // en bas de liste, plus besoin de les repousser.
+  let published = new Set();
+  try {
+    const { data: pub } = await supabase.storage.from(BUCKET).download(`${KIT_DIR}/published.json`);
+    if (pub) {
+      const arr = JSON.parse(Buffer.from(await pub.arrayBuffer()).toString('utf-8'));
+      published = new Set(Array.isArray(arr) ? arr : []);
+    }
+  } catch { /* pas encore de fichier : tout est « à publier » */ }
 
   const activeDogs = (dogs || []).filter(d => d.photos?.length);
-  activeDogs.sort((a, b) => a.species === b.species ? 0 : a.species === 'dog' ? -1 : 1);
+  // Tri : chiens avant chats ; dans chaque espèce, les NON publiés d'abord, puis
+  // par intérêt croissant (0 like = priorité), puis les plus anciens en tête.
+  activeDogs.sort((a, b) => {
+    if (a.species !== b.species) return a.species === 'dog' ? -1 : 1;
+    const pa = published.has(a.id) ? 1 : 0, pb = published.has(b.id) ? 1 : 0;
+    if (pa !== pb) return pa - pb;
+    const ia = interest[a.id] || 0, ib = interest[b.id] || 0;
+    if (ia !== ib) return ia - ib;
+    return new Date(a.created_at) - new Date(b.created_at);
+  });
   const activeIds = new Set(activeDogs.map(d => d.id));
 
   // Images déjà présentes dans le dossier du kit
@@ -202,7 +231,11 @@ export async function syncFbKit() {
     .filter(d => !failedIds.has(d.id))
     .map(d => {
       const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(`${KIT_DIR}/${d.id}.jpg`);
-      return { id: d.id, species: d.species, name: d.name.trim(), img: pub.publicUrl, text: caption(d, shelterNames) };
+      return {
+        id: d.id, species: d.species, name: d.name.trim(), img: pub.publicUrl,
+        text: caption(d, shelterNames, shelterById[d.shelter_id] || ''),
+        prio: !published.has(d.id) && !(interest[d.id] > 0),
+      };
     });
 
   const nbDogs = items.filter(i => i.species === 'dog').length;
@@ -220,6 +253,7 @@ export async function syncFbKit() {
     <a href="${it.img}" target="_blank"><img src="${it.img}" alt="${esc(it.name)}" loading="lazy"/></a>
     <div class="body">
       <h2>${esc(it.name.toUpperCase())}</h2>
+      ${it.prio ? '<div class="prio">⭐ À pousser en priorité</div>' : ''}
       <pre id="t${i}">${esc(it.text)}</pre>
       <button class="copy" onclick="copie(${i}, this)">📋 Copier le texte</button>
       <button class="done-btn" onclick="basculeFait('${it.id}', this)">☑️ Publication faite</button>
@@ -258,7 +292,9 @@ export async function syncFbKit() {
   .tab { flex: 1; padding: 11px 8px; border-radius: 12px; border: 2px solid #dde5f0; background: #fff; color: #1B4F8A; font-weight: 700; font-size: 15px; cursor: pointer; transition: all .15s; }
   .tab.active { background: #1B4F8A; color: #fff; border-color: #1B4F8A; }
   .aucun { text-align: center; color: #889; padding: 30px; display: none; }
+  .prio { display: inline-block; background: #fff4e6; color: #F07A2A; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 8px; margin-bottom: 8px; }
   .card.fait { opacity: 0.45; }
+  .card.fait .prio { display: none; }
   .card.fait img { filter: grayscale(1); }
   .card.fait h2 { text-decoration: line-through; }
   .card.fait .done-btn { background: #22a06b; color: #fff; }
