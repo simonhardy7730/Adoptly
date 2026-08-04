@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import Navbar from '../components/Navbar';
 import api from '../lib/api';
 import { setCanonical, resetCanonical } from '../lib/seo';
+import { thumb } from '../lib/img';
 
 const SPECIES_EMOJI = { dog: '🐕', cat: '🐈', rabbit: '🐇', bird: '🐦', guinea_pig: '🐹', other: '🐾' };
 const SPECIES_LABEL = { dog: 'Chien', cat: 'Chat', rabbit: 'Lapin', bird: 'Oiseau', guinea_pig: 'Cobaye', other: 'Animal' };
@@ -382,7 +383,7 @@ export default function AnimalPublic() {
             ) : photos.length > 0 ? (
               <motion.img
                 key={imgIdx}
-                src={photos[imgIdx]}
+                src={thumb(photos[imgIdx], 900)}
                 alt={animal.name}
                 className="w-full h-full object-cover object-top cursor-pointer"
                 onClick={() => setLightbox(true)}

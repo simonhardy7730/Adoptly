@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/api';
 import { setCanonical, resetCanonical } from '../lib/seo';
+import { thumb } from '../lib/img';
 
 const SPECIES_OPTIONS = [
   { value: 'all', label: 'Tous', emoji: '🐾' },
@@ -50,7 +51,7 @@ function AnimalCard({ animal }) {
       >
         <div className="aspect-square bg-gray-100 overflow-hidden">
           {animal.photo ? (
-            <img src={animal.photo} alt={animal.name} className="w-full h-full object-cover object-top" loading="lazy" />
+            <img src={thumb(animal.photo, 400)} alt={animal.name} className="w-full h-full object-cover object-top" loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-5xl bg-blue-50">
               {SPECIES_OPTIONS.find(s => s.value === animal.species)?.emoji || '🐾'}

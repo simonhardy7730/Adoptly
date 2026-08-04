@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../lib/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { thumb } from '../lib/img';
 
 const SPECIES_LABEL = { dog: 'Chien', cat: 'Chat', rabbit: 'Lapin', guinea_pig: 'Cobaye', other: 'Animal' };
 
@@ -107,8 +108,9 @@ export default function AdoptionSuccess() {
                 <div className="relative aspect-square bg-gray-100 overflow-hidden">
                   {animal.photos?.[0] ? (
                     <img
-                      src={animal.photos[0]}
+                      src={thumb(animal.photos[0], 400)}
                       alt={animal.name}
+                      loading="lazy"
                       className="w-full h-full object-cover object-top"
                       loading="lazy"
                     />

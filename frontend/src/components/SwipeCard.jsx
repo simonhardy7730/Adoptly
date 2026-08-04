@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import PhotoLightbox from './PhotoLightbox';
+import { thumb } from '../lib/img';
 
 const SPECIES_EMOJI = {
   dog: '🐕',
@@ -168,7 +169,7 @@ export default function SwipeCard({ animal, onSwipe, isTop, stackIndex = 0 }) {
             />
           ) : photo ? (
             <img
-              src={photo}
+              src={thumb(photo, 700)}
               alt={animal.name}
               className="w-full h-full object-cover cursor-zoom-in"
               draggable={false}
