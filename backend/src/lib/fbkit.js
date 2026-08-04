@@ -4,6 +4,10 @@ import { supabase } from './supabase.js';
 const KIT_DIR = 'fb-kit-7h2p';
 const BUCKET = 'animal-photos';
 
+// Regroupement d'affichage : chiens / chats / NACs (lapins, rongeurs, autres).
+const speciesGroup = (sp) => (sp === 'dog' ? 'dog' : sp === 'cat' ? 'cat' : 'nac');
+const GROUP_RANK = { dog: 0, cat: 1, nac: 2 };
+
 function ageLabel(months) {
   if (months == null) return null;
   if (months < 12) return `${months} mois`;
@@ -85,21 +89,25 @@ function caption(d, shelterNames = [], shelterName = '') {
   const name = d.name.trim().replace(/\s+/g, ' ');
   const displayName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
   const female = isFemale(d.story);
-  const breed = (d.breed || 'croisé').trim();
+  const isPet = d.species === 'dog' || d.species === 'cat';
+  const breed = (d.breed || (isPet ? 'croisé' : '')).trim();
   const age = ageLabel(d.age);
   const size = SIZE_FR[d.size];
   const tempMap = female ? TEMP_FR_F : TEMP_FR;
   const traits = (d.temperament || '').split(',').map(t => tempMap[t.trim()]).filter(Boolean);
 
-  let desc = breed.toLowerCase().startsWith('crois') ? 'Croisé' : breed.charAt(0).toUpperCase() + breed.slice(1);
-  if (female) {
+  let desc = !breed ? '' : breed.toLowerCase().startsWith('crois') ? 'Croisé' : breed.charAt(0).toUpperCase() + breed.slice(1);
+  if (female && desc) {
     if (desc === 'Croisé') desc = 'Croisée';
     else if (desc.endsWith('éen')) desc += 'ne';
   }
   const parts = [];
   if (age) parts.push(age);
   if (size) parts.push(size);
-  const line2 = desc + (parts.length ? ` de ${parts.join(', ')}` : '');
+  let line2;
+  if (desc) line2 = desc + (parts.length ? ` de ${parts.join(', ')}` : '');
+  else if (parts.length) { const p = parts.join(', '); line2 = p.charAt(0).toUpperCase() + p.slice(1); }
+  else line2 = '';
 
   let line3 = '';
   if (traits.length === 1) line3 = `${displayName} est ${traits[0]}.`;
@@ -110,12 +118,13 @@ function caption(d, shelterNames = [], shelterName = '') {
 
   const tags = d.species === 'cat'
     ? '#ChatAAdopter #AdoptionChat #AdoptionAnimale #Adoptly'
-    : '#ChienAAdopter #AdoptionChien #AdoptionAnimale #Adoptly';
+    : d.species === 'dog'
+      ? '#ChienAAdopter #AdoptionChien #AdoptionAnimale #Adoptly'
+      : '#NAC #AdoptionNAC #AdoptionAnimale #Adoptly';
 
-  const blocks = [
-    `🐾 Voici ${displayName} !`,
-    `${line2}.${line3 ? '\n' + line3 : ''}`,
-  ];
+  const blocks = [`🐾 Voici ${displayName} !`];
+  const intro = [line2 ? `${line2}.` : '', line3].filter(Boolean).join('\n');
+  if (intro) blocks.push(intro);
   if (story) blocks.push(`📖 Son histoire : ${story}`);
   if (compat) blocks.push(compat);
   blocks.push(`${female ? 'Elle' : 'Il'} ne demande qu'une chose : une famille qui lui donnera sa chance. 🧡`);
@@ -157,7 +166,7 @@ export async function syncFbKit() {
   const { data: dogs, error: dogsErr } = await supabase
     .from('animals')
     .select('id, name, breed, age, size, temperament, photos, species, story, requirements, created_at, shelter_id')
-    .eq('status', 'active').in('species', ['dog', 'cat'])
+    .eq('status', 'active').in('species', ['dog', 'cat', 'rabbit', 'guinea_pig', 'other'])
     .not('photos', 'is', null)
     .order('created_at', { ascending: false });
   if (dogsErr) throw new Error(dogsErr.message);
@@ -191,7 +200,8 @@ export async function syncFbKit() {
   // Tri : chiens avant chats ; dans chaque espèce, les NON publiés d'abord, puis
   // par intérêt croissant (0 like = priorité), puis les plus anciens en tête.
   activeDogs.sort((a, b) => {
-    if (a.species !== b.species) return a.species === 'dog' ? -1 : 1;
+    const ga = speciesGroup(a.species), gb = speciesGroup(b.species);
+    if (ga !== gb) return GROUP_RANK[ga] - GROUP_RANK[gb];
     const pa = published.has(a.id) ? 1 : 0, pb = published.has(b.id) ? 1 : 0;
     if (pa !== pb) return pa - pb;
     const ia = interest[a.id] || 0, ib = interest[b.id] || 0;
@@ -232,7 +242,7 @@ export async function syncFbKit() {
     .map(d => {
       const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(`${KIT_DIR}/${d.id}.jpg`);
       return {
-        id: d.id, species: d.species, name: d.name.trim(), img: pub.publicUrl,
+        id: d.id, species: speciesGroup(d.species), name: d.name.trim(), img: pub.publicUrl,
         text: caption(d, shelterNames, shelterById[d.shelter_id] || ''),
         prio: !published.has(d.id) && !(interest[d.id] > 0),
       };
@@ -240,12 +250,14 @@ export async function syncFbKit() {
 
   const nbDogs = items.filter(i => i.species === 'dog').length;
   const nbCats = items.filter(i => i.species === 'cat').length;
+  const nbNacs = items.filter(i => i.species === 'nac').length;
 
   let cards = '';
   let lastSpecies = null;
   items.forEach((it, i) => {
     if (it.species !== lastSpecies) {
-      cards += `\n  <h3 class="section" data-species="${it.species}">${it.species === 'dog' ? `🐶 Chiens (${nbDogs})` : `🐱 Chats (${nbCats})`}</h3>\n`;
+      const label = it.species === 'dog' ? `🐶 Chiens (${nbDogs})` : it.species === 'cat' ? `🐱 Chats (${nbCats})` : `🐰 NACs (${nbNacs})`;
+      cards += `\n  <h3 class="section" data-species="${it.species}">${label}</h3>\n`;
       lastSpecies = it.species;
     }
     cards += `
@@ -267,7 +279,7 @@ export async function syncFbKit() {
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="robots" content="noindex, nofollow"/>
-<title>Kit Facebook — ${nbDogs} chiens et ${nbCats} chats Adoptly</title>
+<title>Kit Facebook Adoptly — ${nbDogs} chiens, ${nbCats} chats${nbNacs ? `, ${nbNacs} NACs` : ''}</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f0f4fa; padding: 16px; }
@@ -302,7 +314,7 @@ export async function syncFbKit() {
 </head>
 <body>
 <header>
-  <h1>🐾 Kit publications Facebook — ${nbDogs} chiens et ${nbCats} chats</h1>
+  <h1>🐾 Kit publications Facebook — ${nbDogs} chiens, ${nbCats} chats${nbNacs ? `, ${nbNacs} NACs` : ''}</h1>
   <p><strong>1.</strong> Touche une photo pour l'ouvrir, puis appuie longuement dessus pour l'enregistrer.<br/>
   <strong>2.</strong> Touche « Copier le texte » et colle-le dans ta publication Facebook.<br/>
   <strong>3.</strong> Une fois publiée, touche « Publication faite » — l'animal est barré et la coche est <strong>partagée</strong> : tu vois aussi ce que les autres ont déjà publié.</p>
@@ -313,6 +325,7 @@ export async function syncFbKit() {
     <button class="tab active" onclick="filtrerEspece('all', this)">🐾 Tous</button>
     <button class="tab" onclick="filtrerEspece('dog', this)">🐶 Chiens (${nbDogs})</button>
     <button class="tab" onclick="filtrerEspece('cat', this)">🐱 Chats (${nbCats})</button>
+    ${nbNacs ? `<button class="tab" onclick="filtrerEspece('nac', this)">🐰 NACs (${nbNacs})</button>` : ''}
   </div>
 </div>
 <p class="aucun" id="aucun">Aucun animal ne correspond à cette recherche.</p>
