@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Navbar from '../../components/Navbar';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
+import { thumb } from '../../lib/img';
 
 const SPECIES_EMOJI = {
   dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾',
@@ -123,7 +124,7 @@ export default function AnimalDetail() {
             {photos.length > 0 ? (
               <motion.img
                 key={photoIndex}
-                src={photos[photoIndex]}
+                src={thumb(photos[photoIndex], 900)}
                 alt={animal?.name}
                 className="absolute inset-0 w-full h-full object-cover"
                 initial={{ opacity: 0 }}
@@ -163,7 +164,7 @@ export default function AnimalDetail() {
                     i === photoIndex ? 'border-secondary' : 'border-transparent'
                   }`}
                 >
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={thumb(url, 200)} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import api from '../../lib/api';
+import { thumb } from '../../lib/img';
 
 function ageLabel(months) {
   if (!months) return '';
@@ -95,7 +96,7 @@ export default function FosterMatches() {
                   {/* Photo */}
                   <div className="w-20 h-20 rounded-2xl overflow-hidden bg-blue-50 flex-shrink-0">
                     {photo ? (
-                      <img src={photo} alt={animal?.name} className="w-full h-full object-cover" />
+                      <img src={thumb(photo, 400)} alt={animal?.name} loading="lazy" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl">🐾</div>
                     )}

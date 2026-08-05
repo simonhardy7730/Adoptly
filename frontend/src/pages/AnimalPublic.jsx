@@ -385,7 +385,7 @@ export default function AnimalPublic() {
                 key={imgIdx}
                 src={thumb(photos[imgIdx], 900)}
                 alt={animal.name}
-                className="w-full h-full object-cover object-top cursor-pointer"
+                className="w-full h-full object-cover object-center cursor-pointer"
                 onClick={() => setLightbox(true)}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

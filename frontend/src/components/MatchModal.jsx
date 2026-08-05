@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { thumb } from '../lib/img';
 import { useState } from 'react';
 
 export default function MatchModal({ animal, matchId, onClose }) {
@@ -57,7 +58,7 @@ export default function MatchModal({ animal, matchId, onClose }) {
           <div className="flex gap-4 items-center bg-bg-light rounded-2xl p-3">
             <div className="w-16 h-16 rounded-xl overflow-hidden bg-blue-100 flex-shrink-0">
               {photo ? (
-                <img src={photo} alt={animal.name} className="w-full h-full object-cover" />
+                <img src={thumb(photo, 500)} alt={animal.name} className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-3xl">🐾</div>
               )}

@@ -5,6 +5,7 @@ import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
+import { thumb } from '../../lib/img';
 
 // ── Modal : liste des adoptants intéressés ────────────────
 function InterestedModal({ animal, onClose, t }) {
@@ -198,7 +199,7 @@ function PendingContactsModal({ onClose, onDismissed, t }) {
               return (
                 <div key={c.match_id} className="flex items-center gap-3 bg-gray-50 rounded-2xl p-3">
                   {c.animal_photo ? (
-                    <img src={c.animal_photo} alt={c.animal_name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                    <img src={thumb(c.animal_photo, 200)} alt={c.animal_name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                   ) : (
                     <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-lg">🐾</div>
                   )}
@@ -629,7 +630,7 @@ export default function Dashboard() {
                         <div className="flex flex-col items-center flex-shrink-0">
                           <div className="w-20 h-20 rounded-xl overflow-hidden bg-blue-50">
                             {photo ? (
-                              <img src={photo} alt={animal.name} className="w-full h-full object-cover" />
+                              <img src={thumb(photo, 400)} alt={animal.name} loading="lazy" className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-2xl">🐾</div>
                             )}

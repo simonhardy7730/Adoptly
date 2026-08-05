@@ -200,7 +200,7 @@ export default function SuiviAdoptions() {
                               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                               <div className="flex items-center gap-2.5">
                                 {c.animal_photo ? (
-                                  <img src={c.animal_photo} alt={c.animal_name} className="w-9 h-9 rounded-lg object-cover object-top flex-shrink-0" />
+                                  <img src={c.animal_photo} alt={c.animal_name} className="w-9 h-9 rounded-lg object-cover object-center flex-shrink-0" />
                                 ) : (
                                   <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">🐾</div>
                                 )}

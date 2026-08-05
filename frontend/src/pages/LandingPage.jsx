@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
+import { thumb } from '../lib/img';
 
 // ── Données ──────────────────────────────────────────────────────────────────
 
@@ -197,7 +198,7 @@ function AnimalPhotoStrip({ realPhotos = [] }) {
             className="flex-shrink-0 w-36 h-36 rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative group"
           >
             <img
-              src={item.photo}
+              src={thumb(item.photo, 400)}
               alt={item.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
