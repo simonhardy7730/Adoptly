@@ -383,7 +383,22 @@ router.post('/:match_id', authenticate, async (req, res) => {
           const adoptantName = [adoptant?.first_name, adoptant?.last_name].filter(Boolean).join(' ') || 'Adoptant';
           const preview = content.trim().length > 150 ? content.trim().slice(0, 150) + '…' : content.trim();
 
-          if (adoptant?.email) {
+          // Throttle email : au plus 1 email par conversation / 24h. Si le refuge a
+          // déjà écrit dans cette conversation sur les dernières 24h, on n'envoie pas
+          // un nouvel email (le push, gratuit, prend le relais) → économise le quota
+          // email et évite la fatigue côté adoptant.
+          const since24h = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+          const { data: recentShelterMsgs } = await supabase
+            .from('messages')
+            .select('id')
+            .eq('match_id', match_id)
+            .eq('sender_role', 'shelter')
+            .gte('created_at', since24h)
+            .neq('id', message.id)
+            .limit(1);
+          const alreadyNotified = (recentShelterMsgs || []).length > 0;
+
+          if (adoptant?.email && !alreadyNotified) {
             // Lien magique : connexion en 1 clic, directement dans la conversation
             const magicToken = makeMagicToken({ adoptantId: match.adoptant_id, matchId: match_id });
             const magicUrl = `https://www.adoptly.fr/magic?token=${magicToken}`;
