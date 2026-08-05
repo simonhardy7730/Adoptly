@@ -90,6 +90,7 @@ export default function AnimalCatalog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [animals, setAnimals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(24);
   const species = searchParams.get('espece') || 'all';
 
   const { token, role } = useAuth();
@@ -105,7 +106,7 @@ export default function AnimalCatalog() {
     meta.content = 'Découvrez les animaux disponibles à l\'adoption dans nos refuges partenaires. Chiens, chats, NAC — trouvez votre compagnon idéal sur Adoptly.';
     setLoading(true);
     api.get('/public/animals', { params: { species: species === 'all' ? undefined : species } })
-      .then(({ data }) => setAnimals(data))
+      .then(({ data }) => { setAnimals(data); setVisibleCount(24); })
       .catch(() => setAnimals([]))
       .finally(() => setLoading(false));
   }, [species]);
@@ -206,11 +207,23 @@ export default function AnimalCatalog() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {animals.map(animal => (
-              <AnimalCard key={animal.id} animal={animal} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {animals.slice(0, visibleCount).map(animal => (
+                <AnimalCard key={animal.id} animal={animal} />
+              ))}
+            </div>
+            {visibleCount < animals.length && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => setVisibleCount(c => c + 24)}
+                  className="bg-white text-primary font-semibold px-8 py-3 rounded-full border border-primary hover:bg-primary hover:text-white transition-colors"
+                >
+                  Voir plus d'animaux ({animals.length - visibleCount})
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* CTA bas de page — uniquement pour les visiteurs non connectés */}
