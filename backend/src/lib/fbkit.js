@@ -152,7 +152,7 @@ async function brandedImage(d) {
     </defs>
     <rect x="0" y="${H - 320}" width="${W}" height="320" fill="url(#fade)"/>
     <text x="48" y="${H - 150}" font-family="Segoe UI, Arial, sans-serif" font-size="76" font-weight="800" fill="#ffffff">${name}</text>
-    <text x="48" y="${H - 84}" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="600" fill="#ffffff" opacity="0.9">Je cherche une famille 🧡</text>
+    <text x="48" y="${H - 84}" font-family="Segoe UI, Arial, sans-serif" font-size="36" font-weight="600" fill="#ffffff" opacity="0.9">Je cherche une famille</text>
     <rect x="48" y="${H - 62}" width="300" height="46" rx="23" fill="#F07A2A"/>
     <text x="198" y="${H - 30}" font-family="Segoe UI, Arial, sans-serif" font-size="27" font-weight="700" fill="#ffffff" text-anchor="middle">adoptly.fr</text>
   </svg>`;
