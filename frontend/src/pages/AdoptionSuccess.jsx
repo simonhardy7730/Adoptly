@@ -111,7 +111,8 @@ export default function AdoptionSuccess() {
                       src={thumb(animal.photos[0], 400)}
                       alt={animal.name}
                       loading="lazy"
-                      className="w-full h-full object-cover object-center"
+                      className="w-full h-full object-cover"
+                      style={{ objectPosition: '50% 30%' }}
                       loading="lazy"
                     />
                   ) : (
