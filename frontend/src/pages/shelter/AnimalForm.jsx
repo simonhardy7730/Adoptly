@@ -18,6 +18,7 @@ const EMPTY_REQUIREMENTS = {
   daily_outdoor_time: 'no',
   spacious_home: 'flexible',
   needs_education: 'no',
+  household_restriction: 'none',
   special_notes: '',
 };
 
@@ -657,6 +658,18 @@ export default function AnimalForm() {
               ]}
               value={form.requirements.needs_education}
               onChange={(v) => setReq('needs_education', v)}
+            />
+
+            <RadioGroup
+              label="🚻 Foyer requis (si l'animal a peur des hommes ou des femmes)"
+              name="household_restriction"
+              options={[
+                { value: 'none',     label: 'Aucune restriction' },
+                { value: 'no_men',   label: '🚫👨 Sans homme'      },
+                { value: 'no_women', label: '🚫👩 Sans femme'      },
+              ]}
+              value={form.requirements.household_restriction || 'none'}
+              onChange={(v) => setReq('household_restriction', v)}
             />
 
             <div>

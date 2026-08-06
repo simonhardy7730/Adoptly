@@ -100,6 +100,12 @@ export function passesHardFilters(animal, shelter, prefs) {
   if (req.spacious_home === 'yes' && prefs.housing_type === 'apartment')
     return false;
 
+  // Restriction de foyer (homme/femme) — pour les animaux traumatisés ayant peur
+  // des hommes ou des femmes. Ne filtre que si l'animal a la restriction ET que
+  // l'adoptant a renseigné son sexe ('na'/undefined => affiché par défaut).
+  if (req.household_restriction === 'no_men' && prefs.adopter_gender === 'male') return false;
+  if (req.household_restriction === 'no_women' && prefs.adopter_gender === 'female') return false;
+
   return true;
 }
 
@@ -155,6 +161,11 @@ export function hardFilterReason(animal, shelter, prefs) {
     return "Cet animal a besoin d'un grand logement.";
   if (req.spacious_home === 'yes' && prefs.housing_type === 'apartment')
     return "Cet animal a besoin d'un logement spacieux (pas d'appartement).";
+
+  if (req.household_restriction === 'no_men' && prefs.adopter_gender === 'male')
+    return "Cet animal a besoin d'un foyer sans homme (il a peur des hommes).";
+  if (req.household_restriction === 'no_women' && prefs.adopter_gender === 'female')
+    return "Cet animal a besoin d'un foyer sans femme (elle a peur des femmes).";
 
   return null;
 }

@@ -164,6 +164,17 @@ function getQuestions(t) {
         { value: false, label: 'Non, merci',           emoji: '🏠' },
       ],
     },
+    {
+      id: 'adopter_gender',
+      text: 'Vous êtes…',
+      hint: 'Optionnel. Certains animaux traumatisés ont peur des hommes ou des femmes — cette info nous aide à leur trouver le bon foyer.',
+      type: 'choice',
+      options: [
+        { value: 'male',   label: 'Un homme',               emoji: '👨' },
+        { value: 'female', label: 'Une femme',              emoji: '👩' },
+        { value: 'na',     label: 'Je préfère ne pas dire', emoji: '🤐' },
+      ],
+    },
   ];
 }
 
@@ -187,6 +198,7 @@ const DEFAULTS = {
   age_preference:   'adult',
   energy_level:     'balanced',
   search_radius_km: 25,
+  adopter_gender:   'na',
   latitude:         null,
   longitude:        null,
 };
