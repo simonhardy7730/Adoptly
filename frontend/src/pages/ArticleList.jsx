@@ -18,6 +18,7 @@ function timeAgo(isoString) {
 
 const FILTERS = [
   { key: 'all',    label: 'Tout' },
+  { key: 'news',   label: "L'actu" },
   { key: 'race',   label: 'Guides des races' },
   { key: 'guide',  label: "Guides d'adoption" },
   { key: 'refuge', label: 'Nos refuges' },
@@ -39,11 +40,13 @@ export default function ArticleList() {
   }, []);
 
   const isRace = (a) => (a.slug || '').endsWith('-race');
+  const isNews = (a) => (a.slug || '').startsWith('actu-');
   const filtered =
     filter === 'all'    ? articles
+    : filter === 'news'   ? articles.filter(isNews)
     : filter === 'race'   ? articles.filter(isRace)
     : filter === 'refuge' ? articles.filter(a => a.shelter_id)
-    : /* guides d'adoption */ articles.filter(a => !a.shelter_id && !isRace(a));
+    : /* guides d'adoption */ articles.filter(a => !a.shelter_id && !isRace(a) && !isNews(a));
 
   return (
     <div className="min-h-screen bg-bg-light">
