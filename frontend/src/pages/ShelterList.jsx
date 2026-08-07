@@ -11,6 +11,47 @@ const SPECIES_LABEL = {
   dog: 'Chiens', cat: 'Chats', rabbit: 'Lapins', guinea_pig: 'Cobayes', other: 'Autres',
 };
 
+// Bannière de marque uniforme pour chaque refuge (même style que la cover
+// de l'article Opale : dégradé bleu Adoptly + pattes + nom du refuge).
+// Rendue en SVG/CSS → aucun visuel à générer ni stocker, cohérent pour tous
+// les refuges présents et futurs.
+function RefugeBanner({ shelter }) {
+  const pid = `paws-${shelter.id}`;
+  return (
+    <div
+      className="relative h-24 flex items-center justify-center overflow-hidden"
+      style={{ background: 'linear-gradient(135deg,#1B4F8A 0%,#2d6ab8 100%)' }}
+    >
+      <svg className="absolute inset-0 w-full h-full" aria-hidden="true">
+        <defs>
+          <pattern
+            id={pid}
+            width="64"
+            height="64"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(12)"
+          >
+            <g fill="#ffffff" fillOpacity="0.09" transform="translate(32 34) scale(0.5)">
+              <ellipse cx="0" cy="30" rx="26" ry="22" />
+              <ellipse cx="-29" cy="-14" rx="11" ry="15" />
+              <ellipse cx="-10" cy="-26" rx="11" ry="15" />
+              <ellipse cx="10" cy="-26" rx="11" ry="15" />
+              <ellipse cx="29" cy="-14" rx="11" ry="15" />
+            </g>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill={`url(#${pid})`} />
+      </svg>
+      <h2
+        className="relative z-10 text-white font-extrabold text-base sm:text-lg text-center px-5 leading-tight"
+        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.28)' }}
+      >
+        {shelter.name}
+      </h2>
+    </div>
+  );
+}
+
 export default function ShelterList() {
   const [shelters, setShelters] = useState([]);
   const [loading,  setLoading]  = useState(true);
@@ -105,74 +146,56 @@ export default function ShelterList() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <div className="flex gap-0">
-                  {/* Photo de couverture */}
-                  <div className="w-28 flex-shrink-0 bg-blue-50 relative">
-                    {shelter.cover ? (
-                      <img
-                        src={shelter.cover}
-                        alt={shelter.name}
-                        className="w-full h-full object-cover"
-                        style={{ minHeight: '120px' }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl"
-                           style={{ minHeight: '120px' }}>
-                        🏠
-                      </div>
-                    )}
+                {/* Bannière de marque uniforme (nom du refuge) */}
+                <RefugeBanner shelter={shelter} />
+
+                {/* Infos */}
+                <div className="p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    {shelter.city
+                      ? <p className="text-gray-400 text-xs">📍 {shelter.city}</p>
+                      : <span />}
+                    <span className="badge bg-green-50 text-green-700 text-xs flex-shrink-0">
+                      {shelter.animal_count} {shelter.animal_count > 1 ? 'animaux' : 'animal'}
+                    </span>
                   </div>
 
-                  {/* Infos */}
-                  <div className="flex-1 p-4 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <h2 className="font-bold text-gray-800 leading-tight">{shelter.name}</h2>
-                      <span className="badge bg-green-50 text-green-700 text-xs flex-shrink-0">
-                        {shelter.animal_count} {shelter.animal_count > 1 ? 'animaux' : 'animal'}
-                      </span>
+                  {shelter.siret && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                      ✅ Vérifiée
+                    </span>
+                  )}
+
+                  {/* Espèces */}
+                  {shelter.species.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {shelter.species.map((sp) => (
+                        <span key={sp}
+                          className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                          {SPECIES_EMOJI[sp]} {SPECIES_LABEL[sp] || sp}
+                        </span>
+                      ))}
                     </div>
+                  )}
 
-                    {shelter.city && (
-                      <p className="text-gray-400 text-xs">📍 {shelter.city}</p>
-                    )}
-
-                    {shelter.siret && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                        ✅ Vérifiée
-                      </span>
-                    )}
-
-                    {/* Espèces */}
-                    {shelter.species.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {shelter.species.map((sp) => (
-                          <span key={sp}
-                            className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                            {SPECIES_EMOJI[sp]} {SPECIES_LABEL[sp] || sp}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex gap-2 flex-wrap pt-1">
-                      <Link
-                        to={`/refuges/${shelter.id}`}
-                        className="text-xs font-semibold text-white bg-secondary hover:bg-primary
+                  {/* Actions */}
+                  <div className="flex gap-2 flex-wrap pt-1">
+                    <Link
+                      to={`/refuges/${shelter.id}`}
+                      className="text-xs font-semibold text-white bg-secondary hover:bg-primary
+                                 px-3 py-1.5 rounded-lg transition-colors"
+                    >
+                      En savoir plus →
+                    </Link>
+                    {shelter.phone && (
+                      <a
+                        href={`tel:${shelter.phone}`}
+                        className="text-xs font-medium text-secondary bg-blue-50 hover:bg-blue-100
                                    px-3 py-1.5 rounded-lg transition-colors"
                       >
-                        En savoir plus →
-                      </Link>
-                      {shelter.phone && (
-                        <a
-                          href={`tel:${shelter.phone}`}
-                          className="text-xs font-medium text-secondary bg-blue-50 hover:bg-blue-100
-                                     px-3 py-1.5 rounded-lg transition-colors"
-                        >
-                          📞 Appeler
-                        </a>
-                      )}
-                    </div>
+                        📞 Appeler
+                      </a>
+                    )}
                   </div>
                 </div>
               </motion.div>
