@@ -415,6 +415,50 @@ function FeedbackModal({ onClose }) {
   );
 }
 
+// Mini-guide refuge : expliqué au 1er login + accessible via « Comment ça marche ».
+// Clarifie coup de cœur vs message, "répondre dans l'app", et "passer en Adopté
+// plutôt que supprimer une fiche" (pour que les adoptants soient prévenus).
+function RefugeGuide({ onClose }) {
+  const steps = [
+    { emoji: '💚', title: 'Un « coup de cœur »', body: "Un adoptant a liké un de vos animaux. Ce n'est pas encore un message : c'est à VOUS de lui écrire en premier — dans « Contacts en attente », puis le bouton « Message »." },
+    { emoji: '💬', title: 'Un message reçu', body: "L'adoptant vous a écrit : vous le retrouvez dans « Messages ». Répondez-lui directement là." },
+    { emoji: '📱', title: 'Répondez toujours dans Adoptly', body: "Ne répondez jamais à l'email de notification : l'adoptant ne le recevrait pas. Toutes les réponses se font depuis la plateforme." },
+    { emoji: '🏡', title: "Un animal n'est plus à l'adoption ?", body: "Passez-le en « Adopté » (au lieu de supprimer sa fiche) : les adoptants intéressés reçoivent alors un email automatique. Personne ne reste sans nouvelle." },
+  ];
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 px-4 pb-4 sm:pb-0"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-white rounded-3xl w-full max-w-md max-h-[88vh] flex flex-col shadow-2xl"
+        initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="font-extrabold text-primary text-lg">Comment ça marche 🐾</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
+        </div>
+        <div className="overflow-y-auto flex-1 p-5 space-y-4">
+          {steps.map((s, i) => (
+            <div key={i} className="flex gap-3">
+              <span className="text-2xl flex-shrink-0">{s.emoji}</span>
+              <div>
+                <p className="font-bold text-gray-800 text-sm">{s.title}</p>
+                <p className="text-gray-500 text-sm leading-relaxed">{s.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-4 border-t border-gray-100">
+          <button onClick={onClose} className="btn-primary w-full py-3 text-sm">J'ai compris 👍</button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function Dashboard() {
   const { t } = useLanguage();
   const [data,      setData]      = useState(null);
@@ -425,6 +469,7 @@ export default function Dashboard() {
   const [copiedId,  setCopiedId]  = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showPending, setShowPending] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   function shareAnimal(animal) {
     const url = `https://adoptly.fr/share/animal/${animal.id}`;
@@ -448,6 +493,11 @@ export default function Dashboard() {
     if (new URLSearchParams(window.location.search).get('contacts') === '1') {
       setShowPending(true);
     }
+  }, []);
+
+  // Guide affiché une seule fois, au premier passage sur le tableau de bord.
+  useEffect(() => {
+    if (!localStorage.getItem('adoptly_refuge_guide_v1')) setShowGuide(true);
   }, []);
 
   async function deleteAnimal(id) {
@@ -524,6 +574,12 @@ export default function Dashboard() {
                   {data?.shelter?.name || t('nav_dashboard')}
                 </h1>
                 <p className="text-gray-500 text-sm mt-0.5">{t('dash_subtitle')}</p>
+                <button
+                  onClick={() => setShowGuide(true)}
+                  className="text-xs font-semibold text-secondary hover:text-primary mt-1 transition-colors"
+                >
+                  ❓ Comment ça marche ?
+                </button>
               </div>
               <Link to="/shelter/animals/add" className="btn-primary text-sm py-2.5 px-4">
                 {t('dash_add_btn')}
@@ -798,6 +854,11 @@ export default function Dashboard() {
               )
             }
             t={t}
+          />
+        )}
+        {showGuide && (
+          <RefugeGuide
+            onClose={() => { setShowGuide(false); localStorage.setItem('adoptly_refuge_guide_v1', '1'); }}
           />
         )}
       </AnimatePresence>
