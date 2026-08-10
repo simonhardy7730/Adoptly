@@ -59,9 +59,10 @@ export async function runMatchDigests() {
   // ── Récaps REFUGES ────────────────────────────────────────────────
   const { data: pendS, error: eS } = await supabase
     .from('matches')
-    .select('id, adoptant_id, timestamp, animals(name, shelter_id, shelters(name, email))')
+    .select('id, adoptant_id, timestamp, contacted, animals(name, shelter_id, shelters(name, email))')
     .eq('shelter_notified', false)
-    .eq('status', 'interested');
+    .eq('status', 'interested')
+    .eq('contacted', false); // ne pas re-notifier un coup de cœur déjà contacté (aligne l'email sur le tableau de bord)
   if (eS) throw new Error('lecture refuges: ' + eS.message);
 
   // regrouper par refuge (via l'animal)

@@ -382,7 +382,7 @@ export async function sendMatchNotificationDigestEmail({ shelterEmail, shelterNa
       <td style="padding:12px 0;border-bottom:1px solid #F3F4F6;">
         <span style="color:#1B4F8A;font-weight:700;font-size:15px;">${it.animalName}</span>
         <span style="color:#9CA3AF;font-size:13px;"> — intéressé(e) : </span>
-        <a href="mailto:${it.adoptantEmail}" style="color:#F07A2A;font-size:14px;text-decoration:none;font-weight:600;">${it.adoptantName || it.adoptantEmail}</a>
+        <span style="color:#F07A2A;font-size:14px;font-weight:700;">${it.adoptantName || it.adoptantEmail}</span>
       </td>
     </tr>`).join('');
 
@@ -398,15 +398,18 @@ export async function sendMatchNotificationDigestEmail({ shelterEmail, shelterNa
         <div style="text-align:center;margin-bottom:20px;">
           <div style="display:inline-block;background:#FFF3E0;border-radius:50px;padding:10px 22px;">
             <span style="font-size:24px;">💚</span>
-            <span style="color:#F07A2A;font-weight:800;font-size:17px;margin-left:8px;vertical-align:middle;">${n} nouvel${n > 1 ? 's' : ''} intéressé${n > 1 ? 's' : ''} !</span>
+            <span style="color:#F07A2A;font-weight:800;font-size:17px;margin-left:8px;vertical-align:middle;">${n} coup${n > 1 ? 's' : ''} de cœur pour vos animaux</span>
           </div>
         </div>
-        <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px;text-align:center;">
-          Des adoptant(e)s compatibles ont craqué pour vos animaux. Vous pouvez les contacter directement.
+        <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 8px;text-align:center;">
+          ${n > 1 ? 'Des adoptant(e)s compatibles ont' : 'Un(e) adoptant(e) compatible a'} eu un coup de cœur pour ${n > 1 ? 'vos animaux' : 'un de vos animaux'}. <strong>C'est à vous de faire le premier pas&nbsp;!</strong>
+        </p>
+        <p style="color:#6B7280;font-size:13px;line-height:1.6;margin:0 0 20px;text-align:center;background:#FFF8F0;border-radius:12px;padding:12px 16px;">
+          ℹ️ Ce n'est pas encore un message : cliquez ci-dessous pour leur écrire <strong>directement dans Adoptly</strong>. Ne répondez pas à cet email, l'adoptant ne le recevrait pas.
         </p>
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">${rows}</table>
         <div style="text-align:center;">
-          <a href="https://adoptly.fr/shelter/dashboard" style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;">Voir mon tableau de bord →</a>
+          <a href="https://adoptly.fr/shelter/dashboard?contacts=1" style="background:#F07A2A;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:14px 32px;border-radius:14px;display:inline-block;">✍️ Écrire à ${n > 1 ? 'ces adoptants' : 'cet adoptant'} →</a>
         </div>
       </div>
       <div style="border-top:1px solid #F3F4F6;padding:20px 32px;text-align:center;">
@@ -418,7 +421,7 @@ export async function sendMatchNotificationDigestEmail({ shelterEmail, shelterNa
 
   await sendEmail({
     to:      shelterEmail,
-    subject: `💚 ${n} adoptant${n > 1 ? 's' : ''} intéressé${n > 1 ? 's' : ''} par vos animaux`,
+    subject: `💚 ${n} coup${n > 1 ? 's' : ''} de cœur pour vos animaux — écrivez-leur !`,
     html,
   });
 }
