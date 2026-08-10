@@ -183,6 +183,10 @@ function PendingContactsModal({ onClose, onDismissed, t }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
         </div>
 
+        <p className="text-xs text-gray-600 bg-blue-50 px-5 py-2.5 leading-relaxed">
+          💡 Ces personnes ont <strong>liké</strong> vos animaux : à vous de leur écrire en premier avec « Message ». Répondez ici dans Adoptly — jamais par email, l'adoptant ne le recevrait pas.
+        </p>
+
         <div className="overflow-y-auto flex-1 p-4 space-y-3">
           {loading ? (
             <div className="flex justify-center py-8"><LoadingSpinner size="md" /></div>
@@ -438,6 +442,14 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Lien du mail refuge « ✍️ Écrire à… » (?contacts=1) → ouvre directement
+  // la liste des coups de cœur, plutôt que d'atterrir sur le tableau générique.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('contacts') === '1') {
+      setShowPending(true);
+    }
+  }, []);
+
   async function deleteAnimal(id) {
     try {
       await api.delete(`/shelter/animals/${id}`);
@@ -580,10 +592,32 @@ export default function Dashboard() {
               <StatCard
                 value={data?.stats?.pending_contacts ?? 0}
                 label={t('dash_stat_contacts')}
-                emoji="📬"
+                emoji="💚"
                 onClick={(data?.stats?.pending_contacts ?? 0) > 0 ? () => setShowPending(true) : undefined}
               />
             </div>
+
+            {/* Bandeau « coups de cœur à contacter » — distinct des messages reçus.
+                Clarifie que c'est à VOUS d'écrire en premier (source de confusion refuge). */}
+            {(data?.stats?.pending_contacts ?? 0) > 0 && (
+              <button
+                onClick={() => setShowPending(true)}
+                className="card w-full p-4 flex items-center gap-3 text-left bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 hover:shadow-md transition-shadow"
+              >
+                <span className="text-2xl flex-shrink-0">💚</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-800 text-sm">
+                    {data.stats.pending_contacts} coup{data.stats.pending_contacts > 1 ? 's' : ''} de cœur en attente
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    Ces adoptants ont liké vos animaux — à vous de leur écrire en premier 💬
+                  </p>
+                </div>
+                <span className="flex-shrink-0 text-xs font-semibold text-white bg-secondary px-3 py-1.5 rounded-lg whitespace-nowrap">
+                  ✍️ Écrire
+                </span>
+              </button>
+            )}
 
             {/* Graphique matchs hebdomadaires */}
             {data?.stats?.weekly?.some((w) => w.count > 0) && (

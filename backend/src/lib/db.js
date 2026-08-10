@@ -18,13 +18,20 @@ import { supabase } from './supabase.js';
  */
 export async function selectIn(table, columns, inColumn, values, applyFilters) {
   const CHUNK = 100;
+  const PAGE = 1000; // Supabase plafonne un select à 1000 lignes par requête.
   let rows = [];
   for (let i = 0; i < values.length; i += CHUNK) {
-    let q = supabase.from(table).select(columns).in(inColumn, values.slice(i, i + CHUNK));
-    if (applyFilters) q = applyFilters(q);
-    const { data, error } = await q;
-    if (error) throw error;
-    rows = rows.concat(data || []);
+    const slice = values.slice(i, i + CHUNK);
+    // Pagination via .range() : sans ça, un gros refuge (> 1000 matchs) voit ses
+    // lignes tronquées → compteurs faux (ex: "Contacts en attente" sous-compté).
+    for (let from = 0; ; from += PAGE) {
+      let q = supabase.from(table).select(columns).in(inColumn, slice).range(from, from + PAGE - 1);
+      if (applyFilters) q = applyFilters(q);
+      const { data, error } = await q;
+      if (error) throw error;
+      rows = rows.concat(data || []);
+      if (!data || data.length < PAGE) break;
+    }
   }
   return rows;
 }
