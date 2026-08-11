@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../../components/Navbar';
 import { useLanguage } from '../../context/LanguageContext';
 import api from '../../lib/api';
@@ -9,6 +9,52 @@ import { thumb } from '../../lib/img';
 const SPECIES_EMOJI = {
   dog: '🐕', cat: '🐈', rabbit: '🐇', guinea_pig: '🐹', other: '🐾',
 };
+
+// Photo en grand : clic sur la photo → plein écran (flèches + clavier)
+function Lightbox({ photos, startIdx, onClose }) {
+  const [idx, setIdx] = useState(startIdx);
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') setIdx((i) => (i + 1) % photos.length);
+      if (e.key === 'ArrowLeft') setIdx((i) => (i - 1 + photos.length) % photos.length);
+    };
+    window.addEventListener('keydown', handler);
+    document.body.style.overflow = 'hidden';
+    return () => { window.removeEventListener('keydown', handler); document.body.style.overflow = ''; };
+  }, [photos.length, onClose]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl z-10">✕</button>
+      <img
+        src={photos[idx]}
+        alt=""
+        className="max-h-[90vh] max-w-[95vw] object-contain rounded-lg"
+        onClick={(e) => e.stopPropagation()}
+      />
+      {photos.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIdx((i) => (i - 1 + photos.length) % photos.length); }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/20 text-white text-xl flex items-center justify-center hover:bg-white/30"
+          >‹</button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setIdx((i) => (i + 1) % photos.length); }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/20 text-white text-xl flex items-center justify-center hover:bg-white/30"
+          >›</button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+            {idx + 1} / {photos.length}
+          </div>
+        </>
+      )}
+    </motion.div>
+  );
+}
 
 function ageLabel(months, t) {
   if (!months) return t('detail_age_unk');
@@ -43,6 +89,7 @@ export default function AnimalDetail() {
   const { t }    = useLanguage();
   const { match } = location.state || {};
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
 
   const TEMPERAMENT = {
     calm:     `😌 ${t('tp_calm')}`,
@@ -126,7 +173,8 @@ export default function AnimalDetail() {
                 key={photoIndex}
                 src={thumb(photos[photoIndex], 900)}
                 alt={animal?.name}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+                onClick={() => setLightbox(true)}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
@@ -327,6 +375,11 @@ export default function AnimalDetail() {
         )}
 
       </div>
+
+      {/* Photo en grand */}
+      {lightbox && photos.length > 0 && (
+        <Lightbox photos={photos} startIdx={photoIndex} onClose={() => setLightbox(false)} />
+      )}
     </div>
   );
 }
