@@ -21,6 +21,27 @@ export function haversineKm(lat1, lon1, lat2, lon2) {
 const NORTH_AMERICA = new Set(['canada', 'états-unis', 'etats-unis', 'usa', 'québec', 'quebec']);
 const isNorthAmerica = (country) => NORTH_AMERICA.has((country || '').trim().toLowerCase());
 
+// Tranches d'âge (en mois) — mêmes bornes que le questionnaire adoptant.
+// baby 0-6m · young 6-24m · adult 2-7a · senior 7a+
+const AGE_ORDER = { baby: 0, young: 1, adult: 2, senior: 3 };
+export function animalAgeBracket(age) {
+  if (age == null) return null; // âge inconnu → jamais filtré
+  if (age < 6) return 'baby';
+  if (age < 24) return 'young';
+  if (age < 84) return 'adult';
+  return 'senior';
+}
+// Un animal passe le filtre d'âge s'il est à ±1 tranche de la préférence.
+// Évite de proposer un senior à qui cherche un chiot (et inversement).
+// Âge inconnu ou "aucune préférence" => on n'exclut pas.
+export function passesAgeFilter(animal, prefs) {
+  const want = AGE_ORDER[prefs.age_preference];
+  if (want == null) return true; // no_preference / non renseigné
+  const bracket = animalAgeBracket(animal.age);
+  if (bracket == null) return true; // âge inconnu
+  return Math.abs(AGE_ORDER[bracket] - want) <= 1;
+}
+
 export function passesHardFilters(animal, shelter, prefs) {
   // Animaux internationaux (hors Belgique/France)
   // → distance ignorée. Seuls les "non" explicites sont bloqués.
@@ -63,6 +84,9 @@ export function passesHardFilters(animal, shelter, prefs) {
     )
       return false;
   }
+
+  // Âge — tranche à ±1 de la préférence (un chiot ne remonte pas un senior)
+  if (!passesAgeFilter(animal, prefs)) return false;
 
   const req = animal.requirements || {};
 
@@ -132,6 +156,11 @@ export function hardFilterReason(animal, shelter, prefs) {
       return 'Tu cherches plutôt un petit animal (NAC).';
     if (prefs.preferred_animal !== 'small_animal' && animal.species !== prefs.preferred_animal)
       return "Ce n'est pas le type d'animal que tu recherches.";
+  }
+
+  if (!passesAgeFilter(animal, prefs)) {
+    const labels = { baby: 'un bébé', young: 'un jeune', adult: 'un adulte', senior: 'un senior' };
+    return `Tu cherches plutôt ${labels[prefs.age_preference] || 'un autre âge'}, cet animal est ${labels[animalAgeBracket(animal.age)] || 'd’un autre âge'}.`;
   }
 
   const req = animal.requirements || {};
