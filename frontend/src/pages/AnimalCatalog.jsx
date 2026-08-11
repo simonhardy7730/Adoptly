@@ -49,9 +49,9 @@ function AnimalCard({ animal }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="aspect-square bg-gray-100 overflow-hidden">
+        <div className="aspect-[4/5] bg-gray-100 overflow-hidden">
           {animal.photo ? (
-            <img src={thumb(animal.photo, 400)} alt={animal.name} className="w-full h-full object-cover" style={{ objectPosition: '50% 30%' }} loading="lazy" />
+            <img src={thumb(animal.photo, 400)} alt={animal.name} className="w-full h-full object-cover" style={{ objectPosition: '50% 50%' }} loading="lazy" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-5xl bg-blue-50">
               {SPECIES_OPTIONS.find(s => s.value === animal.species)?.emoji || '🐾'}
