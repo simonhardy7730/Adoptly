@@ -111,23 +111,13 @@ export default function AdoptionSuccess() {
                   onClick={() => animal.photos?.[0] && setLightbox(animal)}
                 >
                   {animal.photos?.[0] ? (
-                    <>
-                      {/* Fond flou = remplit le carré sans jamais couper le sujet */}
-                      <img
-                        src={thumb(animal.photos[0], 400)}
-                        alt=""
-                        aria-hidden="true"
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover scale-110 blur-lg opacity-50"
-                      />
-                      {/* Photo entière au premier plan */}
-                      <img
-                        src={thumb(animal.photos[0], 400)}
-                        alt={animal.name}
-                        loading="lazy"
-                        className="relative w-full h-full object-contain transition-transform duration-300 hover:scale-105"
-                      />
-                    </>
+                    <img
+                      src={thumb(animal.photos[0], 400)}
+                      alt={animal.name}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      style={{ objectPosition: '50% 50%' }}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-5xl bg-green-50">
                       {animal.species === 'dog' ? '🐕' : animal.species === 'cat' ? '🐈' : '🐾'}
