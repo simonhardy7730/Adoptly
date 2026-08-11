@@ -489,6 +489,15 @@ router.patch('/animals/:id/reactivate', authenticate, async (req, res) => {
       .select()
       .single();
     if (error) throw error;
+
+    // L'adoption est annulée → on referme les anciens matchs marqués "adopté"
+    // pour ne pas laisser d'état incohérent (animal actif mais matchs adoptés).
+    await supabase
+      .from('matches')
+      .update({ status: 'closed' })
+      .eq('animal_id', req.params.id)
+      .eq('status', 'adopted');
+
     res.json(animal);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -503,11 +512,14 @@ router.patch('/animals/:id/reserve', authenticate, async (req, res) => {
     return res.status(403).json({ error: 'Forbidden' });
   const reserved = req.body.reserved === true;
   try {
+    // Garde-fou : le toggle réserver/disponible ne doit JAMAIS ressusciter un
+    // animal adopté. On ne bascule qu'entre 'active' et 'reserved'.
     const { data, error } = await supabase
       .from('animals')
       .update({ status: reserved ? 'reserved' : 'active' })
       .eq('id', req.params.id)
       .eq('shelter_id', req.user.id)
+      .in('status', ['active', 'reserved'])
       .select()
       .single();
     if (error) throw error;

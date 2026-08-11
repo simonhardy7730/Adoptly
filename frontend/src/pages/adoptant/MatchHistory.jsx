@@ -89,7 +89,13 @@ export default function MatchHistory() {
               const animal  = match.animals;
               const shelter = animal?.shelters;
               const photo   = animal?.photos?.[0];
-              const badge   = STATUS_BADGE[match.status] || STATUS_BADGE.interested;
+              // Le vrai statut de l'animal prime sur le statut (figé) du match :
+              // un animal adopté ne doit plus être présenté comme contactable.
+              const isAdopted  = animal?.status === 'adopted';
+              const isReserved = animal?.status === 'reserved';
+              const badge = isAdopted
+                ? STATUS_BADGE.adopted
+                : (STATUS_BADGE[match.status] || STATUS_BADGE.interested);
 
               return (
                 <motion.div
@@ -136,8 +142,18 @@ export default function MatchHistory() {
                       <p className="text-gray-400 text-xs truncate">{shelter.name}</p>
                     )}
 
-                    {/* Actions de contact */}
+                    {/* Animal adopté → il a trouvé sa famille, plus contactable */}
+                    {isAdopted ? (
+                      <p className="text-purple-600 text-xs mt-2 font-medium">
+                        🎉 A trouvé sa famille — plus disponible
+                      </p>
+                    ) : (
                     <div className="flex gap-2 mt-2 flex-wrap">
+                      {isReserved && (
+                        <span className="w-full text-amber-600 text-xs font-medium mb-0.5">
+                          ⏳ Adoption en cours (réservé)
+                        </span>
+                      )}
                       {/* Message button */}
                       <button
                         onClick={() => {
@@ -185,6 +201,7 @@ export default function MatchHistory() {
                         </a>
                       )}
                     </div>
+                    )}
                   </div>
                 </motion.div>
               );
