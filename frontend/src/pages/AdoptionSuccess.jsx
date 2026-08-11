@@ -107,7 +107,7 @@ export default function AdoptionSuccess() {
                 transition={{ delay: i * 0.05, duration: 0.3 }}
               >
                 <div
-                  className={`relative aspect-square bg-gray-100 overflow-hidden${animal.photos?.[0] ? ' cursor-pointer' : ''}`}
+                  className={`relative aspect-[4/5] bg-gray-100 overflow-hidden${animal.photos?.[0] ? ' cursor-pointer' : ''}`}
                   onClick={() => animal.photos?.[0] && setLightbox(animal)}
                 >
                   {animal.photos?.[0] ? (
