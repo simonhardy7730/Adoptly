@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import api from '../lib/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { thumb } from '../lib/img';
@@ -17,6 +17,7 @@ function ageLabel(months) {
 export default function AdoptionSuccess() {
   const [animals, setAnimals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState(null);
 
   useEffect(() => {
     document.title = 'Ils ont trouvé leur famille | Adoptly';
@@ -105,15 +106,17 @@ export default function AdoptionSuccess() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05, duration: 0.3 }}
               >
-                <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                <div
+                  className={`relative aspect-square bg-gray-100 overflow-hidden${animal.photos?.[0] ? ' cursor-pointer' : ''}`}
+                  onClick={() => animal.photos?.[0] && setLightbox(animal)}
+                >
                   {animal.photos?.[0] ? (
                     <img
                       src={thumb(animal.photos[0], 400)}
                       alt={animal.name}
                       loading="lazy"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       style={{ objectPosition: '50% 30%' }}
-                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-5xl bg-green-50">
@@ -196,6 +199,43 @@ export default function AdoptionSuccess() {
           {' · '}
           <Link to="/actualites" className="hover:text-gray-400">Actualités</Link>
         </div>
+
+        {/* Lightbox : clic sur une photo → grand format */}
+        <AnimatePresence>
+          {lightbox && (
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setLightbox(null)}
+            >
+              <button
+                onClick={() => setLightbox(null)}
+                className="absolute top-4 right-5 text-white/80 hover:text-white text-5xl leading-none"
+                aria-label="Fermer"
+              >×</button>
+              <motion.div
+                className="max-w-md w-full"
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <img
+                  src={thumb(lightbox.photos[0], 1000)}
+                  alt={lightbox.name}
+                  className="w-full rounded-2xl shadow-2xl"
+                />
+                <div className="text-center mt-4 text-white">
+                  <p className="font-bold text-xl">{lightbox.name} 💚</p>
+                  <p className="text-white/70 text-sm mt-0.5">
+                    {SPECIES_LABEL[lightbox.species] || lightbox.species}
+                    {lightbox.breed ? ` · ${lightbox.breed}` : ''}
+                    {lightbox.age != null ? ` · ${ageLabel(lightbox.age)}` : ''}
+                    {lightbox.shelters?.name ? ` · ${lightbox.shelters.name}` : ''}
+                  </p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
