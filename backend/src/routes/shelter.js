@@ -456,10 +456,10 @@ router.patch('/animals/:id/adopted', authenticate, async (req, res) => {
   if (req.user.role !== 'shelter')
     return res.status(403).json({ error: 'Forbidden' });
   try {
-    // 1. Marquer l'animal comme adopté
+    // 1. Marquer l'animal comme adopté (+ date d'adoption réelle)
     const { data: animal, error } = await supabase
       .from('animals')
-      .update({ status: 'adopted' })
+      .update({ status: 'adopted', adopted_at: new Date().toISOString() })
       .eq('id', req.params.id)
       .eq('shelter_id', req.user.id)
       .select()
@@ -482,7 +482,7 @@ router.patch('/animals/:id/reactivate', authenticate, async (req, res) => {
   try {
     const { data: animal, error } = await supabase
       .from('animals')
-      .update({ status: 'active' })
+      .update({ status: 'active', adopted_at: null })
       .eq('id', req.params.id)
       .eq('shelter_id', req.user.id)
       .eq('status', 'adopted')
