@@ -223,7 +223,7 @@ router.get('/adopted', async (_req, res) => {
       .eq('status', 'adopted')
       .not('photos', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(200);
     if (error) throw error;
     res.json(data || []);
   } catch (err) {
