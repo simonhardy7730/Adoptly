@@ -298,6 +298,9 @@ export default function AnimalForm() {
           {/* Photos */}
           <div className="card p-5 space-y-3">
             <h2 className="font-bold text-gray-700">{t('form_photos')}</h2>
+            <p className="text-xs text-gray-600 bg-blue-50 rounded-xl px-3 py-2.5 leading-relaxed">
+              📸 <strong>Une belle photo = plus d'adoptions.</strong> Privilégiez une photo <strong>verticale</strong>, nette et lumineuse, avec l'animal <strong>bien centré et de face</strong>. Évitez les captures d'écran, les images floues ou avec du texte incrusté.
+            </p>
 
             <div className="flex gap-3 flex-wrap">
               {existingPhotos.map((url, i) => (
