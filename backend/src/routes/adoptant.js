@@ -76,7 +76,7 @@ router.get('/animals', authenticate, async (req, res) => {
       .from('animals')
       .select('*, shelters(id, name, phone, email, address, latitude, longitude)')
       .eq('status', 'active')
-      .limit(500);
+      .limit(1000);
 
     if (swipedIds.length > 0) {
       query = query.not('id', 'in', `(${swipedIds.join(',')})`);
