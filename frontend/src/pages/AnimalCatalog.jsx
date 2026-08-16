@@ -36,11 +36,6 @@ const SIZE_OPTIONS = [
   { value: 'medium', label: 'Moyen',  emoji: '🐕' },
   { value: 'large',  label: 'Grand',  emoji: '🦮' },
 ];
-const OK_OPTIONS = [
-  { value: 'enfants', label: 'enfants', emoji: '👶' },
-  { value: 'chats',   label: 'chats',   emoji: '🐈' },
-  { value: 'chiens',  label: 'chiens',  emoji: '🐕' },
-];
 
 // Ligne de filtre à choix unique (label + pastilles)
 function FilterRow({ label, options, value, onSelect }) {
@@ -149,7 +144,6 @@ export default function AnimalCatalog() {
   const ageFilter = searchParams.get('age')  || 'all';
   const sexFilter = searchParams.get('sexe') || 'all';
   const sizeFilter = searchParams.get('taille') || 'all';
-  const okFilters = (searchParams.get('ok') || '').split(',').filter(Boolean); // enfants,chats,chiens
 
   const { token, role } = useAuth();
   const loggedInAdoptant = (token || localStorage.getItem('token')) && (role || localStorage.getItem('role')) === 'adoptant';
@@ -188,16 +182,11 @@ export default function AnimalCatalog() {
       .finally(() => setLoading(false));
   }, [species]);
 
-  // Filtres âge / sexe / taille / compatibilité, côté client sur la liste chargée
+  // Filtres âge / sexe / taille, côté client sur la liste chargée
   const filtered = animals.filter((a) => {
     if (ageFilter  !== 'all' && ageBracket(a.age) !== ageFilter) return false;
     if (sexFilter  !== 'all' && a.sex  !== sexFilter)  return false;
     if (sizeFilter !== 'all' && a.size !== sizeFilter) return false;
-    for (const ok of okFilters) {
-      if (ok === 'enfants' && a.compat?.children !== 'yes') return false;
-      if (ok === 'chats'   && a.compat?.cats !== 'yes') return false;
-      if (ok === 'chiens'  && !['yes', 'males', 'females'].includes(a.compat?.dogs)) return false;
-    }
     return true;
   });
 
@@ -212,11 +201,6 @@ export default function AnimalCatalog() {
   function setAge(value)     { updateParam('age', value); }
   function setSex(value)     { updateParam('sexe', value); }
   function setSize(value)    { updateParam('taille', value); }
-  function toggleOk(value) {
-    const set = new Set(okFilters);
-    set.has(value) ? set.delete(value) : set.add(value);
-    updateParam('ok', [...set].join(','));
-  }
   function resetFilters() { setSearchParams({}); setVisibleCount(24); }
 
   // Mémorise la position avant d'aller voir une fiche animal
@@ -286,23 +270,7 @@ export default function AnimalCatalog() {
           <FilterRow label="Âge" options={AGE_OPTIONS} value={ageFilter} onSelect={setAge} />
           <FilterRow label="Sexe" options={SEX_OPTIONS} value={sexFilter} onSelect={setSex} />
           <FilterRow label="Taille" options={SIZE_OPTIONS} value={sizeFilter} onSelect={setSize} />
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            <span className="text-xs font-semibold text-gray-400 w-14 text-right">Bon avec</span>
-            {OK_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => toggleOk(opt.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  okFilters.includes(opt.value)
-                    ? 'bg-green-500 text-white shadow-sm'
-                    : 'bg-white text-gray-500 border border-gray-200 hover:border-green-400 hover:text-green-600'
-                }`}
-              >
-                {opt.emoji} {opt.label}
-              </button>
-            ))}
-          </div>
-          {(ageFilter !== 'all' || sexFilter !== 'all' || sizeFilter !== 'all' || okFilters.length > 0) && (
+          {(ageFilter !== 'all' || sexFilter !== 'all' || sizeFilter !== 'all') && (
             <div className="text-center pt-1">
               <button onClick={resetFilters} className="text-xs text-gray-400 hover:text-primary underline">
                 Réinitialiser les filtres
