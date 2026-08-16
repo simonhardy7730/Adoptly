@@ -258,7 +258,7 @@ export default function AnimalCatalog() {
           </h1>
           <p className="text-gray-500 mt-2 max-w-md mx-auto">
             {animals.length > 0 && !loading
-              ? `${filtered.length} animal${filtered.length > 1 ? 'aux' : ''} ${filtered.length !== animals.length ? `sur ${animals.length} ` : ''}dans nos refuges partenaires`
+              ? `${filtered.length} ${filtered.length > 1 ? 'animaux' : 'animal'} ${filtered.length !== animals.length ? `sur ${animals.length} ` : ''}dans nos refuges partenaires`
               : 'Découvrez les animaux disponibles à l\'adoption dans nos refuges partenaires'
             }
           </p>
