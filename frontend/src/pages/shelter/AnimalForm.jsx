@@ -619,9 +619,9 @@ export default function AnimalForm() {
               label={t('form_needs_dogs')}
               name="dogs_compatible"
               options={[
-                { value: 'yes',     label: t('val_yes') },
-                { value: 'males',   label: '♂ Mâles' },
-                { value: 'females', label: '♀ Femelles' },
+                { value: 'yes',     label: 'Oui, tous' },
+                { value: 'males',   label: '♂ Mâles uniquement' },
+                { value: 'females', label: '♀ Femelles uniquement' },
                 { value: 'no',      label: t('val_no') },
                 { value: 'unknown', label: t('val_unknown') },
               ]}
