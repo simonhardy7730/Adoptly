@@ -18,6 +18,60 @@ const SPECIES_OPTIONS = [
 const SPECIES_LABEL = { dog: 'Chien', cat: 'Chat', rabbit: 'Lapin', guinea_pig: 'Cobaye', other: 'Animal' };
 const SIZE_LABEL = { small: 'Petit', medium: 'Moyen', large: 'Grand', xlarge: 'Très grand' };
 
+const AGE_OPTIONS = [
+  { value: 'all',    label: 'Tout âge', emoji: '🎂' },
+  { value: 'baby',   label: 'Bébé',     emoji: '🍼' },
+  { value: 'young',  label: 'Jeune',    emoji: '⚡' },
+  { value: 'adult',  label: 'Adulte',   emoji: '🐾' },
+  { value: 'senior', label: 'Senior',   emoji: '🧡' },
+];
+const SEX_OPTIONS = [
+  { value: 'all',    label: 'Mâle & femelle', emoji: '⚥' },
+  { value: 'male',   label: 'Mâle',           emoji: '♂️' },
+  { value: 'female', label: 'Femelle',        emoji: '♀️' },
+];
+const SIZE_OPTIONS = [
+  { value: 'all',    label: 'Toutes tailles', emoji: '📏' },
+  { value: 'small',  label: 'Petit',  emoji: '🐭' },
+  { value: 'medium', label: 'Moyen',  emoji: '🐕' },
+  { value: 'large',  label: 'Grand',  emoji: '🦮' },
+];
+const OK_OPTIONS = [
+  { value: 'enfants', label: 'enfants', emoji: '👶' },
+  { value: 'chats',   label: 'chats',   emoji: '🐈' },
+  { value: 'chiens',  label: 'chiens',  emoji: '🐕' },
+];
+
+// Ligne de filtre à choix unique (label + pastilles)
+function FilterRow({ label, options, value, onSelect }) {
+  return (
+    <div className="flex items-center gap-2 flex-wrap justify-center">
+      <span className="text-xs font-semibold text-gray-400 w-14 text-right">{label}</span>
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onSelect(opt.value)}
+          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+            value === opt.value
+              ? 'bg-secondary text-white shadow-sm'
+              : 'bg-white text-gray-500 border border-gray-200 hover:border-secondary hover:text-secondary'
+          }`}
+        >
+          {opt.emoji} {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+function ageBracket(m) {
+  if (m == null) return null;
+  if (m < 6) return 'baby';
+  if (m < 24) return 'young';
+  if (m < 84) return 'adult';
+  return 'senior';
+}
+const CATALOG_CACHE_KEY = 'adoptly_catalog_state';
+
 function ageLabel(months) {
   if (!months && months !== 0) return null;
   if (months < 12) return `${months} mois`;
@@ -25,7 +79,7 @@ function ageLabel(months) {
   return `${y} an${y > 1 ? 's' : ''}`;
 }
 
-function AnimalCard({ animal }) {
+function AnimalCard({ animal, onNavigate }) {
   const tempLabels = {
     calm: 'Calme', playful: 'Joueur', energetic: 'Énergique', cuddly: 'Câlin',
     affectionate: 'Affectueux', shy: 'Timide', mixed: 'Mixte',
@@ -42,7 +96,7 @@ function AnimalCard({ animal }) {
   const temps = animal.temperament?.split(',').map(t => t.trim()).filter(Boolean).slice(0, 2) || [];
 
   return (
-    <Link to={`/animal/${animal.id}`}>
+    <Link to={`/animal/${animal.id}`} onClick={onNavigate}>
       <motion.div
         className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
         initial={{ opacity: 0, y: 16 }}
@@ -91,7 +145,11 @@ export default function AnimalCatalog() {
   const [animals, setAnimals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(24);
-  const species = searchParams.get('espece') || 'all';
+  const species   = searchParams.get('espece') || 'all';
+  const ageFilter = searchParams.get('age')  || 'all';
+  const sexFilter = searchParams.get('sexe') || 'all';
+  const sizeFilter = searchParams.get('taille') || 'all';
+  const okFilters = (searchParams.get('ok') || '').split(',').filter(Boolean); // enfants,chats,chiens
 
   const { token, role } = useAuth();
   const loggedInAdoptant = (token || localStorage.getItem('token')) && (role || localStorage.getItem('role')) === 'adoptant';
@@ -104,19 +162,68 @@ export default function AnimalCatalog() {
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) { meta = document.createElement('meta'); meta.name = 'description'; document.head.appendChild(meta); }
     meta.content = 'Découvrez les animaux disponibles à l\'adoption dans nos refuges partenaires. Chiens, chats, NAC — trouvez votre compagnon idéal sur Adoptly.';
-    setLoading(true);
+
+    // Restauration : si on revient d'une fiche animal, on remet la liste, le
+    // compteur et la position de défilement exactement là où on les avait laissés.
+    let restored = false;
+    try {
+      const raw = sessionStorage.getItem(CATALOG_CACHE_KEY);
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (c.species === species && Array.isArray(c.animals) && c.animals.length) {
+          setAnimals(c.animals);
+          setVisibleCount(c.visibleCount || 24);
+          setLoading(false);
+          restored = true;
+          requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, c.scrollY || 0)));
+        }
+      }
+    } catch { /* ignore */ }
+    sessionStorage.removeItem(CATALOG_CACHE_KEY);
+
+    if (!restored) setLoading(true);
     api.get('/public/animals', { params: { species: species === 'all' ? undefined : species } })
-      .then(({ data }) => { setAnimals(data); setVisibleCount(24); })
-      .catch(() => setAnimals([]))
+      .then(({ data }) => { setAnimals(data); if (!restored) setVisibleCount(24); })
+      .catch(() => { if (!restored) setAnimals([]); })
       .finally(() => setLoading(false));
   }, [species]);
 
-  function setSpecies(value) {
-    if (value === 'all') {
-      setSearchParams({});
-    } else {
-      setSearchParams({ espece: value });
+  // Filtres âge / sexe / taille / compatibilité, côté client sur la liste chargée
+  const filtered = animals.filter((a) => {
+    if (ageFilter  !== 'all' && ageBracket(a.age) !== ageFilter) return false;
+    if (sexFilter  !== 'all' && a.sex  !== sexFilter)  return false;
+    if (sizeFilter !== 'all' && a.size !== sizeFilter) return false;
+    for (const ok of okFilters) {
+      if (ok === 'enfants' && a.compat?.children !== 'yes') return false;
+      if (ok === 'chats'   && a.compat?.cats !== 'yes') return false;
+      if (ok === 'chiens'  && !['yes', 'males', 'females'].includes(a.compat?.dogs)) return false;
     }
+    return true;
+  });
+
+  function updateParam(key, value) {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'all' || value === '' || value == null) next.delete(key);
+    else next.set(key, value);
+    setSearchParams(next);
+    setVisibleCount(24);
+  }
+  function setSpecies(value) { updateParam('espece', value); }
+  function setAge(value)     { updateParam('age', value); }
+  function setSex(value)     { updateParam('sexe', value); }
+  function setSize(value)    { updateParam('taille', value); }
+  function toggleOk(value) {
+    const set = new Set(okFilters);
+    set.has(value) ? set.delete(value) : set.add(value);
+    updateParam('ok', [...set].join(','));
+  }
+  function resetFilters() { setSearchParams({}); setVisibleCount(24); }
+
+  // Mémorise la position avant d'aller voir une fiche animal
+  function saveScrollState() {
+    try {
+      sessionStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify({ species, animals, visibleCount, scrollY: window.scrollY }));
+    } catch { /* ignore */ }
   }
 
   return (
@@ -151,14 +258,14 @@ export default function AnimalCatalog() {
           </h1>
           <p className="text-gray-500 mt-2 max-w-md mx-auto">
             {animals.length > 0 && !loading
-              ? `${animals.length} animaux disponibles dans nos refuges partenaires`
+              ? `${filtered.length} animal${filtered.length > 1 ? 'aux' : ''} ${filtered.length !== animals.length ? `sur ${animals.length} ` : ''}dans nos refuges partenaires`
               : 'Découvrez les animaux disponibles à l\'adoption dans nos refuges partenaires'
             }
           </p>
         </div>
 
         {/* Filtres espèce */}
-        <div className="flex justify-center gap-2 mb-8 flex-wrap">
+        <div className="flex justify-center gap-2 mb-4 flex-wrap">
           {SPECIES_OPTIONS.map(opt => (
             <button
               key={opt.value}
@@ -172,6 +279,36 @@ export default function AnimalCatalog() {
               {opt.emoji} {opt.label}
             </button>
           ))}
+        </div>
+
+        {/* Filtres avancés : âge · sexe · taille · compatibilité */}
+        <div className="max-w-3xl mx-auto mb-6 space-y-2">
+          <FilterRow label="Âge" options={AGE_OPTIONS} value={ageFilter} onSelect={setAge} />
+          <FilterRow label="Sexe" options={SEX_OPTIONS} value={sexFilter} onSelect={setSex} />
+          <FilterRow label="Taille" options={SIZE_OPTIONS} value={sizeFilter} onSelect={setSize} />
+          <div className="flex items-center gap-2 flex-wrap justify-center">
+            <span className="text-xs font-semibold text-gray-400 w-14 text-right">Bon avec</span>
+            {OK_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => toggleOk(opt.value)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  okFilters.includes(opt.value)
+                    ? 'bg-green-500 text-white shadow-sm'
+                    : 'bg-white text-gray-500 border border-gray-200 hover:border-green-400 hover:text-green-600'
+                }`}
+              >
+                {opt.emoji} {opt.label}
+              </button>
+            ))}
+          </div>
+          {(ageFilter !== 'all' || sexFilter !== 'all' || sizeFilter !== 'all' || okFilters.length > 0) && (
+            <div className="text-center pt-1">
+              <button onClick={resetFilters} className="text-xs text-gray-400 hover:text-primary underline">
+                Réinitialiser les filtres
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Bannière matching — uniquement pour les visiteurs non connectés */}
@@ -198,28 +335,28 @@ export default function AnimalCatalog() {
           <div className="flex justify-center py-20">
             <LoadingSpinner size="lg" />
           </div>
-        ) : animals.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="text-center py-20 space-y-3">
             <div className="text-5xl">🔍</div>
-            <p className="text-gray-500 font-medium">Aucun animal trouvé pour ce filtre</p>
-            <button onClick={() => setSpecies('all')} className="text-secondary text-sm hover:underline">
-              Voir tous les animaux
+            <p className="text-gray-500 font-medium">Aucun animal ne correspond à ces filtres</p>
+            <button onClick={resetFilters} className="text-secondary text-sm hover:underline">
+              Réinitialiser les filtres
             </button>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {animals.slice(0, visibleCount).map(animal => (
-                <AnimalCard key={animal.id} animal={animal} />
+              {filtered.slice(0, visibleCount).map(animal => (
+                <AnimalCard key={animal.id} animal={animal} onNavigate={saveScrollState} />
               ))}
             </div>
-            {visibleCount < animals.length && (
+            {visibleCount < filtered.length && (
               <div className="text-center mt-8">
                 <button
                   onClick={() => setVisibleCount(c => c + 24)}
                   className="bg-white text-primary font-semibold px-8 py-3 rounded-full border border-primary hover:bg-primary hover:text-white transition-colors"
                 >
-                  Voir plus d'animaux ({animals.length - visibleCount})
+                  Voir plus d'animaux ({filtered.length - visibleCount})
                 </button>
               </div>
             )}

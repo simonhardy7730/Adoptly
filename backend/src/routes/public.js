@@ -30,7 +30,7 @@ router.get('/animals', async (req, res) => {
     const { species } = req.query;
     let query = supabase
       .from('animals')
-      .select('id, name, species, breed, age, size, temperament, photos, status, shelter_id, special_needs')
+      .select('id, name, species, breed, age, size, sex, temperament, photos, status, shelter_id, special_needs, requirements')
       .eq('status', 'active')
       .order('created_at', { ascending: false });
 
@@ -66,9 +66,16 @@ router.get('/animals', async (req, res) => {
         breed: a.breed,
         age: a.age,
         size: a.size,
+        sex: a.sex,
         temperament: a.temperament,
         photo: a.photos?.[0] || null,
         special_needs: !!a.special_needs,
+        // Compatibilités (pour les filtres du catalogue)
+        compat: {
+          children: a.requirements?.children_compatible || null,
+          cats: a.requirements?.cats_compatible || null,
+          dogs: a.requirements?.dogs_compatible || null,
+        },
         shelter_name: shelter.name || null,
         city,
       };
