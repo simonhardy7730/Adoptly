@@ -5,6 +5,7 @@ import crypto  from 'crypto';
 import { supabase }          from '../lib/supabase.js';
 import { sendWelcomeEmail, sendAdminNewAdoptantEmail, sendShelterWelcomeEmail, sendAdminNewShelterEmail, sendPasswordResetEmail } from '../lib/email.js';
 import { verifyMagicToken } from '../lib/magic.js';
+import { logEmailEvent } from '../lib/email-events.js';
 
 const router = express.Router();
 
@@ -33,6 +34,9 @@ router.post('/magic', async (req, res) => {
       .eq('id', decoded.adoptantId)
       .single();
     if (error || !adoptant) return res.status(404).json({ error: 'Compte introuvable' });
+
+    // Funnel des relances : on note le clic (et son origine) — non-bloquant.
+    logEmailEvent({ type: 'magic_click', source: decoded.src || null, adoptantId: decoded.adoptantId, matchId: decoded.matchId || null });
 
     const sessionToken = makeToken({ id: adoptant.id, email: adoptant.email, role: 'adoptant' });
     res.json({ token: sessionToken, user: adoptant, role: 'adoptant', matchId: decoded.matchId || null });

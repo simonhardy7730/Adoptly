@@ -10,9 +10,10 @@ import jwt from 'jsonwebtoken';
 
 const MAGIC_TTL = '14d'; // fenêtre confortable : les adoptants lisent leurs mails tardivement
 
-export function makeMagicToken({ adoptantId, matchId = null }) {
+// src = origine du lien (ex. 'relance', 'notif') pour mesurer le funnel côté /auth/magic.
+export function makeMagicToken({ adoptantId, matchId = null, src = null }) {
   return jwt.sign(
-    { purpose: 'magic', adoptantId, matchId },
+    { purpose: 'magic', adoptantId, matchId, src },
     process.env.JWT_SECRET,
     { expiresIn: MAGIC_TTL }
   );

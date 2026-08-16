@@ -400,7 +400,7 @@ router.post('/:match_id', authenticate, async (req, res) => {
 
           if (adoptant?.email && !alreadyNotified) {
             // Lien magique : connexion en 1 clic, directement dans la conversation
-            const magicToken = makeMagicToken({ adoptantId: match.adoptant_id, matchId: match_id });
+            const magicToken = makeMagicToken({ adoptantId: match.adoptant_id, matchId: match_id, src: 'notif' });
             const magicUrl = `https://www.adoptly.fr/magic?token=${magicToken}`;
             await sendAdoptantMessageNotificationEmail({
               adoptantEmail:  adoptant.email,

@@ -557,6 +557,7 @@ app.get('/api/cron/reminder-message-adoptant', async (req, res) => {
     const { createClient } = await import('@supabase/supabase-js');
     const { sendAdoptantMessageNotificationEmail, sendEmailsThrottled } = await import('./lib/email.js');
     const { makeMagicToken } = await import('./lib/magic.js');
+    const { logEmailEvent } = await import('./lib/email-events.js');
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
     const now = new Date();
@@ -603,16 +604,19 @@ app.get('/api/cron/reminder-message-adoptant', async (req, res) => {
 
       const adoptantName = [adoptant.first_name, adoptant.last_name].filter(Boolean).join(' ') || adoptant.email;
       const preview = msg.content.length > 120 ? msg.content.slice(0, 120) + '…' : msg.content;
-      const magicUrl = `https://www.adoptly.fr/magic?token=${makeMagicToken({ adoptantId: match.adoptant_id, matchId: msg.match_id })}`;
+      const magicUrl = `https://www.adoptly.fr/magic?token=${makeMagicToken({ adoptantId: match.adoptant_id, matchId: msg.match_id, src: 'relance' })}`;
 
-      emailFns.push(() => sendAdoptantMessageNotificationEmail({
-        adoptantEmail:  adoptant.email,
-        adoptantName,
-        shelterName:    animal.shelters?.name || 'Un refuge',
-        animalName:     animal.name || 'votre animal',
-        messagePreview: preview,
-        magicUrl,
-      }));
+      emailFns.push(async () => {
+        await sendAdoptantMessageNotificationEmail({
+          adoptantEmail:  adoptant.email,
+          adoptantName,
+          shelterName:    animal.shelters?.name || 'Un refuge',
+          animalName:     animal.name || 'votre animal',
+          messagePreview: preview,
+          magicUrl,
+        });
+        await logEmailEvent({ type: 'relance_sent', source: 'relance', adoptantId: match.adoptant_id, matchId: msg.match_id });
+      });
     }
 
     const count = emailFns.length;
