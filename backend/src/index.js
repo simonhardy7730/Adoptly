@@ -545,6 +545,87 @@ app.get('/api/cron/reminder-j3-shelter', async (req, res) => {
   }
 });
 
+// ── Relance ADOPTANT — un refuge a écrit, l'adoptant n'a pas répondu ────────
+// Appelé ~2×/jour par cron-job.org. Cible : messages de refuge envoyés il y a
+// 48-72h, non lus, sans réponse de l'adoptant → on renvoie UNE fois l'email de
+// notification (avec un lien magique frais = connexion 1 clic dans la conversation).
+app.get('/api/cron/reminder-message-adoptant', async (req, res) => {
+  if (req.query.key !== process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const { sendAdoptantMessageNotificationEmail, sendEmailsThrottled } = await import('./lib/email.js');
+    const { makeMagicToken } = await import('./lib/magic.js');
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+    const now = new Date();
+    const h72 = new Date(now - 72 * 60 * 60 * 1000).toISOString();
+    const h48 = new Date(now - 48 * 60 * 60 * 1000).toISOString();
+
+    const { data: messages, error: msgErr } = await supabase
+      .from('messages')
+      .select('id, match_id, content, created_at')
+      .eq('sender_role', 'shelter')
+      .eq('read', false)
+      .gte('created_at', h72)
+      .lte('created_at', h48);
+    if (msgErr) throw msgErr;
+
+    console.log(`[Reminder-Msg-Adoptant] ${messages?.length || 0} message(s) refuge non-lu(s) 48-72h`);
+    if (!messages?.length) return res.json({ message: 'Aucun message dans la fenêtre', sent: 0 });
+
+    // Un seul rappel par conversation
+    const matchMap = {};
+    for (const m of messages) if (!matchMap[m.match_id]) matchMap[m.match_id] = m;
+    const uniques = Object.values(matchMap);
+
+    const emailFns = [];
+    let skipped = 0;
+    for (const msg of uniques) {
+      // Si l'adoptant a écrit dans cette conversation, il est déjà engagé → on saute
+      const { data: adoReplies } = await supabase
+        .from('messages').select('id').eq('match_id', msg.match_id).eq('sender_role', 'adoptant').limit(1);
+      if (adoReplies?.length > 0) { skipped++; continue; }
+
+      const { data: match } = await supabase
+        .from('matches').select('adoptant_id, animal_id').eq('id', msg.match_id).single();
+      if (!match) continue;
+
+      const { data: adoptant } = await supabase
+        .from('adoptants').select('first_name, last_name, email, questionnaire_answers').eq('id', match.adoptant_id).single();
+      // Respect du désabonnement RGPD
+      if (!adoptant?.email || adoptant?.questionnaire_answers?.email_notifications === false) { skipped++; continue; }
+
+      const { data: animal } = await supabase
+        .from('animals').select('name, shelters(name)').eq('id', match.animal_id).single();
+      if (!animal) continue;
+
+      const adoptantName = [adoptant.first_name, adoptant.last_name].filter(Boolean).join(' ') || adoptant.email;
+      const preview = msg.content.length > 120 ? msg.content.slice(0, 120) + '…' : msg.content;
+      const magicUrl = `https://www.adoptly.fr/magic?token=${makeMagicToken({ adoptantId: match.adoptant_id, matchId: msg.match_id })}`;
+
+      emailFns.push(() => sendAdoptantMessageNotificationEmail({
+        adoptantEmail:  adoptant.email,
+        adoptantName,
+        shelterName:    animal.shelters?.name || 'Un refuge',
+        animalName:     animal.name || 'votre animal',
+        messagePreview: preview,
+        magicUrl,
+      }));
+    }
+
+    const count = emailFns.length;
+    res.json({ message: 'Relance adoptant lancée (arrière-plan)', queued: count, skipped, total: messages.length });
+    sendEmailsThrottled(emailFns)
+      .then(() => console.log(`[Reminder-Msg-Adoptant] ${count} relance(s) envoyée(s), ${skipped} ignorée(s)`))
+      .catch((e) => console.error('[Reminder-Msg-Adoptant] Erreur:', e.message));
+  } catch (err) {
+    console.error('[Reminder-Msg-Adoptant] Erreur:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   // Filet de sécurité : même si le cron nocturne saute, les âges se remettent
