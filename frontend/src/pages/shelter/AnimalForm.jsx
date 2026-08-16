@@ -620,6 +620,8 @@ export default function AnimalForm() {
               name="dogs_compatible"
               options={[
                 { value: 'yes',     label: t('val_yes') },
+                { value: 'males',   label: '♂ Mâles' },
+                { value: 'females', label: '♀ Femelles' },
                 { value: 'no',      label: t('val_no') },
                 { value: 'unknown', label: t('val_unknown') },
               ]}

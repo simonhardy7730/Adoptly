@@ -43,6 +43,20 @@ function getQuestions(t) {
       ],
     },
     {
+      // Affichée uniquement si l'adoptant a déjà un chien : certains chiens à
+      // l'adoption ne s'entendent qu'avec des mâles ou qu'avec des femelles.
+      id: 'adopter_dog_sex',
+      showIf: (a) => a.existing_pets === 'dog' || a.existing_pets === 'both',
+      text: 'Votre chien est…',
+      hint: "Certains chiens à l'adoption ne s'entendent qu'avec les mâles, ou qu'avec les femelles. Ça nous aide à éviter les mauvaises rencontres.",
+      type: 'choice',
+      options: [
+        { value: 'male',   label: 'Un mâle',       emoji: '♂️' },
+        { value: 'female', label: 'Une femelle',   emoji: '♀️' },
+        { value: 'both',   label: "J'ai les deux", emoji: '🐕' },
+      ],
+    },
+    {
       id: 'has_garden',
       text: t('q4_text'),
       hint: t('q4_hint'),
@@ -188,6 +202,7 @@ const DEFAULTS = {
   has_children:     false,
   children_age:     'n/a',
   existing_pets:    'none',
+  adopter_dog_sex:  null,
   has_garden:       'no',
   housing_size:     'medium',
   works_outdoor:    'flexible',

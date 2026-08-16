@@ -106,6 +106,12 @@ export function passesHardFilters(animal, shelter, prefs) {
   }
   if (existingPets === 'dog' || existingPets === 'both') {
     if (req.dogs_compatible === 'no') return false;
+    // Compatibilité par sexe (demande des refuges) : un animal noté "OK mâles
+    // seulement" ne convient pas à un adoptant qui a une femelle, et inversement.
+    // adopter_dog_sex non renseigné (anciens profils) => on ne filtre pas sur le sexe.
+    const s = prefs.adopter_dog_sex;
+    if (req.dogs_compatible === 'males' && (s === 'female' || s === 'both')) return false;
+    if (req.dogs_compatible === 'females' && (s === 'male' || s === 'both')) return false;
   }
   // 'other' = autre animal inconnu → on ne bloque pas sur chats/chiens
 
@@ -179,6 +185,13 @@ export function hardFilterReason(animal, shelter, prefs) {
     return "Cet animal ne s'entend pas avec les chats.";
   if ((existingPets === 'dog' || existingPets === 'both') && req.dogs_compatible === 'no')
     return "Cet animal ne s'entend pas avec les chiens.";
+  if (existingPets === 'dog' || existingPets === 'both') {
+    const s = prefs.adopter_dog_sex;
+    if (req.dogs_compatible === 'males' && (s === 'female' || s === 'both'))
+      return "Cet animal ne s'entend qu'avec les chiens mâles.";
+    if (req.dogs_compatible === 'females' && (s === 'male' || s === 'both'))
+      return "Cet animal ne s'entend qu'avec les chiennes (femelles).";
+  }
 
   if (req.needs_garden === 'yes' && prefs.has_garden === 'no')
     return "Cet animal a besoin d'un jardin.";

@@ -287,8 +287,8 @@ export default function AnimalDetail() {
                 <CompatBadge
                   label={t('compat_dogs')}
                   value={req.dogs_compatible}
-                  icons={{ yes: '✅', no: '❌', unknown: '❓' }}
-                  textKeys={{ yes: 'compat_compat', no: 'compat_no', unknown: 'val_unknown' }}
+                  icons={{ yes: '✅', no: '❌', unknown: '❓', males: '♂', females: '♀' }}
+                  textKeys={{ yes: 'compat_compat', no: 'compat_no', unknown: 'val_unknown', males: 'Avec les mâles', females: 'Avec les femelles' }}
                   t={t}
                 />
               )}
