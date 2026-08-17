@@ -16,6 +16,20 @@ function ageLabel(months) {
   return m > 0 ? `${y} an${y > 1 ? 's' : ''} et ${m} mois` : `${y} an${y > 1 ? 's' : ''}`;
 }
 
+const AGE_LABELS = { baby: 'Bébé', young: 'Jeune', adult: 'Adulte', senior: 'Senior' };
+function ageBracket(m) {
+  if (m == null) return 'unknown';
+  if (m < 6) return 'baby';
+  if (m < 24) return 'young';
+  if (m < 84) return 'adult';
+  return 'senior';
+}
+// Ville depuis une adresse "Rue X, 5000 Namur" → "Namur"
+function cityOf(addr) {
+  if (!addr) return '';
+  return (addr.match(/\d{4,5}\s+([^,]+)$/)?.[1]?.trim() || addr.split(',').pop()?.trim() || '').slice(0, 40);
+}
+
 const SIZE_FR = { small: 'petit gabarit', medium: 'gabarit moyen', large: 'grand gabarit' };
 const TEMP_FR = {
   playful: 'joueur', cuddly: 'câlin', calm: 'calme', affectionate: 'affectueux',
@@ -171,12 +185,17 @@ export async function syncFbKit() {
     .order('created_at', { ascending: false });
   if (dogsErr) throw new Error(dogsErr.message);
 
-  // Noms des refuges (pour filtrer leurs mentions dans les histoires)
-  const { data: shelters } = await supabase.from('shelters').select('id, name');
+  // Refuges : nom (pour filtrer leurs mentions dans les histoires) + adresse/description (pour le kit)
+  const { data: shelters } = await supabase.from('shelters').select('id, name, address, description');
   const shelterNames = (shelters || [])
     .map(s => s.name.replace(/[^\p{L}\s']/gu, '').replace(/\s+/g, ' ').trim().toLowerCase())
     .filter(n => n.length > 3);
   const shelterById = Object.fromEntries((shelters || []).map(s => [s.id, s.name.trim()]));
+  const shelterInfoById = Object.fromEntries((shelters || []).map(s => [s.id, {
+    name: s.name.trim(),
+    city: cityOf(s.address),
+    desc: (s.description || '').replace(/\s+/g, ' ').trim().slice(0, 260),
+  }]));
 
   // Intérêt par animal (nb de swipes « j'aime ») — pour pousser en priorité
   // ceux que personne n'a encore repérés.
@@ -245,8 +264,21 @@ export async function syncFbKit() {
         id: d.id, species: speciesGroup(d.species), name: d.name.trim(), img: pub.publicUrl,
         text: caption(d, shelterNames, shelterById[d.shelter_id] || ''),
         prio: !published.has(d.id) && !(interest[d.id] > 0),
+        shelterId: d.shelter_id || '', age: ageBracket(d.age),
       };
     });
+
+  // Compteurs par refuge (dans le kit) : total + déjà publiés → aide Coralie à répartir
+  const shelterStats = {};
+  for (const it of items) {
+    const st = (shelterStats[it.shelterId] ??= { total: 0, done: 0 });
+    st.total++;
+    if (published.has(it.id)) st.done++;
+  }
+  // Liste triée : refuges avec le plus d'animaux "à publier" en tête
+  const shelterList = Object.keys(shelterStats)
+    .filter(sid => shelterInfoById[sid])
+    .sort((a, b) => (shelterStats[b].total - shelterStats[b].done) - (shelterStats[a].total - shelterStats[a].done));
 
   const nbDogs = items.filter(i => i.species === 'dog').length;
   const nbCats = items.filter(i => i.species === 'cat').length;
@@ -261,7 +293,7 @@ export async function syncFbKit() {
       lastSpecies = it.species;
     }
     cards += `
-  <div class="card" data-id="${it.id}" data-species="${it.species}" data-name="${esc(it.name.toLowerCase())}">
+  <div class="card" data-id="${it.id}" data-species="${it.species}" data-name="${esc(it.name.toLowerCase())}" data-shelter="${esc(it.shelterId)}" data-age="${it.age}">
     <a href="${it.img}" target="_blank"><img src="${it.img}" alt="${esc(it.name)}" loading="lazy"/></a>
     <div class="body">
       <h2>${esc(it.name.toUpperCase())}</h2>
@@ -272,6 +304,21 @@ export async function syncFbKit() {
     </div>
   </div>`;
   });
+
+  // Contrôles : menu déroulant refuge (avec compteur posté/total) + pastilles âge
+  const refugeOptions = [`<option value="all">🏠 Tous les refuges (${items.length})</option>`]
+    .concat(shelterList.map(sid => {
+      const info = shelterInfoById[sid], st = shelterStats[sid];
+      return `<option value="${esc(sid)}">${esc(info.name)} — ${st.done}/${st.total} postés</option>`;
+    })).join('');
+  const AGE_CHIP = { all: '🎂 Tout âge', baby: '🍼 Bébé', young: '⚡ Jeune', adult: '🐾 Adulte', senior: '🧡 Senior' };
+  const ageChips = ['all', 'baby', 'young', 'adult', 'senior']
+    .map(a => `<button class="agechip${a === 'all' ? ' active' : ''}" onclick="filtrerAge('${a}', this)">${AGE_CHIP[a]}</button>`).join('');
+  // Infos refuge (pour le descriptif, sans que Coralie aille sur le site)
+  const refugeInfoJson = JSON.stringify(Object.fromEntries(shelterList.map(sid => [sid, {
+    name: shelterInfoById[sid].name, city: shelterInfoById[sid].city,
+    desc: shelterInfoById[sid].desc, done: shelterStats[sid].done, total: shelterStats[sid].total,
+  }])));
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -303,6 +350,13 @@ export async function syncFbKit() {
   .tabs { display: flex; gap: 8px; margin-top: 8px; }
   .tab { flex: 1; padding: 11px 8px; border-radius: 12px; border: 2px solid #dde5f0; background: #fff; color: #1B4F8A; font-weight: 700; font-size: 15px; cursor: pointer; transition: all .15s; }
   .tab.active { background: #1B4F8A; color: #fff; border-color: #1B4F8A; }
+  #refugeSelect { width: 100%; margin-top: 8px; padding: 12px 14px; font-size: 15px; font-weight: 600; color: #1B4F8A; border: 2px solid #dde5f0; border-radius: 12px; background: #fff; }
+  .agechips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .agechip { flex: 1; min-width: 84px; padding: 9px 6px; border-radius: 12px; border: 2px solid #dde5f0; background: #fff; color: #667; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .agechip.active { background: #F07A2A; color: #fff; border-color: #F07A2A; }
+  .refuge-info { max-width: 1100px; margin: 0 auto 6px; padding: 12px 16px; background: #eaf2ff; border: 1px solid #d6e4ff; border-radius: 12px; color: #1B4F8A; font-size: 14px; display: none; }
+  .refuge-info strong { font-size: 15px; }
+  .refuge-info .meta { color: #5a749a; font-size: 13px; margin-top: 2px; }
   .aucun { text-align: center; color: #889; padding: 30px; display: none; }
   .prio { display: inline-block; background: #fff4e6; color: #F07A2A; font-weight: 700; font-size: 12px; padding: 4px 10px; border-radius: 8px; margin-bottom: 8px; }
   .card.fait { opacity: 0.45; }
@@ -327,13 +381,17 @@ export async function syncFbKit() {
     <button class="tab" onclick="filtrerEspece('cat', this)">🐱 Chats (${nbCats})</button>
     ${nbNacs ? `<button class="tab" onclick="filtrerEspece('nac', this)">🐰 NACs (${nbNacs})</button>` : ''}
   </div>
+  <select id="refugeSelect" onchange="filtrerRefuge(this.value)">${refugeOptions}</select>
+  <div class="agechips">${ageChips}</div>
 </div>
+<div id="refugeInfo" class="refuge-info"></div>
 <p class="aucun" id="aucun">Aucun animal ne correspond à cette recherche.</p>
 <div class="grid">
 ${cards}
 </div>
 <script>
-var filtreEspece = 'all';
+var filtreEspece = 'all', filtreRefuge = 'all', filtreAge = 'all';
+var REFUGES = ${refugeInfoJson};
 function appliquer() {
   var q = (document.getElementById('search').value || '').trim().toLowerCase();
   var cards = document.querySelectorAll('.card');
@@ -341,7 +399,9 @@ function appliquer() {
   cards.forEach(function (c) {
     var okSp = filtreEspece === 'all' || c.dataset.species === filtreEspece;
     var okQ = !q || c.dataset.name.includes(q);
-    var ok = okSp && okQ;
+    var okR = filtreRefuge === 'all' || c.dataset.shelter === filtreRefuge;
+    var okA = filtreAge === 'all' || c.dataset.age === filtreAge;
+    var ok = okSp && okQ && okR && okA;
     c.style.display = ok ? '' : 'none';
     if (ok) visibles++;
   });
@@ -360,6 +420,27 @@ function appliquer() {
 function filtrerEspece(sp, btn) {
   filtreEspece = sp;
   document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  appliquer();
+}
+function filtrerRefuge(sid) {
+  filtreRefuge = sid;
+  var box = document.getElementById('refugeInfo');
+  var info = REFUGES[sid];
+  if (sid === 'all' || !info) {
+    box.style.display = 'none';
+  } else {
+    var lieu = info.city ? '📍 ' + info.city : '';
+    var descr = info.desc ? '<div class="meta">' + info.desc + '</div>' : '';
+    box.innerHTML = '<strong>' + info.name + '</strong> — ' + info.done + '/' + info.total + ' postés' +
+      (lieu ? ' · ' + lieu : '') + descr;
+    box.style.display = 'block';
+  }
+  appliquer();
+}
+function filtrerAge(a, btn) {
+  filtreAge = a;
+  document.querySelectorAll('.agechip').forEach(function (t) { t.classList.remove('active'); });
   if (btn) btn.classList.add('active');
   appliquer();
 }
