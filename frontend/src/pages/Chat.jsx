@@ -151,17 +151,47 @@ export default function Chat() {
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-gray-800 text-sm truncate leading-tight">
-            {animal?.name || '…'}
-          </p>
-          <p className="text-gray-400 text-xs truncate leading-tight">
-            {shelter?.name || ''}
-          </p>
+          {matchInfo ? (
+            <>
+              <p className="font-bold text-gray-800 text-sm truncate leading-tight">
+                {animal?.name}
+              </p>
+              <p className="text-primary text-xs font-semibold truncate leading-tight">
+                {shelter?.name}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="h-3.5 w-28 bg-gray-200 rounded animate-pulse mb-1.5" />
+              <div className="h-3 w-20 bg-gray-100 rounded animate-pulse" />
+            </>
+          )}
         </div>
       </div>
 
+      {/* Contexte épinglé : rappelle en permanence de quel animal / refuge on parle */}
+      {matchInfo && (
+        <div className="sticky top-0 z-10 bg-blue-50/95 backdrop-blur-sm border-b border-blue-100 px-4 py-1.5 flex-shrink-0">
+          <p className="text-[11px] text-primary font-medium text-center truncate">
+            🐾 À propos de <span className="font-bold">{animal?.name}</span> · {shelter?.name}
+          </p>
+        </div>
+      )}
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+        {photo && (
+          <div className="flex flex-col items-center gap-2 pb-2">
+            <img
+              src={photo}
+              alt={animal?.name}
+              className="w-28 h-28 rounded-2xl object-cover shadow-sm"
+            />
+            <p className="text-xs text-gray-400">
+              Vous discutez de <span className="font-semibold text-gray-600">{animal?.name}</span>
+            </p>
+          </div>
+        )}
         {loading ? (
           <div className="flex justify-center items-center h-32">
             <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
