@@ -90,6 +90,12 @@ export const translations = {
     profile_account:     'Informations du compte',
     profile_email_label: 'Email',
     profile_change_pwd:  '🔑 Changer mon mot de passe',
+    profile_change_email:  "✉️ Changer l'adresse email du compte",
+    profile_new_email:     'Nouvelle adresse email',
+    profile_current_pwd:   'Mot de passe actuel (pour confirmer)',
+    profile_email_save:    'Enregistrer la nouvelle adresse',
+    profile_email_changed: '✓ Adresse email mise à jour. Vous utiliserez la nouvelle pour vous connecter.',
+    profile_email_hint:    'Utile quand un·e autre bénévole reprend le compte du refuge. Les notifications seront envoyées à la nouvelle adresse.',
 
     // ── Animal form ───────────────────────────────────────
     form_title_add:      'Ajouter un animal',
@@ -511,6 +517,12 @@ export const translations = {
     profile_account:     'Accountgegevens',
     profile_email_label: 'E-mail',
     profile_change_pwd:  '🔑 Wachtwoord wijzigen',
+    profile_change_email:  '✉️ E-mailadres van het account wijzigen',
+    profile_new_email:     'Nieuw e-mailadres',
+    profile_current_pwd:   'Huidig wachtwoord (ter bevestiging)',
+    profile_email_save:    'Nieuw adres opslaan',
+    profile_email_changed: '✓ E-mailadres bijgewerkt. Gebruik het nieuwe adres om in te loggen.',
+    profile_email_hint:    'Handig wanneer een andere vrijwilliger het account van het asiel overneemt. Meldingen gaan naar het nieuwe adres.',
 
     // ── Animal form ───────────────────────────────────────
     form_title_add:      'Dier toevoegen',

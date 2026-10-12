@@ -4,7 +4,9 @@ import sharp from 'sharp';
 import { supabase } from '../lib/supabase.js';
 import { selectIn } from '../lib/db.js';
 import { authenticate } from '../middleware/auth.js';
-import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendAdminAnimalDeletedEmail, sendEmailsThrottled, sendShelterFeedbackEmail } from '../lib/email.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { sendNewAnimalNotificationEmail, sendAnimalAdoptedEmail, sendAdminNewAnimalEmail, sendAdminAnimalDeletedEmail, sendEmailsThrottled, sendShelterFeedbackEmail, sendShelterEmailChangedEmail } from '../lib/email.js';
 import { passesHardFilters } from '../lib/matching.js';
 import { birthDateFromAge } from '../lib/ages.js';
 
@@ -160,6 +162,69 @@ router.put('/profile', authenticate, uploadMiddleware([
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Changer l'adresse email du compte ────────────────────
+// Cas d'usage : un·e autre bénévole reprend le compte d'un refuge. On exige le
+// mot de passe actuel (un jeton volé ne suffit pas), puis on prévient l'ancienne
+// ET la nouvelle adresse.
+router.put('/email', authenticate, async (req, res) => {
+  if (req.user.role !== 'shelter')
+    return res.status(403).json({ error: 'Forbidden' });
+
+  const newEmail = (req.body.new_email || '').trim().toLowerCase();
+  const password = req.body.password || '';
+
+  if (!newEmail || !password)
+    return res.status(400).json({ error: 'Nouvelle adresse et mot de passe requis' });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(newEmail))
+    return res.status(400).json({ error: "Cette adresse email n'est pas valide" });
+
+  try {
+    const { data: shelter, error: fetchErr } = await supabase
+      .from('shelters')
+      .select('id, email, name, password_hash')
+      .eq('id', req.user.id)
+      .single();
+    if (fetchErr || !shelter) return res.status(404).json({ error: 'Compte introuvable' });
+
+    const ok = await bcrypt.compare(password, shelter.password_hash || '');
+    if (!ok) return res.status(401).json({ error: 'Mot de passe incorrect' });
+
+    const oldEmail = shelter.email;
+    if (oldEmail && oldEmail.toLowerCase() === newEmail)
+      return res.status(400).json({ error: "C'est déjà l'adresse de votre compte" });
+
+    // Unicité (insensible à la casse : d'anciens comptes peuvent avoir des majuscules)
+    const { data: taken, error: takenErr } = await supabase
+      .from('shelters')
+      .select('id')
+      .ilike('email', newEmail)
+      .neq('id', shelter.id)
+      .limit(1);
+    if (takenErr) throw takenErr;
+    if (taken?.length)
+      return res.status(409).json({ error: 'Cette adresse est déjà utilisée par un autre compte' });
+
+    const { error: updErr } = await supabase
+      .from('shelters')
+      .update({ email: newEmail })
+      .eq('id', shelter.id);
+    if (updErr) {
+      if (updErr.code === '23505')
+        return res.status(409).json({ error: 'Cette adresse est déjà utilisée par un autre compte' });
+      throw updErr;
+    }
+
+    sendShelterEmailChangedEmail({ oldEmail, newEmail, name: shelter.name })
+      .catch((err) => console.error('[Email/ShelterEmailChanged]', err.message));
+
+    const token = jwt.sign({ id: shelter.id, email: newEmail, role: 'shelter' }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    res.json({ email: newEmail, token });
+  } catch (err) {
+    console.error('[Shelter/email]', err.message);
+    res.status(500).json({ error: 'Impossible de modifier l\'adresse pour le moment' });
   }
 });
 

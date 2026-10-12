@@ -4,11 +4,13 @@ import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
 
 export default function ShelterProfile() {
   const navigate = useNavigate();
   const { t }    = useLanguage();
+  const { user, role, login } = useAuth();
   const logoRef  = useRef();
   const descPhotoRef = useRef();
 
@@ -18,6 +20,14 @@ export default function ShelterProfile() {
   const [saving,  setSaving]  = useState(false);
   const [saved,   setSaved]   = useState(false);
   const [error,   setError]   = useState('');
+
+  // Changement d'adresse email du compte
+  const [emailOpen,   setEmailOpen]   = useState(false);
+  const [newEmail,    setNewEmail]    = useState('');
+  const [emailPwd,    setEmailPwd]    = useState('');
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailError,  setEmailError]  = useState('');
+  const [emailDone,   setEmailDone]   = useState(false);
 
   const [form, setForm] = useState({
     name: '', phone: '', address: '', description: '', siret: '',
@@ -47,6 +57,28 @@ export default function ShelterProfile() {
       .catch(() => navigate('/shelter/dashboard'))
       .finally(() => setLoading(false));
   }, [navigate]);
+
+  async function handleChangeEmail(e) {
+    e.preventDefault();
+    setEmailError('');
+    setEmailDone(false);
+    setEmailSaving(true);
+    try {
+      const { data } = await api.put('/shelter/email', { new_email: newEmail, password: emailPwd });
+      setProfile((p) => ({ ...p, email: data.email }));
+      // Met à jour la session (nouveau jeton + email) en gardant le mode « rester connecté »
+      const remember = localStorage.getItem('token') !== null;
+      login(data.token, { ...(user || {}), email: data.email }, role || 'shelter', remember);
+      setEmailDone(true);
+      setEmailOpen(false);
+      setNewEmail('');
+      setEmailPwd('');
+    } catch (err) {
+      setEmailError(err.response?.data?.error || t('profile_error'));
+    } finally {
+      setEmailSaving(false);
+    }
+  }
 
   async function handleSave(e) {
     e.preventDefault();
@@ -343,9 +375,42 @@ export default function ShelterProfile() {
               <span className="font-medium text-gray-700">{memberSince}</span>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-100">
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+            {emailDone && (
+              <p className="text-green-500 text-sm font-medium">{t('profile_email_changed')}</p>
+            )}
+            {!emailOpen ? (
+              <button type="button" onClick={() => { setEmailOpen(true); setEmailDone(false); }}
+                className="block text-secondary text-sm font-medium hover:underline text-left"
+              >{t('profile_change_email')}</button>
+            ) : (
+              <form onSubmit={handleChangeEmail} className="space-y-3 bg-gray-50 rounded-2xl p-4">
+                <p className="text-xs text-gray-500">{t('profile_email_hint')}</p>
+                <input type="email" required autoComplete="email" value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder={t('profile_new_email')}
+                  className="input-field w-full text-sm"
+                />
+                <input type="password" required autoComplete="current-password" value={emailPwd}
+                  onChange={(e) => setEmailPwd(e.target.value)}
+                  placeholder={t('profile_current_pwd')}
+                  className="input-field w-full text-sm"
+                />
+                {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
+                <div className="flex gap-2">
+                  <button type="submit" disabled={emailSaving}
+                    className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center"
+                  >
+                    {emailSaving ? <LoadingSpinner size="sm" className="text-white" /> : t('profile_email_save')}
+                  </button>
+                  <button type="button" onClick={() => { setEmailOpen(false); setEmailError(''); setNewEmail(''); setEmailPwd(''); }}
+                    className="btn-secondary flex-1 py-2.5 text-sm"
+                  >{t('profile_cancel')}</button>
+                </div>
+              </form>
+            )}
             <a href="/auth/forgot-password?role=shelter"
-              className="text-secondary text-sm font-medium hover:underline"
+              className="block text-secondary text-sm font-medium hover:underline"
             >{t('profile_change_pwd')}</a>
           </div>
         </div>

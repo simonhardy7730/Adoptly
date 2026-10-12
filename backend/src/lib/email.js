@@ -894,6 +894,69 @@ export async function sendAnimalAdoptedEmail({
 }
 
 /**
+ * Prévient qu'un refuge a changé l'adresse email de son compte.
+ * Envoyé à l'ANCIENNE adresse (alerte sécurité) et à la NOUVELLE (confirmation).
+ * @param {{ oldEmail: string, newEmail: string, name?: string }} params
+ */
+export async function sendShelterEmailChangedEmail({ oldEmail, newEmail, name }) {
+  const build = ({ heading, intro, warning }) => `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#F4F7FF;font-family:Inter,system-ui,sans-serif;">
+  <div style="max-width:560px;margin:0 auto;padding:40px 16px;">
+    <div style="background:#fff;border-radius:24px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.07);">
+      <div style="background:linear-gradient(135deg,#0F3460,#1B4F8A,#2271B3);padding:32px;text-align:center;">
+        <span style="color:#fff;font-weight:900;font-size:22px;letter-spacing:-0.5px;">Adoptly</span>
+        <p style="color:rgba(255,255,255,0.6);font-size:12px;margin:8px 0 0;">Sécurité de votre compte</p>
+      </div>
+      <div style="padding:32px;">
+        <h1 style="color:#1B4F8A;font-size:20px;font-weight:800;margin:0 0 12px;text-align:center;">${heading}</h1>
+        <p style="color:#6B7280;font-size:15px;line-height:1.7;margin:0 0 20px;text-align:center;">${intro}</p>
+        <div style="background:#F4F7FF;border-radius:12px;padding:16px;text-align:center;margin:0 0 20px;">
+          <p style="color:#374151;font-size:14px;margin:0;line-height:1.7;">
+            Ancienne adresse : <strong>${oldEmail}</strong><br>
+            Nouvelle adresse : <strong>${newEmail}</strong>
+          </p>
+        </div>
+        <div style="background:#FFF3E0;border-radius:12px;padding:16px;text-align:center;">
+          <p style="color:#92400E;font-size:13px;margin:0;line-height:1.5;">${warning}</p>
+        </div>
+      </div>
+      <div style="border-top:1px solid #F3F4F6;padding:20px 32px;text-align:center;">
+        <p style="color:#9CA3AF;font-size:12px;margin:0;">© ${new Date().getFullYear()} Adoptly · <a href="https://adoptly.fr" style="color:#6B7280;text-decoration:none;">adoptly.fr</a></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`.trim();
+
+  const who = name ? `de <strong>${name}</strong> ` : '';
+
+  // Alerte sur l'ancienne adresse
+  await sendEmail({
+    to: oldEmail,
+    subject: "L'adresse email de votre compte Adoptly a été modifiée",
+    html: build({
+      heading: 'Adresse email modifiée',
+      intro: `L'adresse email du compte refuge ${who}vient d'être remplacée. Les prochains emails Adoptly (nouveaux messages, adoptants intéressés…) seront envoyés à la nouvelle adresse.`,
+      warning: `⚠️ Vous n'êtes pas à l'origine de ce changement ? Écrivez-nous tout de suite à <a href="mailto:info@adoptly.fr" style="color:#92400E;">info@adoptly.fr</a>.`,
+    }),
+  });
+
+  // Confirmation sur la nouvelle adresse
+  await sendEmail({
+    to: newEmail,
+    subject: 'Votre nouvelle adresse email Adoptly est enregistrée ✅',
+    html: build({
+      heading: 'Nouvelle adresse enregistrée',
+      intro: `Cette adresse est désormais celle du compte refuge ${who}sur Adoptly. Vous l'utiliserez pour vous connecter et vous y recevrez toutes les notifications.`,
+      warning: `Votre mot de passe n'a pas changé. Besoin d'aide ? Répondez simplement à ce message.`,
+    }),
+  });
+}
+
+/**
  * Envoie l'email de bienvenue après inscription d'un refuge.
  * Inclut un template Facebook prêt à publier pour maximiser leur visibilité.
  * @param {{ email: string, name: string }} params
