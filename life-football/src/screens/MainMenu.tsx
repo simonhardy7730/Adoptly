@@ -44,6 +44,7 @@ export function MainMenu() {
   const load = useGame((s) => s.load);
   const goCreate = useGame((s) => s.goCreate);
   const del = useGame((s) => s.deleteSlot);
+  const goDemo = useGame((s) => s.goDemo);
   const [confirm, setConfirm] = useState<number | null>(null);
   const latest = saves.filter(Boolean).sort((a, b) => b!.savedAt - a!.savedAt)[0];
 
@@ -62,6 +63,7 @@ export function MainMenu() {
         <div className="row wrap" style={{ marginTop: 8 }}>
           {latest && <button className="btn primary lg" onClick={() => load(latest.slot)}>▶ Continuer</button>}
           <button className={`btn lg ${latest ? '' : 'primary'}`} onClick={goCreate} disabled={saves.every(Boolean)} title={saves.every(Boolean) ? 'Libère un emplacement pour commencer' : ''}>＋ Nouvelle carrière</button>
+          <button className="btn lg ghost" onClick={goDemo}>⚽ Match de démonstration</button>
         </div>
         <div className="card-title" style={{ marginTop: 22 }}>Sauvegardes ({saves.filter(Boolean).length}/{SLOT_COUNT})</div>
         <div className="col">

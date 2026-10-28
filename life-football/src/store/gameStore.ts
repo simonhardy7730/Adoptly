@@ -21,6 +21,8 @@ import { ageAt, formatDate } from '../game/calendar';
 import { playerOverall, applyTraining, type TrainingFocus } from '../game/stats';
 import { clamp } from '../game/rng';
 import type { MiniGameId } from '../minigames/logic';
+import type { SimConfig, SimState } from '../match2d/types';
+import { applySimToMatch, careerConfig, type SimResult } from '../match2d/build';
 
 export type TabId =
   | 'dashboard' | 'calendar' | 'training' | 'club' | 'life' | 'finance' | 'relations' | 'profile' | 'national' | 'sponsors' | 'social' | 'history';
@@ -44,7 +46,8 @@ export interface Practice {
 }
 
 interface Store {
-  screen: 'menu' | 'create' | 'game';
+  screen: 'menu' | 'create' | 'game' | 'demo';
+  match2d: SimConfig | null;
   tab: TabId;
   game: GameState | null;
   match: MatchState | null;
@@ -57,6 +60,9 @@ interface Store {
   // navigation
   goMenu: () => void;
   goCreate: () => void;
+  goDemo: () => void;
+  kickOff2D: (a: Approach, p: Preparation) => void;
+  finish2D: (r: SimResult, s: SimState) => void;
   setTab: (t: TabId) => void;
   refreshSaves: () => void;
   toast: (text: string, kind?: Toast['kind']) => void;
@@ -135,6 +141,7 @@ export const useGame = create<Store>((set, get) => {
     tab: 'dashboard',
     game: null,
     match: null,
+    match2d: null,
     matchLines: [],
     tryout: null,
     practice: null,
@@ -145,9 +152,35 @@ export const useGame = create<Store>((set, get) => {
     goMenu: () => {
       const g = get().game;
       if (g) writeSave(g, summaryOf(g));
-      set({ screen: 'menu', game: null, match: null, tryout: null, practice: null, saves: listSaves() });
+      set({ screen: 'menu', game: null, match: null, match2d: null, tryout: null, practice: null, saves: listSaves() });
     },
     goCreate: () => set({ screen: 'create' }),
+    goDemo: () => set({ screen: 'demo' }),
+    kickOff2D: (a, p) => {
+      const m0 = get().match;
+      if (!m0) return;
+      const m = clone(m0);
+      const cfg = mutate((g) => {
+        if (p === 'intense') g.player.energy = clamp(g.player.energy - 6);
+        if (p === 'light') g.player.energy = clamp(g.player.energy + 4);
+        m.approach = a;
+        m.preparation = p;
+        m.status = 'live';
+        return careerConfig(g, m, a);
+      });
+      if (cfg) set({ match: m, match2d: cfg });
+    },
+    finish2D: (r, sim) => {
+      const m0 = get().match;
+      if (!m0) return;
+      const m = clone(m0);
+      applySimToMatch(m, sim, r);
+      const lines = mutate((g) => {
+        if (r.userInjured && !g.player.injury) g.player.injury = { name: 'Coup reçu en match', weeksLeft: 2, severity: 1 };
+        return concludeMatch(g, m);
+      }, true) ?? [];
+      set({ match: m, match2d: null, matchLines: lines.length ? lines : ['Match terminé.'] });
+    },
     setTab: (tab) => set({ tab }),
     refreshSaves: () => set({ saves: listSaves() }),
     toast,
@@ -327,7 +360,7 @@ export const useGame = create<Store>((set, get) => {
         set({ matchLines: lines.length ? lines : ['Match terminé.'] });
         return;
       }
-      set({ match: null, matchLines: [] });
+      set({ match: null, match2d: null, matchLines: [] });
     },
 
     startPractice: (game) => {

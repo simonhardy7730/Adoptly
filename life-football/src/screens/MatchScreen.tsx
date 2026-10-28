@@ -5,6 +5,7 @@ import { chanceLabel, myTeam, oppTeam, resultLabel, type Approach, type Preparat
 import { Crest, StatBar, ratingColor } from '../ui/kit';
 import { ATTR_LABELS } from '../content/profiles';
 import { STATUS_LABELS } from '../game/career';
+import { Match2DView } from '../match2d/Match2DView';
 
 const APPROACHES: { id: Approach; label: string; desc: string }[] = [
   { id: 'focused', label: '🎯 Concentré', desc: 'Bonus lié à ton mental. Équilibré.' },
@@ -27,6 +28,11 @@ export function MatchScreen() {
   const [approach, setApproach] = useState<Approach>('focused');
   const [prep, setPrep] = useState<Preparation>('normal');
   const [shown, setShown] = useState(0);
+  const [mode, setMode] = useState<'2d' | 'text'>('2d');
+  const match2d = useGame((s) => s.match2d);
+  const kickOff2D = useGame((s) => s.kickOff2D);
+  const finish2D = useGame((s) => s.finish2D);
+  const is2d = m.meta?.mode === '2d';
 
   useEffect(() => {
     if (shown < m.ticker.length) {
@@ -35,15 +41,29 @@ export function MatchScreen() {
     }
   }, [shown, m.ticker]);
 
-  const revealed = m.ticker.slice(0, shown);
+  const revealed = m.ticker.slice(0, is2d ? m.ticker.length : shown);
   const homeIsMine = m.playerHome;
   const goalsFor = revealed.filter((x) => x.kind === 'goal_for').length;
   const goalsAgainst = revealed.filter((x) => x.kind === 'goal_against').length;
   const score = homeIsMine ? [goalsFor, goalsAgainst] : [goalsAgainst, goalsFor];
   const minute = revealed.length ? revealed[revealed.length - 1].minute : 0;
-  const caughtUp = shown >= m.ticker.length;
+  const caughtUp = is2d || shown >= m.ticker.length;
   const moment = caughtUp && m.status === 'moment' ? m.moments[m.momentIdx] : null;
   const finished = caughtUp && m.status === 'done';
+
+  if (match2d) {
+    return (
+      <div className="fullscreen">
+        <div className="inner">
+          <div className="row between mb wrap">
+            <div><div className="card-title" style={{ margin: 0 }}>{m.competition}</div><h1 className="display" style={{ fontSize: 26 }}>Match en direct</h1></div>
+            {m.scoutWatching && m.kind !== 'street' && <span className="pill gold">🔭 Des recruteurs sont dans les tribunes</span>}
+          </div>
+          <Match2DView config={match2d} onFinish={finish2D} finishLabel="Voir mon bilan ▶" title={m.competition} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fullscreen">
@@ -78,7 +98,13 @@ export function MatchScreen() {
             <div className="card">
               <h3>🧠 Approche mentale</h3>
               {APPROACHES.map((a) => <button key={a.id} className={`pick-card ${approach === a.id ? 'on' : ''}`} style={{ marginBottom: 8 }} onClick={() => setApproach(a.id)}><b>{a.label}</b><div className="tiny muted">{a.desc}</div></button>)}
-              <button className="btn primary lg block" onClick={() => { setShown(0); kickOff(approach, prep); }}>Coup d’envoi ▶</button>
+              <div className="card-title" style={{ marginTop: 6 }}>Affichage du match</div>
+              <div className="seg mb">
+                <button className={mode === '2d' ? 'on' : ''} onClick={() => setMode('2d')}>🎥 Animé 2D</button>
+                <button className={mode === 'text' ? 'on' : ''} onClick={() => setMode('text')}>🎙️ Commenté (tes décisions)</button>
+              </div>
+              <div className="tiny dim mb">{mode === '2d' ? 'Tu regardes le match en spectateur : ton joueur agit selon ses statistiques, ta forme et ton approche.' : 'Le match est raconté et tu choisis ton action dans les moments clés.'}</div>
+              <button className="btn primary lg block" onClick={() => { setShown(0); if (mode === '2d') kickOff2D(approach, prep); else kickOff(approach, prep); }}>Coup d’envoi ▶</button>
             </div>
           </div>
         ) : (
@@ -124,7 +150,7 @@ export function MatchScreen() {
                     <div className="grid g3" style={{ flex: 1 }}>
                       <div><div className="tiny dim">Buts</div><b className="display" style={{ fontSize: 22 }}>{m.stats.goals}</b></div>
                       <div><div className="tiny dim">Passes déc.</div><b className="display" style={{ fontSize: 22 }}>{m.stats.assists}</b></div>
-                      <div><div className="tiny dim">Moments réussis</div><b className="display" style={{ fontSize: 22 }}>{m.stats.momentsWon}/{m.stats.momentsTotal}</b></div>
+                      <div><div className="tiny dim">{is2d ? 'Passes réussies' : 'Moments réussis'}</div><b className="display" style={{ fontSize: 22 }}>{m.stats.momentsWon}/{m.stats.momentsTotal}</b></div>
                     </div>
                   </div>
                   <div className="sep" />

@@ -9,7 +9,7 @@ Tout est fictif : clubs, marques, personnages, compétitions.
 cd life-football
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 39 tests (règles de jeu + parcours complets simulés)
+npm test           # 45 tests (règles de jeu + parcours complets simulés)
 npm run build      # build de production dans dist/
 ```
 
@@ -80,6 +80,33 @@ pouvoir être dupliquées par langue.
 - Sélections jeunes (U15→U21) et A, double nationalité, verrouillage après match officiel A.
 - Finances avec historique et comparaison revenus sportifs / commerciaux, impôts simplifiés.
 - 3 emplacements de sauvegarde, sauvegarde auto et manuelle.
+
+## Moteur de match 2D (`src/match2d/`)
+
+- `sim.ts` : simulation à pas fixe (1/30 s) et graine. Chaque action (passe, tir, tacle,
+  dribble, centre, dégagement) est **résolue d'abord** à partir des statistiques, de la
+  position, de la pression adverse, de l'endurance et de la tactique ; le ballon suit
+  ensuite une trajectoire continue jusqu'à ce résultat (jamais de téléportation, y compris
+  pour les remises en jeu). IA collective par rôle : ancres de formation décalées selon le
+  ballon et la possession, presseurs, soutiens du porteur, marquage de zone, appels en
+  profondeur, gardien qui couvre son but. Coups d'envoi, touches, six mètres, corners
+  (duel aérien puis tête), coups francs directs, penalties, fautes, cartons, expulsions,
+  blessures, mi-temps, remplacements (`substitute`).
+- `render.ts` : terrain Canvas (bandes, lignes, surfaces, cages et filets), joueurs
+  vectoriels animés (marche, course, conduite, contrôle, passe, tir, tacle, tête,
+  plongeon, arrêt, au sol, célébration), ballon avec ombre et hauteur, caméra avec zoom.
+- `Match2DView.tsx` : coup d'envoi, pause / reprise, ×1 à ×8, « Moment fort », « Fin du
+  match », affichage des noms et des lignes tactiques, effets (bannières, ralenti, zoom)
+  désactivables, statistiques en direct, résumé et notes de fin de match.
+- `build.ts` : équipes de démonstration, intégration du joueur de carrière (poste,
+  numéro, apparence, statistiques, énergie, approche mentale), entrée en jeu en cours de
+  match, conversion du résultat vers la carrière (note, réputation, progression).
+- Formations dans `formations.ts` (4-4-2, 4-3-3, 2-3-1 pour le foot à 7 des moins de
+  11 ans et des matchs de quartier). Tactique par équipe : mentalité, pressing, largeur.
+
+Le résultat ne dépend pas de la vitesse d'affichage (testé : même match quelle que soit la
+façon de le regarder). Pas encore faits : hors-jeu, consignes tactiques modifiables en
+cours de match, remplacements choisis par le joueur.
 
 ## Points d'extension pour les prochains systèmes
 
