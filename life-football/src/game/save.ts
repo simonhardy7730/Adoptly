@@ -76,9 +76,9 @@ export function writeSave(state: GameState, summary: Omit<SaveSummary, 'slot' | 
 
 export function readSave(slot: number, storage = defaultStorage()): GameState | null {
   if (!storage) return null;
-  const raw = storage.getItem(PREFIX + slot);
-  if (!raw) return null;
   try {
+    const raw = storage.getItem(PREFIX + slot);
+    if (!raw) return null;
     const env = JSON.parse(raw) as SaveEnvelope;
     const st = migrate(env.state);
     st.slot = slot;
@@ -91,12 +91,12 @@ export function readSave(slot: number, storage = defaultStorage()): GameState | 
 export function listSaves(storage = defaultStorage()): (SaveSummary | null)[] {
   const out: (SaveSummary | null)[] = [];
   for (let i = 0; i < SLOT_COUNT; i++) {
-    const raw = storage?.getItem(PREFIX + i);
-    if (!raw) {
-      out.push(null);
-      continue;
-    }
     try {
+      const raw = storage?.getItem(PREFIX + i);
+      if (!raw) {
+        out.push(null);
+        continue;
+      }
       out.push((JSON.parse(raw) as SaveEnvelope).summary);
     } catch {
       out.push(null);
@@ -106,7 +106,11 @@ export function listSaves(storage = defaultStorage()): (SaveSummary | null)[] {
 }
 
 export function deleteSave(slot: number, storage = defaultStorage()) {
-  storage?.removeItem(PREFIX + slot);
+  try {
+    storage?.removeItem(PREFIX + slot);
+  } catch {
+    /* stockage indisponible */
+  }
 }
 
 export class MemoryStorage implements StorageLike {
