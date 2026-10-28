@@ -8,6 +8,7 @@ import { applyTraining, FOCUS_SPLIT, type TrainingFocus } from './stats';
 import { background } from '../content/profiles';
 import { food } from '../content/foods';
 import { createClubOffer } from './career';
+import { rollInjury } from './injuries';
 import { chance, clamp, round1 } from './rng';
 import { ATTR_LABELS } from '../content/profiles';
 
@@ -62,11 +63,9 @@ function trainAction(focus: TrainingFocus): ActionDef {
       s.player.energy = clamp(s.player.energy - info.energy);
       s.player.form = clamp(s.player.form + (focus === 'physical' ? 3 : 1.2));
       wearBoots(s, focus === 'tactical' || focus === 'mental' ? 0.5 : 2);
-      const injuryRisk = s.player.energy < 25 ? 0.06 : s.player.energy < 40 ? 0.02 : 0.004;
-      if (focus !== 'tactical' && focus !== 'mental' && chance(s, injuryRisk + (s.player.boots.wear > 85 ? 0.01 : 0))) {
-        s.player.injury = { name: 'Élongation à l’entraînement', weeksLeft: 2, severity: 1 };
-        journal(s, 'Blessure à l’entraînement : élongation (2 semaines).', '🩹');
-        return 'Aïe ! Une douleur à la cuisse en fin de séance : élongation, 2 semaines d’arrêt.';
+      if (focus !== 'tactical' && focus !== 'mental') {
+        const inj = rollInjury(s, 'training', 'à l’entraînement', focus === 'physical' ? [{ label: 'Séance physique', mult: 1.3 }] : []);
+        if (inj) return `Aïe ! ${inj.name} en fin de séance : environ ${inj.weeksLeft} semaine(s) d’arrêt.`;
       }
       return `Séance terminée. ${fmtGains(gains)}`;
     },

@@ -80,7 +80,7 @@ export function applyEffects(s: GameState, e: Effects) {
   if (e.rep) applyRep(s, e.rep);
   if (e.flags) for (const [k, v] of Object.entries(e.flags)) s.events.flags[k] = (s.events.flags[k] ?? 0) + v;
   if (e.injury && !p.injury) {
-    p.injury = { name: e.injury.name, weeksLeft: e.injury.weeks, severity: e.injury.severity };
+    p.injury = { name: e.injury.name, weeksLeft: e.injury.weeks, weeksTotal: e.injury.weeks, severity: e.injury.severity, phase: 'repos', treatment: 'standard', since: s.t };
     notify(s, 'injury', 'Blessure', `${e.injury.name} — indisponible environ ${e.injury.weeks} semaine(s).`);
   }
   if (e.schedule) s.events.scheduled.push({ eventId: e.schedule.eventId, at: s.t + e.schedule.inWeeks });

@@ -66,10 +66,47 @@ export interface Appearance {
   accessory: string;
 }
 
+export type BodyPart = 'cheville' | 'genou' | 'cuisse' | 'mollet' | 'adducteurs' | 'pied' | 'épaule' | 'dos' | 'tête';
+export type InjuryPhase = 'repos' | 'rééducation';
+export type Treatment = 'standard' | 'rushed' | 'specialist';
+
 export interface Injury {
   name: string;
   weeksLeft: number;
   severity: 1 | 2 | 3;
+  id?: string; // entrée du catalogue (content/injuries.ts)
+  part?: BodyPart;
+  weeksTotal?: number;
+  phase?: InjuryPhase;
+  treatment?: Treatment;
+  cause?: string;
+  since?: number;
+}
+
+export interface InjuryRecord {
+  id: string;
+  name: string;
+  part: BodyPart;
+  severity: 1 | 2 | 3;
+  weeks: number;
+  t: number;
+  cause: string;
+}
+
+/** Style de jeu d'un entraîneur : c'est lui qui décide du système et des consignes. */
+export type CoachStyle = 'offensif' | 'equilibre' | 'defensif' | 'pressing' | 'possession';
+export type CoachTemperament = 'exigeant' | 'paternel' | 'pragmatique';
+export type Instruction = 'press' | 'stay_high' | 'safe' | 'support' | 'freedom' | 'hold_line' | 'short_build';
+
+export interface CoachProfile {
+  name: string;
+  style: CoachStyle;
+  temperament: CoachTemperament;
+  formation: string;
+  values: AttrKey[];
+  since: number;
+  lastTalk: Record<string, number>;
+  focus: { attr: AttrKey; until: number } | null;
 }
 
 export interface Boots {
@@ -89,6 +126,9 @@ export interface PlayerState {
   nutrition: number; // 0..100 (moyenne glissante)
   sleepMode: SleepMode;
   injury: Injury | null;
+  injuryHistory: InjuryRecord[];
+  load: number; // charge d'entraînement et de matchs, 0..100
+  returnUntil: number; // semaine jusqu'à laquelle le joueur revient de blessure (risque accru)
   school: { grade: number; trend: number };
   boots: Boots;
 }
@@ -177,6 +217,7 @@ export interface ClubMembership {
   joined: number;
   status: SquadStatus;
   coachId: string;
+  coach: CoachProfile;
   league: LeagueTeam[];
   fixtures: Array<[string, string]>[]; // journées
   matchday: number;

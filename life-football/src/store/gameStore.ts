@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import '../game/index';
-import type { GameState, SleepMode, SponsorTerms, SocialPost } from '../game/types';
+import type { GameState, SleepMode, SponsorTerms, SocialPost, Treatment } from '../game/types';
 import { createGame, type CreationInput } from '../game/create';
 import { clone, addMoney, changeRelation } from '../game/helpers';
 import { readSave, writeSave, deleteSave, listSaves, type SaveSummary } from '../game/save';
@@ -23,9 +23,11 @@ import { clamp } from '../game/rng';
 import type { MiniGameId } from '../minigames/logic';
 import type { SimConfig, SimState } from '../match2d/types';
 import { applySimToMatch, careerConfig, type SimResult } from '../match2d/build';
+import { inflictInjury, pickInjury, rollInjury, setTreatment, TREATMENTS } from '../game/injuries';
+import { matchPlan, meetCoach, type CoachTopic } from '../game/coach';
 
 export type TabId =
-  | 'dashboard' | 'calendar' | 'training' | 'club' | 'life' | 'finance' | 'relations' | 'profile' | 'national' | 'sponsors' | 'social' | 'history';
+  | 'dashboard' | 'calendar' | 'training' | 'club' | 'coach' | 'health' | 'life' | 'finance' | 'relations' | 'profile' | 'national' | 'sponsors' | 'social' | 'history';
 
 export interface Toast {
   id: number;
@@ -61,7 +63,7 @@ interface Store {
   goMenu: () => void;
   goCreate: () => void;
   goDemo: () => void;
-  kickOff2D: (a: Approach, p: Preparation) => void;
+  kickOff2D: (a: Approach, p: Preparation, followed?: boolean) => void;
   finish2D: (r: SimResult, s: SimState) => void;
   setTab: (t: TabId) => void;
   refreshSaves: () => void;
@@ -79,6 +81,8 @@ interface Store {
   admin: (id: string) => void;
   advance: (force?: boolean) => void;
   chooseEvent: (choiceId: string) => void;
+  talkToCoach: (topic: CoachTopic) => void;
+  treat: (tr: Treatment) => void;
   choosePrologue: (choiceId: string) => string | null;
   finishPrologue: () => void;
   setSleep: (m: SleepMode) => void;
@@ -92,7 +96,7 @@ interface Store {
   closeTryout: () => void;
   // matchs
   street: () => void;
-  kickOff: (a: Approach, p: Preparation) => void;
+  kickOff: (a: Approach, p: Preparation, followed?: boolean) => void;
   choose: (optionId: string) => void;
   endMatch: () => void;
   // entraînement mini-jeux
@@ -107,6 +111,12 @@ interface Store {
 }
 
 let toastId = 1;
+
+/** Enregistre dans le match le plan du coach et la décision du joueur (suivre la consigne ou non). */
+function attachPlan(g: GameState, m: MatchState, followed: boolean) {
+  const plan = matchPlan(g, m);
+  m.meta = { ...(m.meta ?? {}), formation: plan.formation, instruction: plan.instruction ?? '', followed: plan.instruction ? (followed ? 1 : 0) : 1, coach: plan.coachName };
+}
 
 function summaryOf(g: GameState) {
   const club = currentClub(g);
@@ -156,7 +166,7 @@ export const useGame = create<Store>((set, get) => {
     },
     goCreate: () => set({ screen: 'create' }),
     goDemo: () => set({ screen: 'demo' }),
-    kickOff2D: (a, p) => {
+    kickOff2D: (a, p, followed = true) => {
       const m0 = get().match;
       if (!m0) return;
       const m = clone(m0);
@@ -166,6 +176,7 @@ export const useGame = create<Store>((set, get) => {
         m.approach = a;
         m.preparation = p;
         m.status = 'live';
+        attachPlan(g, m, followed);
         return careerConfig(g, m, a);
       });
       if (cfg) set({ match: m, match2d: cfg });
@@ -176,8 +187,12 @@ export const useGame = create<Store>((set, get) => {
       const m = clone(m0);
       applySimToMatch(m, sim, r);
       const lines = mutate((g) => {
-        if (r.userInjured && !g.player.injury) g.player.injury = { name: 'Coup reçu en match', weeksLeft: 2, severity: 1 };
-        return concludeMatch(g, m);
+        const extra: string[] = [];
+        // Blessure : coup reçu dans le match animé, sinon risque lié à la fatigue et à la charge.
+        const inj = r.userInjured ? inflictInjury(g, pickInjury(g, 'contact'), 'touché en match') : r.userTally && r.userTally.minutes > 0 ? rollInjury(g, 'match', 'en match', [{ label: 'Chocs déjà simulés', mult: 0.6 }]) : null;
+        if (inj) extra.push(`Blessure : ${inj.name} (~${inj.weeksLeft} sem.)`);
+        if (r.userSubbedOff) extra.push(`Le coach t’a fait sortir à la ${r.userSubbedOff}e minute.`);
+        return [...concludeMatch(g, m), ...extra];
       }, true) ?? [];
       set({ match: m, match2d: null, matchLines: lines.length ? lines : ['Match terminé.'] });
     },
@@ -262,6 +277,20 @@ export const useGame = create<Store>((set, get) => {
       mutate((g) => finishPrologue(g), true);
       set({ tab: 'dashboard' });
     },
+    talkToCoach: (topic) => {
+      const r = mutate((g) => meetCoach(g, topic), true);
+      if (r) toast(r.message, r.ok ? 'info' : 'warning');
+    },
+    treat: (tr) => {
+      const r = mutate((g) => {
+        if (tr === 'specialist') {
+          if (g.money < TREATMENTS.specialist.cost) return 'Pas assez d’argent pour un spécialiste.';
+          addMoney(g, -TREATMENTS.specialist.cost, 'health', 'Spécialiste (blessure)');
+        }
+        return setTreatment(g, tr);
+      }, true);
+      if (r) toast(r, 'info');
+    },
     chooseEvent: (choiceId) => {
       const r = mutate((g) => resolveEvent(g, choiceId), true);
       if (r) toast(r.message, r.ok ? 'info' : 'warning');
@@ -338,11 +367,14 @@ export const useGame = create<Store>((set, get) => {
       if (!r.ok || !r.match) return toast(r.message, 'warning');
       set({ match: r.match, matchLines: [] });
     },
-    kickOff: (a, p) => {
+    kickOff: (a, p, followed = true) => {
       const m0 = get().match;
       if (!m0) return;
       const m = clone(m0);
-      mutate((g) => beginMatch(g, m, a, p));
+      mutate((g) => {
+        attachPlan(g, m, followed);
+        beginMatch(g, m, a, p);
+      });
       set({ match: m });
     },
     choose: (optionId) => {

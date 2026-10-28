@@ -7,6 +7,7 @@ import { advance, kickOff, resolveMoment, type Approach, type MatchState, type P
 import { sponsorMatchBonus } from './sponsors';
 import { performAction } from './actions';
 import { notify } from './helpers';
+import { coachVerdict } from './coach';
 
 export function createMatchFor(s: GameState, kind: 'league' | 'national' | 'street'): MatchState | null {
   if (kind === 'league') return setupLeagueMatch(s);
@@ -38,11 +39,13 @@ export function chooseInMatch(s: GameState, m: MatchState, optionId: string) {
 export function concludeMatch(s: GameState, m: MatchState): string[] {
   const before = { sport: s.reputation.sport, pop: s.reputation.popularity, morale: s.player.morale, energy: s.player.energy, coach: s.npcs.find((n) => n.role === 'coach')?.relation };
   const lines = applyMatchResult(s, m);
+  const verdict = coachVerdict(s, m);
   const d = (a: number, b: number) => `${b - a >= 0 ? '+' : ''}${(b - a).toFixed(1)}`;
   lines.push(`Réputation sportive ${d(before.sport, s.reputation.sport)} · Popularité ${d(before.pop, s.reputation.popularity)}`);
   lines.push(`Moral ${d(before.morale, s.player.morale)} · Énergie ${d(before.energy, s.player.energy)}`);
   const coach = s.npcs.find((n) => n.role === 'coach');
   if (coach && before.coach !== undefined && m.kind === 'league') lines.push(`Relation avec l’entraîneur ${d(before.coach, coach.relation)}`);
+  if (verdict) lines.push(verdict);
   if (m.kind === 'national') applyNationalResult(s, m);
   if (m.entersAt < 90 && m.kind !== 'street') sponsorMatchBonus(s, m.stats.goals, m.kind === 'national');
   if (m.kind !== 'street' && m.rating !== null && m.rating >= 8.5 && s.social.unlocked && !s.social.posts.some((p) => p.t >= s.t - 2)) {

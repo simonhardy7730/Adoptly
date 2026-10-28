@@ -8,12 +8,14 @@ import { currentClub, ensureSeason, expireTryouts, newSeason, seasonEnd, simulat
 import { applyTraining, naturalGrowth, type TrainingFocus } from './stats';
 import { food, WEEKLY_PORTIONS } from '../content/foods';
 import { background } from '../content/profiles';
-import { clamp, nextFloat } from './rng';
+import { chance, clamp, nextFloat } from './rng';
 import { weeklySlots } from './actions';
 import { generateSponsorOffers, monthlySponsorCycle, activeContracts } from './sponsors';
 import { checkCallup, nationalMatchDue } from './national';
 import { weeklySocial } from './social';
 import { rollEvents } from './events';
+import { replaceCoach } from './coach';
+import { maybeNiggle, updateLoad, weeklyHeal } from './injuries';
 
 export type Blocking =
   | { type: 'event' }
@@ -36,6 +38,7 @@ export function leaguePlayable(s: GameState): boolean {
   if (!s.membership || !isLeagueWeek(s.t, s.startYear) || s.weekDone.league) return false;
   if (s.player.injury) return false;
   if (s.membership.status === 'bench') return false;
+  if ((s.events.flags.coachRest ?? -1) === s.t) return false; // ménagé par le coach
   const cu = s.national.callupHistory.find((c) => c.week === s.t && c.status === 'played');
   if (cu || (s.national.pendingCallup?.week === s.t && s.national.pendingCallup.status === 'accepted')) return false;
   const md = leagueMatchdayIndex(s.t, s.startYear);
@@ -76,7 +79,7 @@ export function finalizeWeek(s: GameState): WeekReport {
       simulateMatchday(s, md);
       const me = s.membership.league.find((t) => t.isPlayerTeam)!;
       const pos = standings(s.membership.league).findIndex((t) => t.isPlayerTeam) + 1;
-      lines.push(`Match de championnat sans toi (${p.injury ? 'blessé' : s.membership.status === 'bench' ? 'non retenu' : 'absent'}). ${club?.name} : ${me.w}V ${me.d}N ${me.l}D, ${pos}e.`);
+      lines.push(`Match de championnat sans toi (${p.injury ? 'blessé' : (s.events.flags.coachRest ?? -1) === s.t ? 'ménagé par le coach' : s.membership.status === 'bench' ? 'non retenu' : 'absent'}). ${club?.name} : ${me.w}V ${me.d}N ${me.l}D, ${pos}e.`);
       if (!p.injury) p.morale = clamp(p.morale - 3);
     }
   }
@@ -129,14 +132,16 @@ export function finalizeWeek(s: GameState): WeekReport {
   p.energy = clamp(p.energy + recovery);
   if (p.sleepMode === 'late') p.morale = clamp(p.morale + 2);
   if (p.sleepMode === 'early') p.morale = clamp(p.morale - 0.5);
-  if (p.injury) {
-    p.injury.weeksLeft -= 0.8 + p.nutrition / 300 + (p.sleepMode === 'early' ? 0.1 : 0);
-    if (p.injury.weeksLeft <= 0) {
-      notify(s, 'success', 'Rétabli', `Tu es guéri : ${p.injury.name} n’est plus qu’un mauvais souvenir.`);
-      journal(s, `Retour de blessure (${p.injury.name}).`, '💪');
-      p.injury = null;
-    }
-  }
+  // Blessures : guérison par phases (repos, rééducation), rechute possible.
+  const healed = weeklyHeal(s);
+  if (healed) lines.push(healed);
+  // Charge de travail de la semaine et alertes musculaires.
+  const sessions = s.weekLog.filter((a) => a.startsWith('train_') || a === 'private_coach' || a === 'street_match').length;
+  const playedLeague = !!s.membership && s.membership.lastMatchWeek === s.t;
+  const minutes = playedLeague ? (s.membership!.status === 'starter' ? 90 : 30) : 0;
+  updateLoad(s, sessions, minutes + (s.weekDone.national ? 70 : 0), !!club && !holidays && !p.injury);
+  if (p.load > 80) lines.push(`Charge de travail très élevée (${Math.round(p.load)}/100) : risque de blessure accru.`);
+  maybeNiggle(s);
   // Le moral revient doucement vers l'équilibre.
   p.morale = clamp(p.morale + (62 - p.morale) * 0.06);
 
@@ -185,7 +190,13 @@ export function finalizeWeek(s: GameState): WeekReport {
     naturalGrowth(s);
     monthlySponsorCycle(s);
     generateSponsorOffers(s);
-    if (s.membership) updateSquadStatus(s);
+    if (s.membership) {
+      updateSquadStatus(s);
+      // Un entraîneur dont l'équipe est en bas de classement peut être remercié.
+      const pos = standings(s.membership.league).findIndex((t) => t.isPlayerTeam) + 1;
+      if (s.membership.matchday >= 8 && pos >= 9 && chance(s, 0.3)) replaceCoach(s, 'mauvais résultats');
+      if (s.membership.coach.focus && s.membership.coach.focus.until < s.t) s.membership.coach.focus = null;
+    }
     if (club && club.tier >= 3 && age >= 16) addMoney(s, club.tier === 4 ? 420 : 300, 'salary', `Indemnité de formation ${club.name}`);
     if (activeContracts(s).length && age >= 16) {
       const tax = Math.round(s.ledger.filter((x) => x.t > s.t - 4 && (x.category === 'sponsor' || x.category === 'sponsor_bonus' || x.category === 'salary')).reduce((a, x) => a + x.amount, 0) * 0.15);

@@ -71,7 +71,7 @@ export function Match2DView({ config, onFinish, finishLabel = 'Terminer', title 
   const s = simRef.current;
   const [t0, t1] = s.cfg.teams;
   const banner = opts.effects && s.banner && s.t < s.banner.until ? s.banner : null;
-  const keyEvents = s.events.filter((e) => e.key || e.type === 'shot').slice(-14).reverse();
+  const keyEvents = s.events.filter((e) => e.key || e.type === 'shot' || e.type === 'sub').slice(-14).reverse();
   const poss = s.stats[0].possession + s.stats[1].possession || 1;
   const user = s.players.find((p) => p.isUser && p.onPitch);
   const skip = () => {

@@ -50,6 +50,7 @@ export interface PlayerSetup {
   isUser?: boolean;
   look?: Look;
   energy?: number; // 0..1 au coup d'envoi
+  instruction?: string; // consigne individuelle du coach (voir content/coaches.ts)
 }
 
 export interface Tactic {
@@ -67,6 +68,8 @@ export interface TeamSetup {
   tactic: Tactic;
   players: PlayerSetup[]; // dans l'ordre des postes de la formation
   bench: PlayerSetup[];
+  /** L'entraîneur décide de la tactique, des ajustements et des remplacements. */
+  coach?: { name: string; temperament: string; style: string };
 }
 
 export interface PitchDims {
@@ -118,6 +121,8 @@ export interface SimPlayer {
   stats: SimStats;
   look?: Look;
   isUser: boolean;
+  instruction: string | null;
+  enteredAt: number;
   onPitch: boolean;
   sentOff: boolean;
   pos: Vec;
@@ -257,4 +262,7 @@ export interface SimState {
   userEntered: boolean;
   /** Caches de calcul (recalculés à chaque pas). */
   cache: { active: SimPlayer[]; avg: number; step: number };
+  coachDone: Record<string, boolean>;
+  subs: [number, number];
+  userOutAt: number | null;
 }

@@ -1,6 +1,6 @@
 // Catalogue des événements narratifs (français). Chaque choix a des conséquences sur plusieurs systèmes.
 
-import type { GameEvent } from '../game/events';
+import type { EventChoice, GameEvent } from '../game/events';
 import { ageAt, isLeagueWeek, isHolidays, isSchoolPeriod } from '../game/calendar';
 import { addMoney, applyRep, changeRelation, journal, notify, npcByRole } from '../game/helpers';
 import { clubById, createClubOffer, currentClub, inviteTryout, leaveClub, pickScoutingClub, TIER_LABELS } from '../game/career';
@@ -11,6 +11,8 @@ import { activeContracts } from '../game/sponsors';
 import { brand } from './brands';
 import { npcPortrait, personName } from '../game/world';
 import { applyTraining, playerOverall } from '../game/stats';
+import { inflictInjury, setTreatment } from '../game/injuries';
+import { injuryType } from './injuries';
 
 const friendName = (s: Parameters<GameEvent['text']>[0]) => npcByRole(s, 'friend')?.name.split(' ')[0] ?? 'ton ami';
 const coachName = (s: Parameters<GameEvent['text']>[0]) => npcByRole(s, 'coach')?.name ?? 'ton entraîneur';
@@ -273,8 +275,8 @@ export const EVENTS: GameEvent[] = [
           return 'Le recruteur a pris des notes. Ton nom est dans son carnet.';
         }
         if (chance(s, 0.25)) {
-          s.player.injury = { name: 'Claquage aux ischios', weeksLeft: 3, severity: 2 };
-          return 'Ta cuisse lâche à la 70e. Claquage : trois semaines d’arrêt.';
+          const inj = inflictInjury(s, 'hamstring_tear', 'en forçant malgré la fatigue');
+          return inj ? `Ta cuisse lâche à la 70e : ${inj.name}, ${inj.weeksLeft} semaines d’arrêt.` : 'Ta cuisse te tiraille en fin de match.';
         }
         return 'Seconde période difficile. Le recruteur part à la 60e.';
       } },
@@ -515,6 +517,89 @@ export const EVENTS: GameEvent[] = [
     ],
   },
 ];
+
+// Santé : diagnostic, traitement, douleurs, convalescence.
+EVENTS.push(
+  {
+    id: 'injury_diagnosis', title: 'Le diagnostic', icon: '🩻', category: 'santé',
+    when: (s) => !!s.player.injury,
+    text: (s, d) => `${d.staff ? `Le staff médical de ${d.staff}` : 'Le médecin'} a rendu son verdict : ${String(d.name).toLowerCase()}, environ ${d.weeks} semaines d’indisponibilité. ${injuryType(s.player.injury?.id)?.description ?? ''} Comment veux-tu gérer ton retour ?`,
+    choices: (): EventChoice[] => [
+      { id: 'standard', label: 'Suivre le protocole du club', hint: 'Durée normale, risque de rechute normal', result: 'Patience et sérieux : tu suis le programme à la lettre.', run: (st) => { setTreatment(st, 'standard'); changeRelation(st, 'coach', 1); } },
+      { id: 'rushed', label: 'Accélérer le retour', hint: 'Environ 35 % plus rapide, mais rechute deux fois plus probable', result: 'Tu veux rejouer au plus vite.', run: (st) => { setTreatment(st, 'rushed'); changeRelation(st, 'coach', st.membership?.coach.temperament === 'exigeant' ? 3 : 0); } },
+      {
+        id: 'specialist', label: 'Consulter un spécialiste (150 €)', hint: 'Plus rapide et moins de rechutes · tes parents peuvent payer si tu es mineur',
+        unavailable: (st) => (st.money >= 150 || (ageAt(st) < 18 && (npcByRole(st, 'parent')?.relation ?? 0) >= 60) ? null : 'Pas assez d’argent (150 €)'),
+        result: 'Le spécialiste établit un programme sur mesure.',
+        run: (st) => {
+          setTreatment(st, 'specialist');
+          if (st.money >= 150) addMoney(st, -150, 'health', 'Spécialiste (blessure)');
+          else { changeRelation(st, 'parent', -3); return 'Tes parents ont payé la consultation.'; }
+        },
+      },
+    ],
+  },
+  {
+    id: 'niggle', title: 'Une douleur qui inquiète', icon: '⚠️', category: 'santé', npc: 'coach',
+    when: (s) => !s.player.injury,
+    text: (_s, d) => `Depuis l’entraînement, tu sens une gêne dans ${d.part}. Rien de grave… pour l’instant. Le prochain match approche.`,
+    choices: [
+      { id: 'tell', label: 'Prévenir le staff', hint: 'Tu seras ménagé · risque écarté', result: 'Le kiné te prend en charge. Sage décision.', run: (s) => { s.events.flags.coachRest = s.t + 1; s.player.energy = clamp(s.player.energy + 10); changeRelation(s, 'coach', s.membership?.coach.temperament === 'exigeant' ? 0 : 2); } },
+      { id: 'hide', label: 'Ne rien dire et jouer', hint: 'Risque de blessure ×3 jusqu’à ta prochaine blessure ou ton prochain repos', result: 'Tu serres les dents. Personne ne sait.', run: (s) => { s.events.flags.niggleHidden = 1; } },
+      { id: 'rest', label: 'Te reposer davantage cette semaine', hint: 'Énergie +18 · charge réduite', effects: { energy: 18 }, result: 'Bain froid, étirements, sommeil : la douleur s’estompe.', run: (s) => { s.player.load = clamp(s.player.load - 20); } },
+    ],
+  },
+  {
+    id: 'long_injury', title: 'Le temps est long', icon: '🛋️', category: 'santé', random: true, cooldown: 10,
+    when: (s) => !!s.player.injury && (s.player.injury.weeksTotal ?? 0) >= 6 && s.player.injury.weeksLeft > 2,
+    weight: 3,
+    text: (s) => `Cela fait des semaines que tu regardes les autres jouer. ${s.membership ? 'Le groupe continue sans toi.' : ''} Le moral flanche.`,
+    choices: [
+      { id: 'team', label: 'Rester au contact de l’équipe', effects: { morale: 8, rel: { teammate: 6, coach: 3 } }, result: 'Tu assistes aux séances, tu encourages : on ne t’oublie pas.' },
+      { id: 'family', label: 'Te ressourcer en famille', effects: { morale: 10, rel: { parent: 5, parent2: 5 } }, result: 'Ça fait du bien de penser à autre chose.' },
+      { id: 'mind', label: 'Travailler la tactique et le mental', effects: { attrs: { tactics: 1, mental: 1 }, morale: 3 }, result: 'Vidéos, lectures : tu progresses autrement.' },
+    ],
+  },
+);
+
+// L'entraîneur : système, poste, analyse vidéo.
+EVENTS.push(
+  {
+    id: 'coach_system', title: 'Le coach change de système', icon: '📋', category: 'club', npc: 'coach', random: true, cooldown: 30,
+    when: (s) => !!s.membership && ageAt(s) >= 11 && s.t - (s.membership.coach.since ?? 0) > 12,
+    text: (s) => {
+      const c = s.membership!.coach;
+      return `Après une série décevante, ${c.name} réunit le groupe : « On passe en ${c.formation === '4-4-2' ? '4-3-3' : '4-4-2'}. » Chacun va devoir s’adapter.`;
+    },
+    choices: [
+      { id: 'adapt', label: 'T’investir dans le nouveau système', hint: 'Tactique, confiance du coach', effects: { attrs: { tactics: 1 }, rel: { coach: 4 } }, result: 'Tu es l’un des premiers à comprendre ce qu’il veut.', run: (s) => { const c = s.membership!.coach; c.formation = c.formation === '4-4-2' ? '4-3-3' : '4-4-2'; } },
+      { id: 'doubt', label: 'Exprimer tes doutes', hint: 'Il n’aime pas toujours être contredit', result: 'Le coach t’écoute.', run: (s) => {
+        const c = s.membership!.coach;
+        c.formation = c.formation === '4-4-2' ? '4-3-3' : '4-4-2';
+        changeRelation(s, 'coach', c.temperament === 'exigeant' ? -6 : c.temperament === 'paternel' ? 2 : -1);
+        return c.temperament === 'exigeant' ? '« Ici, c’est moi qui décide. » Ambiance tendue.' : '« J’entends. On verra sur le terrain. »';
+      } },
+    ],
+  },
+  {
+    id: 'coach_out_of_position', title: 'Pas à ton poste', icon: '🔀', category: 'club', npc: 'coach', random: true, cooldown: 24,
+    when: (s) => !!s.membership && s.identity.position !== 'GK' && isLeagueWeek(s.t + 1, s.startYear),
+    text: (s) => `Plusieurs joueurs sont blessés. ${s.membership!.coach.name} te demande de dépanner à un autre poste ce week-end.`,
+    choices: [
+      { id: 'yes', label: 'Accepter pour l’équipe', hint: 'Confiance du coach, tactique', effects: { rel: { coach: 6, teammate: 3 }, attrs: { tactics: 0.8 } }, result: 'Le coach apprécie ton état d’esprit.' },
+      { id: 'no', label: 'Refuser : tu veux jouer à ton poste', effects: { rel: { coach: -7 }, morale: 2 }, result: 'Le coach prend note. Il s’en souviendra.' },
+    ],
+  },
+  {
+    id: 'coach_video', title: 'Séance vidéo', icon: '🎞️', category: 'club', npc: 'coach', random: true, cooldown: 14, minAge: 12,
+    when: (s) => !!s.membership && s.recentRatings.length > 0,
+    text: (s) => `${s.membership!.coach.name} te montre tes dernières actions en vidéo. ${s.recentRatings[s.recentRatings.length - 1] >= 7 ? 'Il insiste sur ce que tu fais bien.' : 'Il s’arrête sur tes erreurs de placement.'}`,
+    choices: [
+      { id: 'listen', label: 'Écouter et prendre des notes', effects: { attrs: { tactics: 1.2, vision: 0.4 }, rel: { coach: 3 } }, result: 'Tu repars avec trois idées précises.' },
+      { id: 'defend', label: 'Justifier tes choix', result: 'La discussion s’anime.', run: (s) => { const t = s.membership!.coach.temperament; changeRelation(s, 'coach', t === 'pragmatique' ? 1 : t === 'paternel' ? 0 : -4); s.player.attrs.mental = clamp(s.player.attrs.mental + 0.6, 1, 99); return t === 'exigeant' ? '« Tu discuteras quand tu seras titulaire indiscutable. »' : '« Argumenté. Mais regarde encore cette action. »'; } },
+    ],
+  },
+);
 
 // Conséquences différées des choix du prologue.
 EVENTS.push(

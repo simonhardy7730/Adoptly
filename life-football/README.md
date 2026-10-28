@@ -9,7 +9,7 @@ Tout est fictif : clubs, marques, personnages, compétitions.
 cd life-football
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 45 tests (règles de jeu + parcours complets simulés)
+npm test           # 55 tests (règles de jeu + parcours complets simulés)
 npm run build      # build de production dans dist/
 ```
 
@@ -107,6 +107,34 @@ pouvoir être dupliquées par langue.
 Le résultat ne dépend pas de la vitesse d'affichage (testé : même match quelle que soit la
 façon de le regarder). Pas encore faits : hors-jeu, consignes tactiques modifiables en
 cours de match, remplacements choisis par le joueur.
+
+## Entraîneurs (`game/coach.ts`, `content/coaches.ts`)
+
+- Chaque club a un entraîneur avec un style (offensif, équilibré, défensif, pressing,
+  possession), un caractère (exigeant, paternel, pragmatique), un système de jeu et les
+  qualités qu'il valorise. **C'est lui qui décide de la tactique** : le joueur ne la
+  choisit jamais.
+- Avant chaque match : plan du coach (système, plan du jour, pressing) et consigne
+  individuelle (pressing, profondeur, sécurité, soutien, liberté, placement, relance
+  courte) que le joueur applique ou non. Elle agit réellement dans les deux modes de match.
+- Après le match : verdict du coach selon la consigne et la note ; la confiance évolue.
+- Pendant le match 2D : ajustements tactiques selon le score, remplacements (blessés,
+  fatigués, joueurs décevants selon le caractère du coach), y compris de ton joueur.
+- Écran « Entraîneur » : profil, analyse, entretiens (temps de jeu, axe de progression,
+  changement de poste, fatigue, système) avec délai et effets réels. Le statut dépend
+  aussi de l'adéquation au style du coach ; un coach peut être remercié après de mauvais
+  résultats.
+
+## Blessures (`game/injuries.ts`, `content/injuries.ts`)
+
+- 12 blessures par zone du corps (contusion à la rupture des croisés), durées, séquelles
+  possibles pour les plus graves.
+- Risque calculé et affiché : fatigue, charge de travail, crampons usés, retour récent,
+  blessures à répétition, âge, alimentation, douleur cachée, engagement agressif.
+- Diagnostic avec choix du traitement (protocole, retour accéléré, spécialiste), phases
+  repos puis rééducation, rechute possible, période de reprise vulnérable, historique.
+- Alertes musculaires : signaler la douleur (être ménagé) ou la cacher (risque ×3).
+- Écran « Santé & blessures ».
 
 ## Points d'extension pour les prochains systèmes
 

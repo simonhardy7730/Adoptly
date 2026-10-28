@@ -62,7 +62,7 @@ const emptyStats = (): TeamStats => ({ possession: 0, shots: 0, shotsOn: 0, pass
 
 function makePlayer(ps: PlayerSetup, team: Side, slot: { role: Role; x: number; y: number }, onPitch: boolean): SimPlayer {
   return {
-    id: ps.id, name: ps.name, num: ps.num, team, role: slot.role, slot: v(slot.x, slot.y), stats: ps.stats, look: ps.look, isUser: !!ps.isUser,
+    id: ps.id, name: ps.name, num: ps.num, team, role: slot.role, slot: v(slot.x, slot.y), stats: ps.stats, look: ps.look, isUser: !!ps.isUser, instruction: ps.instruction ?? null, enteredAt: onPitch ? 0 : -1,
     onPitch, sentOff: false, pos: v(0, 0), vel: v(0, 0), target: v(0, 0), facing: 0, energy: clamp(ps.energy ?? 1, 0.3, 1),
     anim: 'idle', animT: 0, animDur: 0, animDir: 0, runPhase: ps.num * 0.7, cooldown: 0, stun: 0, carryTarget: null,
     yellow: 0, cardUntil: 0, injured: false, tally: emptyTally(),
@@ -83,6 +83,7 @@ export function createSim(cfg: SimConfig): SimState {
     players, bench, ball: { pos: v(L / 2, W / 2), z: 0, vel: v(0, 0), owner: null, flight: null, lastTouch: null, lastTeam: null },
     score: [0, 0], events: [], stats: [emptyStats(), emptyStats()], banner: null, focusUntil: 0, slowUntil: 0, protect: null, lastPass: null,
     pendingGoal: null, done: false, userEntered: cfg.userEntersAt === undefined, cache: { active: [], avg: 50, step: -1 },
+    coachDone: {}, subs: [0, 0], userOutAt: null,
   };
   refreshCache(s);
   // Les joueurs démarrent à leur position de coup d'envoi.
@@ -180,6 +181,9 @@ function anchor(s: SimState, p: SimPlayer, inPoss: boolean, ballA: Vec): Vec {
     const line = defensiveLine(s, p.team === 0 ? 1 : 0, p.team);
     ax = clamp(Math.max(ax, ballA.x + 6), 0, line - 0.5);
   }
+  // consignes individuelles du coach
+  if (p.instruction === 'stay_high') ax += inPoss ? L * 0.06 : L * 0.12;
+  if (p.instruction === 'hold_line' && !inPoss) ax -= L * 0.03;
   ax = clamp(ax, L * 0.04, L * 0.96);
   ay = clamp(ay, 1.5, W - 1.5);
   return fromA(s, p.team, v(ax, ay));
@@ -230,7 +234,7 @@ function assignPlayTargets(s: SimState) {
     const inPoss = possTeam === team;
     const mates = active(s).filter((q) => q.team === team);
     // Presseurs : le plus proche du ballon (et un second si le pressing est élevé)
-    const pressers = !inPoss ? [...mates].filter((q) => q.role !== 'GK').sort((a, c) => dist(a.pos, ballPos) - dist(c.pos, ballPos)).slice(0, s.cfg.teams[team].tactic.pressing > 0.6 ? 2 : 1) : [];
+    const pressers = !inPoss ? [...mates].filter((q) => q.role !== 'GK' && q.instruction !== 'hold_line').sort((a, c) => dist(a.pos, ballPos) - dist(c.pos, ballPos)).slice(0, s.cfg.teams[team].tactic.pressing > 0.6 ? 2 : 1) : [];
     // Ballon libre : le plus proche de chaque équipe va le chercher
     const loose = !b.owner && (!b.flight || b.flight.kind === 'clear' || b.flight.kind === 'deflect');
     const chaser = loose ? [...mates].filter((q) => q.role !== 'GK' || dist(q.pos, ownGoal(s, team)) < s.cfg.pitch.boxDepth).sort((a, c) => dist(a.pos, rest) - dist(c.pos, rest))[0] : undefined;
@@ -247,14 +251,16 @@ function assignPlayTargets(s: SimState) {
         continue;
       }
       if (chaser && chaser.id === p.id) { p.target = rest; continue; }
-      if (pressers.some((q) => q.id === p.id) && owner) {
+      const instructedPress = p.instruction === 'press' && owner && !inPoss && dist(p.pos, owner.pos) < 22;
+      if ((pressers.some((q) => q.id === p.id) || instructedPress) && owner) {
         // presser en restant côté but
         const g = ownGoal(s, team);
         p.target = add(owner.pos, mul(norm(sub(g, owner.pos)), pressers[0].id === p.id ? 0.6 : 4));
         continue;
       }
       let t = anchor(s, p, inPoss, ballPos);
-      const si = supporters.findIndex((q) => q.id === p.id);
+      let si = supporters.findIndex((q) => q.id === p.id);
+      if (si < 0 && p.instruction === 'support' && owner && inPoss) si = 0;
       if (si >= 0 && owner) {
         const dir = attackDir(s, team);
         const side = si === 0 ? (owner.pos.y < s.cfg.pitch.W / 2 ? 1 : -1) : (owner.pos.y < s.cfg.pitch.W / 2 ? -1 : 1);
@@ -343,6 +349,9 @@ function decide(s: SimState, p: SimPlayer) {
   if (pr.d < 2.4) opts.push({ kind: 'takeon', score: 0.05 + rel(s, (p.stats.technique + p.stats.speed) / 2) / 160 + (p.role === 'ATT' ? 0.12 : 0) + noise() });
   if (myA.x < L * 0.28 && pr.level > 0.4) opts.push({ kind: 'clear', score: 0.25 + pr.level * 0.4 - rel(s, p.stats.passing) / 200 + noise() });
   opts.push({ kind: 'hold', score: -0.1 + noise() });
+  // consignes : jouer simple ou provoquer
+  if (p.instruction === 'safe') for (const o of opts) if (o.kind === 'takeon' || o.kind === 'carry' || o.kind === 'shoot') o.score -= 0.25;
+  if (p.instruction === 'freedom') for (const o of opts) if (o.kind === 'takeon' || o.kind === 'carry') o.score += 0.22; else if (o.kind === 'shoot') o.score += 0.1;
   opts.sort((a, b) => b.score - a.score);
   execute(s, p, opts[0]);
 }
@@ -379,7 +388,8 @@ function passScore(s: SimState, p: SimPlayer, t: SimPlayer) {
   const progress = raw < 0 ? raw * 2.2 : raw;
   const tOpen = Math.min(...opponents(s, p.team).map((o) => dist(o.pos, t.pos)), 20);
   const { risk } = interceptRisk(s, p.pos, t.pos, p.team);
-  return 0.32 + progress * 1.9 + Math.min(tOpen, 8) / 8 * 0.45 - d / 80 - risk * 0.8 + (tA > L * 0.68 ? 0.22 : 0) + rel(s, p.stats.passing) / 400 + (t.isUser ? 0.04 : 0);
+  const shortBias = p.instruction === 'short_build' ? (d < 20 ? 0.2 : -0.25) : 0;
+  return shortBias + 0.32 + progress * 1.9 + Math.min(tOpen, 8) / 8 * 0.45 - d / 80 - risk * 0.8 + (tA > L * 0.68 ? 0.22 : 0) + rel(s, p.stats.passing) / 400 + (t.isUser ? 0.04 : 0);
 }
 
 function execute(s: SimState, p: SimPlayer, o: Option) {
@@ -1008,6 +1018,16 @@ export function step(s: SimState) {
       return;
     }
   }
+  if (s.phase === 'play') {
+    const mn = minute(s);
+    for (const team of [0, 1] as Side[]) {
+      for (const stage of [60, 75]) if (mn >= stage && !s.coachDone[`${team}-${stage}`]) { s.coachDone[`${team}-${stage}`] = true; coachReview(s, team, stage); }
+      if (active(s).some((p) => p.team === team && p.injured && p.anim !== 'down') && !s.coachDone[`${team}-inj-${Math.floor(mn / 5)}`]) {
+        s.coachDone[`${team}-inj-${Math.floor(mn / 5)}`] = true;
+        coachReview(s, team, 0);
+      }
+    }
+  }
   switch (s.phase as Phase) {
     case 'kickoff': kickoffUpdate(s); break;
     case 'restart': {
@@ -1023,6 +1043,8 @@ export function step(s: SimState) {
     case 'halftime':
       for (const p of active(s)) p.target = kickoffTarget(s, p);
       if (s.phaseT > 2.5) {
+        coachReview(s, 0, 46);
+        coachReview(s, 1, 46);
         s.half = 2;
         s.halfStart = s.t;
         s.kickoffTeam = s.kickoffTeam === 0 ? 1 : 0;
@@ -1080,6 +1102,51 @@ function goalUpdate(s: SimState) {
 }
 
 /** Entrée du joueur incarné : il remplace un joueur du même poste (architecture des remplacements). */
+/** Décisions de l'entraîneur pendant le match : ajustements tactiques et remplacements. */
+function coachReview(s: SimState, team: Side, stage: number) {
+  const t = s.cfg.teams[team];
+  const name = t.coach?.name ?? `Le coach de ${t.name}`;
+  const temper = t.coach?.temperament ?? 'pragmatique';
+  const diff = s.score[team] - s.score[team === 0 ? 1 : 0];
+  if (stage >= 46) {
+    if (diff < 0 && t.tactic.mentality !== 'attacking') {
+      t.tactic = { ...t.tactic, mentality: 'attacking', pressing: Math.min(1, t.tactic.pressing + 0.15) };
+      event(s, 'sub', team, null, `${name} demande à ${t.name} d’attaquer.`);
+    } else if (diff > 0 && stage >= 75 && t.tactic.mentality !== 'defensive') {
+      t.tactic = { ...t.tactic, mentality: 'defensive', pressing: Math.max(0.2, t.tactic.pressing - 0.15) };
+      event(s, 'sub', team, null, `${name} demande à ${t.name} de défendre son avance.`);
+    }
+  }
+  // Remplacements : joueurs blessés, épuisés, ou décevants (selon le caractère du coach).
+  const maxSubs = 3;
+  const onPitch = active(s).filter((p) => p.team === team && p.role !== 'GK' && p.id !== s.ball.owner);
+  const live = (p: SimPlayer) => 6 + p.tally.goals + p.tally.assists * 0.6 + p.tally.tacklesWon * 0.15 + (p.tally.passes > 4 ? (p.tally.passesOk / p.tally.passes - 0.75) * 2 : 0) - p.tally.fouls * 0.15;
+  const candidates = onPitch
+    .filter((p) => !(p.isUser && p.enteredAt > 0) && s.t - p.enteredAt > 30)
+    .map((p) => {
+      let need = 0;
+      if (p.injured) need = 3;
+      else if (stage >= 60 && p.energy < (p.isUser && temper === 'paternel' ? 0.42 : 0.6)) need = 1 + (0.6 - p.energy) * 4;
+      if (stage >= 60 && temper === 'exigeant' && live(p) < 5.6) need += 1.2;
+      if (stage >= 60 && temper === 'pragmatique' && live(p) < 5.3) need += 0.8;
+      return { p, need };
+    })
+    .filter((c) => c.need > 0.9)
+    .sort((a, b) => b.need - a.need);
+  for (const c of candidates) {
+    if (s.subs[team] >= maxSubs) break;
+    const benchMate = s.bench.filter((b) => b.team === team && !b.isUser).sort((a, b) => Number(b.role === c.p.role) - Number(a.role === c.p.role))[0];
+    if (!benchMate) break;
+    if (substitute(s, benchMate.id, c.p.id)) {
+      s.subs[team] += 1;
+      if (c.p.isUser) {
+        s.userOutAt = Math.round(minute(s));
+        event(s, 'sub', team, c.p.id, `${name} te fait sortir (${c.p.injured ? 'blessure' : c.p.energy < 0.6 ? 'fatigue' : 'performance insuffisante'}).`, true, 'info', 'Tu sors du terrain');
+      }
+    }
+  }
+}
+
 export function substitute(s: SimState, inId: string, outId: string) {
   const inP = s.bench.find((b) => b.id === inId);
   const outP = s.players.find((p) => p.id === outId);
@@ -1088,6 +1155,7 @@ export function substitute(s: SimState, inId: string, outId: string) {
   inP.role = outP.role;
   inP.team = outP.team;
   inP.onPitch = true;
+  inP.enteredAt = s.t;
   inP.pos = v(s.cfg.pitch.L / 2, -1.5); // entre depuis la ligne de touche
   inP.target = { ...outP.pos };
   outP.onPitch = false;

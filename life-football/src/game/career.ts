@@ -8,6 +8,9 @@ import { chance, clamp, nextFloat, pick, randInt, shuffle, uid } from './rng';
 import { createMatch, myScore, oppScore, quickSim, type MatchState } from './match';
 import { namePool, clubName, CLUB_COLORS } from '../content/names';
 import { npcPortrait, personName } from './world';
+import { generateCoach, styleFit } from './coach';
+import { COACH_STYLES, TEMPERAMENTS } from '../content/coaches';
+import { rollInjury } from './injuries';
 import { environment } from '../content/profiles';
 import { wearBoots } from './actions';
 
@@ -261,12 +264,13 @@ export function simulateMatchday(s: GameState, md: number, playerResult?: [numbe
 export function joinClub(s: GameState, club: Club, role: SquadStatus) {
   const age = ageAt(s);
   const { league, fixtures } = buildLeague(s, club);
-  const coachName = personName(s, club.country);
+  const coach = generateCoach(s, club);
+  const coachName = coach.name;
   s.npcs = s.npcs.filter((n) => n.role !== 'coach' && n.role !== 'rival' && n.role !== 'teammate');
-  s.npcs.push({ id: uid(s, 'npc'), name: coachName, role: 'coach', relation: 50, portrait: npcPortrait(s, 'adult'), met: s.t, note: `Éducateur ${ageCategory(age)} à ${club.name}.` });
+  s.npcs.push({ id: uid(s, 'npc'), name: coachName, role: 'coach', relation: 50, portrait: npcPortrait(s, 'adult'), met: s.t, note: `Éducateur ${ageCategory(age)} à ${club.name} · style ${COACH_STYLES[coach.style].label.toLowerCase()}, ${TEMPERAMENTS[coach.temperament].label.toLowerCase()}.` });
   s.npcs.push({ id: uid(s, 'npc'), name: personName(s, club.country), role: 'rival', relation: 40, portrait: npcPortrait(s, age >= 13 ? 'teen' : 'child'), met: s.t, note: 'Il joue à ton poste. La concurrence est rude.' });
   s.npcs.push({ id: uid(s, 'npc'), name: personName(s, club.country), role: 'teammate', relation: 55, portrait: npcPortrait(s, age >= 13 ? 'teen' : 'child'), met: s.t, note: 'Le premier à t’avoir accueilli dans le vestiaire.' });
-  s.membership = { clubId: club.id, joined: s.t, status: role, coachId: coachName, league, fixtures, matchday: 0, lastMatchWeek: -1, feePaid: true };
+  s.membership = { clubId: club.id, joined: s.t, status: role, coachId: coachName, coach, league, fixtures, matchday: 0, lastMatchWeek: -1, feePaid: true };
   // Rattrape les journées déjà jouées (sans le joueur) pour un classement cohérent.
   let md = leagueMatchdayIndex(s.t, s.startYear);
   if (md < 0) {
@@ -311,7 +315,10 @@ export function updateSquadStatus(s: GameState) {
   if (!ms || !club) return;
   const coach = s.npcs.find((n) => n.role === 'coach');
   const avg = s.recentRatings.length ? s.recentRatings.reduce((a, b) => a + b, 0) / s.recentRatings.length : 6.3;
-  const score = playerOverall(s) - teamStrength(s, club) + ((coach?.relation ?? 50) - 50) / 8 + (avg - 6.4) * 3 + (s.player.attrs.discipline - 40) / 20;
+  // Le coach décide : niveau, confiance, forme récente, discipline et adéquation à son style de jeu.
+  const fit = styleFit(s, ms.coach) / 3;
+  const youthCare = ms.coach.temperament === 'paternel' && ageAt(s) < 17 ? 1 : 0;
+  const score = playerOverall(s) - teamStrength(s, club) + ((coach?.relation ?? 50) - 50) / 8 + (avg - 6.4) * 3 + (s.player.attrs.discipline - 40) / 20 + fit + youthCare;
   const prev = ms.status;
   ms.status = score >= -1.5 ? 'starter' : score >= -7 ? 'rotation' : 'bench';
   if (prev !== ms.status) {
@@ -421,16 +428,10 @@ export function applyMatchResult(s: GameState, m: MatchState): string[] {
         p.attrs.technique = clamp(p.attrs.technique + 0.1 * learn, 1, 99);
       }
     }
-    // Risque de blessure : fatigue et intensité.
-    const risk = 0.012 + (p.energy < 30 ? 0.05 : p.energy < 45 ? 0.02 : 0) + (m.approach === 'aggressive' ? 0.015 : 0) + (p.boots.wear > 85 ? 0.01 : 0) - p.attrs.strength / 6000;
-    if (!p.injury && chance(s, risk)) {
-      const sev = nextFloat(s);
-      const inj = sev < 0.6 ? { name: 'Contusion à la cheville', weeksLeft: 1, severity: 1 as const } : sev < 0.92 ? { name: 'Entorse du genou', weeksLeft: 4, severity: 2 as const } : { name: 'Fracture du métatarse', weeksLeft: 10, severity: 3 as const };
-      p.injury = inj;
-      notify(s, 'injury', 'Blessé pendant le match', `${inj.name} : environ ${inj.weeksLeft} semaine(s) d’indisponibilité.`);
-      journal(s, `Blessure en match : ${inj.name}.`, '🚑', true);
-      out.push(`Blessure : ${inj.name}`);
-    }
+    // Risque de blessure : fatigue, charge, antécédents, intensité du match.
+    const extra = [...(m.approach === 'aggressive' ? [{ label: 'Engagement agressif', mult: 1.35 }] : []), ...(m.kind === 'street' ? [{ label: 'Terrain de quartier', mult: 0.7 }] : [])];
+    const inj = m.meta?.mode === '2d' ? null : rollInjury(s, 'match', 'en match', extra);
+    if (inj) out.push(`Blessure : ${inj.name}`);
   } else if (m.kind === 'league') {
     p.morale = clamp(p.morale - 3);
     changeRelation(s, 'coach', -0.5);

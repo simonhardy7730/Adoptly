@@ -1,11 +1,13 @@
 // Match : avant-match (préparation, approche), direct narratif avec moments clés, bilan.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useGame } from '../store/gameStore';
 import { chanceLabel, myTeam, oppTeam, resultLabel, type Approach, type Preparation } from '../game/match';
 import { Crest, StatBar, ratingColor } from '../ui/kit';
 import { ATTR_LABELS } from '../content/profiles';
 import { STATUS_LABELS } from '../game/career';
 import { Match2DView } from '../match2d/Match2DView';
+import { matchPlan } from '../game/coach';
+import { COACH_STYLES, INSTRUCTIONS, TEMPERAMENTS } from '../content/coaches';
 
 const APPROACHES: { id: Approach; label: string; desc: string }[] = [
   { id: 'focused', label: '🎯 Concentré', desc: 'Bonus lié à ton mental. Équilibré.' },
@@ -29,6 +31,8 @@ export function MatchScreen() {
   const [prep, setPrep] = useState<Preparation>('normal');
   const [shown, setShown] = useState(0);
   const [mode, setMode] = useState<'2d' | 'text'>('2d');
+  const [follow, setFollow] = useState(true);
+  const plan = useMemo(() => matchPlan(g, m), [g, m]);
   const match2d = useGame((s) => s.match2d);
   const kickOff2D = useGame((s) => s.kickOff2D);
   const finish2D = useGame((s) => s.finish2D);
@@ -80,6 +84,25 @@ export function MatchScreen() {
         </div>
         {m.status !== 'pre' && <div className="bar mb"><span style={{ width: `${(minute / 90) * 100}%` }} /></div>}
 
+        {m.status === 'pre' && (
+          <div className="card mb" style={{ borderColor: 'var(--green-2)' }}>
+            <div className="row wrap between">
+              <div>
+                <div className="card-title" style={{ margin: 0 }}>📣 Plan de {plan.coachName}</div>
+                <div className="small muted">{m.kind === 'street' ? 'Match libre' : `${plan.formation} · ${COACH_STYLES[plan.style].label}${plan.temperament ? ` · ${TEMPERAMENTS[plan.temperament].label.toLowerCase()}` : ''} · plan du jour : ${plan.tactic.mentality === 'attacking' ? 'prendre l’initiative' : plan.tactic.mentality === 'defensive' ? 'rester compact' : 'équilibre'}, pressing ${plan.tactic.pressing >= 0.7 ? 'élevé' : plan.tactic.pressing <= 0.4 ? 'bas' : 'moyen'}`}</div>
+              </div>
+              {plan.instruction && <span className="pill green">Consigne : {INSTRUCTIONS[plan.instruction].short}</span>}
+            </div>
+            <p style={{ margin: '8px 0' }}>« {plan.talk} »</p>
+            {plan.instruction && (
+              <div className="seg">
+                <button className={follow ? 'on' : ''} onClick={() => setFollow(true)}>✅ Appliquer la consigne</button>
+                <button className={!follow ? 'on' : ''} onClick={() => setFollow(false)}>🎲 Jouer à ma façon</button>
+              </div>
+            )}
+            {plan.instruction && <div className="tiny dim" style={{ marginTop: 6 }}>{follow ? INSTRUCTIONS[plan.instruction].description + ' Le coach appréciera.' : plan.temperament === 'exigeant' ? 'Ton entraîneur est exigeant : il n’aime pas qu’on ignore ses consignes.' : 'Tu joues selon ton instinct. Le coach jugera sur le résultat.'}</div>}
+          </div>
+        )}
         {m.status === 'pre' ? (
           <div className="grid g3">
             <div className="card">
@@ -104,7 +127,7 @@ export function MatchScreen() {
                 <button className={mode === 'text' ? 'on' : ''} onClick={() => setMode('text')}>🎙️ Commenté (tes décisions)</button>
               </div>
               <div className="tiny dim mb">{mode === '2d' ? 'Tu regardes le match en spectateur : ton joueur agit selon ses statistiques, ta forme et ton approche.' : 'Le match est raconté et tu choisis ton action dans les moments clés.'}</div>
-              <button className="btn primary lg block" onClick={() => { setShown(0); if (mode === '2d') kickOff2D(approach, prep); else kickOff(approach, prep); }}>Coup d’envoi ▶</button>
+              <button className="btn primary lg block" onClick={() => { setShown(0); if (mode === '2d') kickOff2D(approach, prep, follow); else kickOff(approach, prep, follow); }}>Coup d’envoi ▶</button>
             </div>
           </div>
         ) : (

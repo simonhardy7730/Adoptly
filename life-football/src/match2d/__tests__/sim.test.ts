@@ -77,6 +77,22 @@ describe('Moteur 2D : simulation', () => {
   }, 30000);
 });
 
+describe('Moteur 2D : décisions des entraîneurs', () => {
+  it('les coachs font des remplacements et adaptent leur tactique au score', () => {
+    let subs = 0, tacticChanges = 0;
+    for (let i = 1; i <= 6; i++) {
+      const s = createSim(demoConfig(i * 59));
+      runToEnd(s);
+      subs += s.subs[0] + s.subs[1];
+      tacticChanges += s.events.filter((e) => e.type === 'sub' && e.player === null).length;
+      expect(s.subs[0]).toBeLessThanOrEqual(3);
+      expect(s.players.filter((p) => p.onPitch && !p.sentOff && p.team === 0).length).toBeLessThanOrEqual(11);
+    }
+    expect(subs).toBeGreaterThan(0);
+    expect(tacticChanges).toBeGreaterThan(0);
+  }, 30000);
+});
+
 describe('Moteur 2D : lien avec la carrière', () => {
   it('intègre le joueur créé (poste, stats, apparence) et reporte sa performance', () => {
     const g = newGame(21, { position: 'ATT' });
@@ -95,7 +111,9 @@ describe('Moteur 2D : lien avec la carrière', () => {
     const s = createSim(cfg);
     runToEnd(s);
     const r = resultOf(s);
-    expect(r.userTally!.minutes).toBeGreaterThan(80);
+    // titulaire : il joue tout le match, sauf si le coach le fait sortir
+    if (r.userSubbedOff === null) expect(r.userTally!.minutes).toBeGreaterThan(80);
+    else expect(r.userSubbedOff).toBeGreaterThanOrEqual(45);
     applySimToMatch(m, s, r);
     const repBefore = g.reputation.sport;
     const lines = concludeMatch(g, m);

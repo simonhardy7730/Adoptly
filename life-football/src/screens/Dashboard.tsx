@@ -14,6 +14,7 @@ import { visibleActions } from '../game/actions';
 import { activeContracts } from '../game/sponsors';
 import { totalCaps } from '../game/national';
 import { FirstSteps } from './FirstSteps';
+import { injuryRisk, injuryStatusText } from '../game/injuries';
 
 const NOTIF_ICON: Record<string, string> = { invite: '📨', injury: '🚑', offer: '📝', event: '📖', info: 'ℹ️', money: '💶', sponsor: '🤝', national: '🎽', success: '🌟', warning: '⚠️' };
 
@@ -142,7 +143,8 @@ export function Dashboard() {
       <div className="col" style={{ gap: 16 }}>
         <div className="card">
           <h3>💪 Condition</h3>
-          {p.injury && <div className="pill red mb">🚑 {p.injury.name} · encore ~{Math.max(1, Math.ceil(p.injury.weeksLeft))} sem.</div>}
+          {p.injury && <button className="pill red mb" style={{ cursor: 'pointer', whiteSpace: 'normal', textAlign: 'left' }} onClick={() => setTab('health')}>🚑 {p.injury.name} · {injuryStatusText(p.injury)}</button>}
+          {!p.injury && (() => { const r = injuryRisk(g, 'match'); return r.p >= 0.03 ? <button className="pill gold mb" style={{ cursor: 'pointer', whiteSpace: 'normal', textAlign: 'left' }} onClick={() => setTab('health')}>⚠️ Risque de blessure élevé : {r.factors.slice(0, 2).map((f) => f.label.toLowerCase()).join(', ')}</button> : null; })()}
           <StatBar label="Énergie" value={Math.round(p.energy)} color="auto" hint="Baisse avec les efforts, remonte avec le sommeil, le repos et une bonne alimentation." />
           <StatBar label="Moral" value={Math.round(p.morale)} color="blue" />
           <StatBar label="Forme physique" value={Math.round(p.form)} color="gold" />

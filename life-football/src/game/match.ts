@@ -5,6 +5,16 @@ import type { AttrKey, GameState, SquadStatus } from './types';
 import { clamp, nextFloat, pick, sigmoid, uid, type RngHolder } from './rng';
 import { overall } from './stats';
 
+const INSTRUCTION_OPTIONS: Record<string, string[]> = {
+  press: ['press', 'tackle', 'rush'],
+  safe: ['simple', 'pass', 'hold', 'short', 'clear', 'cover', 'lay'],
+  freedom: ['dribble', 'shoot', 'carry', 'volley', 'direct'],
+  stay_high: ['shoot', 'dribble', 'header'],
+  support: ['pass', 'long', 'lay', 'cross', 'combo'],
+  hold_line: ['hold', 'cover', 'anticipate', 'duel', 'angle', 'stay'],
+  short_build: ['short', 'simple'],
+};
+
 export type MatchKind = 'street' | 'league' | 'national' | 'friendly';
 export type Approach = 'calm' | 'aggressive' | 'focused';
 export type Preparation = 'light' | 'normal' | 'intense';
@@ -349,6 +359,9 @@ export function optionChance(s: GameState, m: MatchState, o: MomentOption): numb
   if (m.approach === 'calm' && ['hold', 'pass', 'simple', 'cover', 'short', 'angle'].includes(o.id)) x += 0.25;
   if (m.approach === 'focused') x += (p.attrs.mental - 40) / 200;
   if (m.preparation === 'intense') x += 0.12;
+  // Consigne du coach suivie : les actions qui la respectent sont mieux préparées.
+  const ins = String(m.meta?.instruction ?? '');
+  if (ins && Number(m.meta?.followed ?? 1) === 1 && (INSTRUCTION_OPTIONS[ins] ?? []).includes(o.id)) x += 0.22;
   return clamp(sigmoid(x), 0.05, 0.95);
 }
 

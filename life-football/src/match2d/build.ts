@@ -3,6 +3,8 @@
 
 import type { GameState } from '../game/types';
 import type { MatchState, Approach } from '../game/match';
+import { matchPlan, styleFromName, tacticOf } from '../game/coach';
+import { COACH_STYLES } from '../content/coaches';
 import { ageAt } from '../game/calendar';
 import { namePool } from '../content/names';
 import { SKIN_TONES } from '../ui/Avatar';
@@ -27,7 +29,7 @@ export function makeStats(h: RngHolder, level: number, role: Role): SimStats {
   return { speed: c('speed'), technique: c('technique'), passing: c('passing'), shooting: c('shooting'), positioning: c('positioning'), stamina: c('stamina'), defending: c('defending'), reflexes: c('reflexes') };
 }
 
-export function makeTeam(h: RngHolder, opts: { name: string; short: string; colors: [string, string]; gkColor?: string; formation: string; level: number; country: string; prefix: string; tactic?: TeamSetup['tactic'] }): TeamSetup {
+export function makeTeam(h: RngHolder, opts: { name: string; short: string; colors: [string, string]; gkColor?: string; formation: string; level: number; country: string; prefix: string; tactic?: TeamSetup['tactic']; coach?: TeamSetup['coach'] }): TeamSetup {
   const f = FORMATIONS[opts.formation];
   const pool = namePool(opts.country);
   const used = new Set<number>();
@@ -52,14 +54,25 @@ export function makeTeam(h: RngHolder, opts: { name: string; short: string; colo
       energy: 1,
     };
   });
-  return { name: opts.name, short: opts.short, colors: opts.colors, gkColor: opts.gkColor ?? '#f4c95d', formation: opts.formation, tactic: opts.tactic ?? { mentality: 'balanced', pressing: 0.5, width: 0.6 }, players, bench: [] };
+  // Banc : un défenseur, un milieu, un attaquant
+  const bench: PlayerSetup[] = (['DEF', 'MID', 'ATT'] as Role[]).map((role, i) => {
+    let last = pool.last[Math.floor(nextFloat(h) * pool.last.length)];
+    for (let k = 0; k < 12 && names.has(last); k++) last = pool.last[Math.floor(nextFloat(h) * pool.last.length)];
+    if (names.has(last)) last = `${pool.first[Math.floor(nextFloat(h) * pool.first.length)][0]}. ${last}`;
+    names.add(last);
+    let num = 12 + i * 3;
+    while (used.has(num)) num++;
+    used.add(num);
+    return { id: `${opts.prefix}b${i}`, name: last, num, role, stats: makeStats(h, opts.level - 2, role), look: { skin: SKIN_TONES[Math.floor(nextFloat(h) * SKIN_TONES.length)], hair: HAIRS[Math.floor(nextFloat(h) * HAIRS.length)], hairColor: HAIR_COLORS[Math.floor(nextFloat(h) * HAIR_COLORS.length)] }, energy: 1 };
+  });
+  return { name: opts.name, short: opts.short, colors: opts.colors, gkColor: opts.gkColor ?? '#f4c95d', formation: opts.formation, tactic: opts.tactic ?? { mentality: 'balanced', pressing: 0.5, width: 0.6 }, players, bench, coach: opts.coach };
 }
 
 /** Match de démonstration : deux équipes fictives de bon niveau. */
 export function demoConfig(seed: number): SimConfig {
   const h = { rng: seed };
-  const home = makeTeam(h, { name: 'Racing Valmont', short: 'RVA', colors: ['#1fa860', '#ffffff'], formation: '4-3-3', level: 70, country: 'FR', prefix: 'h', tactic: { mentality: 'attacking', pressing: 0.7, width: 0.8 } });
-  const away = makeTeam(h, { name: 'Sporting Portemer', short: 'SPO', colors: ['#c62828', '#212121'], gkColor: '#90caf9', formation: '4-4-2', level: 70, country: 'FR', prefix: 'a', tactic: { mentality: 'attacking', pressing: 0.6, width: 0.7 } });
+  const home = makeTeam(h, { name: 'Racing Valmont', short: 'RVA', colors: ['#1fa860', '#ffffff'], formation: '4-3-3', level: 70, country: 'FR', prefix: 'h', tactic: { mentality: 'attacking', pressing: 0.7, width: 0.8 }, coach: { name: 'M. Ferrand', temperament: 'exigeant', style: 'offensif' } });
+  const away = makeTeam(h, { name: 'Sporting Portemer', short: 'SPO', colors: ['#c62828', '#212121'], gkColor: '#90caf9', formation: '4-4-2', level: 70, country: 'FR', prefix: 'a', tactic: { mentality: 'attacking', pressing: 0.6, width: 0.7 }, coach: { name: 'R. Lindqvist', temperament: 'pragmatique', style: 'pressing' } });
   return { seed, pitch: pitchFor('4-3-3'), halfSeconds: 180, teams: [home, away] };
 }
 
@@ -88,12 +101,16 @@ export function careerConfig(g: GameState, m: MatchState, approach: Approach): S
   const h = { rng: (g.rng ^ 0x2d2d) | 0 };
   const age = ageAt(g);
   const small = m.kind === 'street' || age <= 10;
-  const formation = small ? '2-3-1' : m.kind === 'national' ? '4-3-3' : '4-4-2';
+  // Le coach décide du système, de la tactique et de la consigne du joueur.
+  const plan = matchPlan(g, m);
+  const followed = Number(m.meta?.followed ?? 1) === 1;
+  const formation = small ? '2-3-1' : plan.formation;
   const my = m.playerHome ? m.home : m.away;
   const opp = m.playerHome ? m.away : m.home;
+  const oppStyle = styleFromName(opp.name);
   const country = g.identity.growUpCountry;
-  const mine = makeTeam(h, { name: my.name, short: my.short, colors: my.colors, formation, level: my.strength, country, prefix: 'm' });
-  const them = makeTeam(h, { name: opp.name, short: opp.short, colors: opp.colors, gkColor: '#90caf9', formation: small ? '2-3-1' : '4-4-2', level: opp.strength, country, prefix: 'o' });
+  const mine = makeTeam(h, { name: my.name, short: my.short, colors: my.colors, formation, level: my.strength, country, prefix: 'm', tactic: plan.tactic, coach: plan.temperament ? { name: plan.coachName, temperament: plan.temperament, style: plan.style } : undefined });
+  const them = makeTeam(h, { name: opp.name, short: opp.short, colors: opp.colors, gkColor: '#90caf9', formation: small ? '2-3-1' : COACH_STYLES[oppStyle].formation, level: opp.strength, country, prefix: 'o', tactic: tacticOf(oppStyle), coach: m.kind === 'street' ? undefined : { name: `Le coach de ${opp.name}`, temperament: 'pragmatique', style: oppStyle } });
   const pos = g.identity.position;
   const user: PlayerSetup = {
     id: 'user',
@@ -104,6 +121,7 @@ export function careerConfig(g: GameState, m: MatchState, approach: Approach): S
     isUser: true,
     look: { skin: SKIN_TONES[g.appearance.skin] ?? SKIN_TONES[2], hair: g.appearance.hairStyle, hairColor: g.appearance.hairColor },
     energy: g.player.energy / 100,
+    instruction: followed && plan.instruction ? plan.instruction : undefined,
   };
   const playing = m.entersAt < 90;
   if (playing && m.entersAt === 0) {
@@ -127,6 +145,7 @@ export interface SimResult {
   userTally: Tally | null;
   userRating: number | null;
   userInjured: boolean;
+  userSubbedOff: number | null;
   ratings: { id: string; name: string; team: 0 | 1; role: Role; rating: number; tally: Tally; isUser: boolean }[];
 }
 
@@ -157,6 +176,7 @@ export function resultOf(s: SimState): SimResult {
     userTally: u ? u.tally : null,
     userRating: u ? playerRating(s, u) : null,
     userInjured: !!u?.injured,
+    userSubbedOff: s.userOutAt,
     ratings: ratings.sort((a, b) => b.rating - a.rating),
   };
 }

@@ -87,7 +87,8 @@ export function applyTraining(s: GameState, focus: TrainingFocus, amount: number
   for (const k of Object.keys(split) as AttrKey[]) {
     const cur = p.attrs[k];
     const diminishing = (cur > 85 ? 0.35 : cur > 75 ? 0.65 : 1) * (cur > attrCap ? 0.04 : cur > attrCap - 6 ? 0.4 : 1);
-    const g = total * (split[k] ?? 0) * diminishing;
+    const coachFocus = s.membership?.coach?.focus && s.membership.coach.focus.until >= s.t && s.membership.coach.focus.attr === k ? 1.3 : 1;
+    const g = total * (split[k] ?? 0) * diminishing * coachFocus;
     p.attrs[k] = clamp(cur + g, 1, 99);
     gains[k] = g;
   }

@@ -2,7 +2,7 @@
 
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 export const SLOT_COUNT = 3;
 const PREFIX = 'lifefootball.save.';
 
@@ -44,6 +44,14 @@ export const MIGRATIONS: Record<number, (s: any) => any> = {
     creation: s.creation ?? { qualities: [], startAge: 9, seed: 0, initialAttrs: { ...s.player.attrs } },
     prologue: s.prologue ?? { done: true, step: 0, choices: {} },
   }),
+  // v2 → v3 : profil d'entraîneur, blessures détaillées, charge de travail.
+  2: (s) => {
+    const n = { ...s, version: 3, player: { injuryHistory: [], load: 30, returnUntil: -1, ...s.player } };
+    if (n.membership && !n.membership.coach) {
+      n.membership = { ...n.membership, coach: { name: n.membership.coachId, style: 'equilibre', temperament: 'pragmatique', formation: '4-4-2', values: ['tactics', 'discipline', 'stamina'], since: n.membership.joined, lastTalk: {}, focus: null } };
+    }
+    return n;
+  },
 };
 
 export function migrate(state: any): GameState {

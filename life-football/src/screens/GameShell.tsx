@@ -22,6 +22,8 @@ import { MatchScreen } from './MatchScreen';
 import { TryoutScreen } from './TryoutScreen';
 import { PracticeScreen } from './PracticeScreen';
 import { PrologueScreen } from './PrologueScreen';
+import { CoachScreen } from './CoachScreen';
+import { HealthScreen } from './HealthScreen';
 import type { GameState } from '../game/types';
 import { socialLocked } from '../game/social';
 
@@ -32,8 +34,10 @@ const NAV: NavDef[] = [
   { id: 'calendar', label: 'Calendrier', icon: '📅', group: 'Ma semaine' },
   { id: 'training', label: 'Entraînement & mini-jeux', icon: '🎯', group: 'Ma semaine' },
   { id: 'club', label: 'Club & détections', icon: '🏟️', group: 'Carrière', badge: (g) => g.tryouts.filter((t) => t.status === 'invited').length + g.clubOffers.filter((o) => o.status === 'pending').length },
+  { id: 'coach', label: 'Entraîneur', icon: '📋', group: 'Carrière' },
   { id: 'national', label: 'Sélections', icon: '🎽', group: 'Carrière', badge: (g) => (g.national.pendingCallup?.status === 'pending' ? 1 : 0) },
   { id: 'history', label: 'Historique & stats', icon: '📜', group: 'Carrière' },
+  { id: 'health', label: 'Santé & blessures', icon: '🩺', group: 'Vie', badge: (g) => (g.player.injury ? 1 : 0) },
   { id: 'life', label: 'Courses & alimentation', icon: '🛒', group: 'Vie' },
   { id: 'finance', label: 'Logement & finances', icon: '💶', group: 'Vie' },
   { id: 'relations', label: 'Relations & famille', icon: '❤️', group: 'Vie', badge: (g) => g.admin.filter((a) => !a.done).length },
@@ -84,7 +88,7 @@ export function GameShell() {
               <button className={`nav-item ${tab === n.id ? 'active' : ''}`} onClick={() => { setTab(n.id); setMenuOpen(false); }}>
                 <span className="ico">{n.icon}</span>{n.label}
                 {locked && <span className="tiny dim right">13 ans</span>}
-                {badge > 0 && <span className={`badge ${n.id === 'relations' ? 'warn' : ''}`}>{badge}</span>}
+                {badge > 0 && <span className={`badge ${n.id === 'relations' || n.id === 'health' ? 'warn' : ''}`}>{badge}</span>}
               </button>
             </div>
           );
@@ -124,6 +128,8 @@ export function GameShell() {
             {tab === 'calendar' && <CalendarScreen />}
             {tab === 'training' && <TrainingScreen />}
             {tab === 'club' && <ClubScreen />}
+            {tab === 'coach' && <CoachScreen />}
+            {tab === 'health' && <HealthScreen />}
             {tab === 'life' && <LifeScreen />}
             {tab === 'finance' && <FinanceScreen />}
             {tab === 'relations' && <RelationsScreen />}
