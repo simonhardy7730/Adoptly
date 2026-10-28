@@ -9,6 +9,7 @@ import { readSave, writeSave, deleteSave, listSaves, type SaveSummary } from '..
 import { doAdminTask, performAction, fmtGains } from '../game/actions';
 import { blockingActivity, finalizeWeek } from '../game/week';
 import { resolveEvent } from '../game/events';
+import { choosePrologue, finishPrologue } from '../game/prologue';
 import { answerClubOffer, answerTryout, completeTryout, clubById, currentClub, transportCost } from '../game/career';
 import { beginMatch, chooseInMatch, concludeMatch, createMatchFor, startStreetMatch } from '../game/flow';
 import type { Approach, MatchState, Preparation } from '../game/match';
@@ -72,6 +73,8 @@ interface Store {
   admin: (id: string) => void;
   advance: (force?: boolean) => void;
   chooseEvent: (choiceId: string) => void;
+  choosePrologue: (choiceId: string) => string | null;
+  finishPrologue: () => void;
   setSleep: (m: SleepMode) => void;
   buy: (cart: Record<string, number>) => void;
   buyBoots: (id: string) => void;
@@ -185,7 +188,7 @@ export const useGame = create<Store>((set, get) => {
 
     act: (id) => {
       if (id === 'street_match') return get().street();
-      const r = mutate((g) => performAction(g, id));
+      const r = mutate((g) => performAction(g, id), true);
       if (r) toast(r.message, r.ok ? 'success' : 'warning');
     },
     admin: (id) => {
@@ -195,6 +198,7 @@ export const useGame = create<Store>((set, get) => {
     advance: (force) => {
       const g = get().game;
       if (!g) return;
+      if (!g.prologue.done) return toast('Termine d’abord le prologue.', 'warning');
       const b = blockingActivity(g);
       if (b?.type === 'event') return toast('Une décision t’attend avant de continuer.', 'warning');
       if (b?.type === 'tryout') {
@@ -217,11 +221,19 @@ export const useGame = create<Store>((set, get) => {
       const ng = get().game!;
       set({ weekReport: { title: formatDate(ng.t, ng.startYear), lines: report?.lines ?? [] }, saves: listSaves() });
     },
+    choosePrologue: (choiceId) => {
+      const r = mutate((g) => choosePrologue(g, choiceId), true);
+      return r?.ok ? r.outcome : null;
+    },
+    finishPrologue: () => {
+      mutate((g) => finishPrologue(g), true);
+      set({ tab: 'dashboard' });
+    },
     chooseEvent: (choiceId) => {
       const r = mutate((g) => resolveEvent(g, choiceId), true);
       if (r) toast(r.message, r.ok ? 'info' : 'warning');
     },
-    setSleep: (m) => mutate((g) => { g.player.sleepMode = m; }),
+    setSleep: (m) => mutate((g) => { g.player.sleepMode = m; }, true),
     buy: (cart) => {
       const r = mutate((g) => {
         let total = 0;
@@ -235,7 +247,7 @@ export const useGame = create<Store>((set, get) => {
         }
         addMoney(g, -total, 'food', 'Courses');
         return { ok: true, msg: `Courses payées : ${total.toFixed(2)} €.` };
-      });
+      }, true);
       if (r) toast(r.msg, r.ok ? 'success' : 'warning');
     },
     buyBoots: (id) => {

@@ -516,6 +516,47 @@ export const EVENTS: GameEvent[] = [
   },
 ];
 
+// Conséquences différées des choix du prologue.
+EVENTS.push(
+  {
+    id: 'neighborhood_cup', title: 'Le tournoi du quartier', icon: '🏆', category: 'enfance', npc: 'friend',
+    when: (s) => (s.events.flags.leader ?? 0) > 0,
+    text: (s) => `Depuis que tu organises les matchs, tout le quartier parle d’un vrai tournoi. ${npcByRole(s, 'friend')?.name.split(' ')[0] ?? 'Ton ami'} te tend une liste : « Huit équipes ! C’est toi le capitaine. »`,
+    choices: [
+      { id: 'captain', label: 'Mener ton équipe jusqu’au bout', hint: 'Réputation locale, fatigue ; un éducateur sera peut-être là', result: 'Trois matchs dans l’après-midi.', run: (s) => {
+        s.player.energy = clamp(s.player.energy - 18);
+        const won = nextFloat(s) < 0.35 + playerOverall(s) / 120;
+        applyRep(s, { sport: won ? 3 : 1.5, popularity: won ? 2 : 1 });
+        changeRelation(s, 'friend', 6);
+        if (won && !s.membership) {
+          const club = pickScoutingClub(s, 2);
+          if (club) { inviteTryout(s, club.id, 2); return `Victoire ! Un éducateur de ${club.name} t’invite à une détection.`; }
+        }
+        return won ? 'Victoire au bout du suspense ! Le quartier s’en souviendra.' : 'Défaite en finale, mais tout le monde a vu ton leadership.';
+      } },
+      { id: 'organizer', label: 'Rester organisateur et arbitre', effects: { attrs: { tactics: 0.8, discipline: 0.6 }, rel: { friend: 4 }, rep: { fanImage: 3 } }, result: 'Le tournoi est un succès. Les parents te félicitent.' },
+    ],
+  },
+  {
+    id: 'idol_signing', title: 'Ton idole en dédicace', icon: '✍️', category: 'enfance',
+    when: (s) => (s.events.flags.idol ?? 0) > 0,
+    text: () => 'Ton idole, celle de la finale à la télé, signe des autographes dans un magasin de sport à une heure de chez toi. Samedi, de 14 h à 16 h.',
+    choices: [
+      { id: 'go', label: 'Y aller, quitte à attendre des heures', hint: 'Transport 8 €, gros boost de motivation', unavailable: (s) => (s.money < 8 ? 'Pas assez d’argent pour le trajet (8 €)' : null), effects: { money: -8, moneyCat: 'transport', moneyLabel: 'Trajet séance de dédicace', morale: 12, attrs: { mental: 1 }, energy: -8 }, result: '« Continue à travailler, petit. » Tu ne t’en remettras jamais vraiment.' },
+      { id: 'train', label: 'Rester t’entraîner : un jour, c’est toi qu’on viendra voir', effects: { attrs: { discipline: 1, technique: 0.6 }, morale: -2 }, result: 'Tu enchaînes les frappes jusqu’à la nuit.' },
+    ],
+  },
+  {
+    id: 'sibling_promise', title: 'La promesse', icon: '🤙', category: 'famille', npc: 'sibling',
+    when: (s) => (s.events.flags.promiseSibling ?? 0) > 0 && !!npcByRole(s, 'sibling'),
+    text: (s) => `${npcByRole(s, 'sibling')?.name.split(' ')[0]} a dessiné un maillot avec ton nom et l’a scotché sur ta porte. « Tu te souviens de ta promesse ? » ${s.membership ? 'Elle veut venir voir ton prochain match.' : 'Elle te demande quand tu entres enfin dans un club.'}`,
+    choices: [
+      { id: 'invite', label: 'L’emmener à ton prochain entraînement', effects: { rel: { sibling: 8, parent2: 3 }, morale: 8, energy: -5 }, result: 'Elle a crié ton nom à chaque contrôle réussi.' },
+      { id: 'renew', label: 'Renouveler la promesse, plus sérieusement', effects: { attrs: { mental: 1, discipline: 0.8 }, rel: { sibling: 4 } }, result: 'Petit doigt levé, encore une fois. Cette fois, tu le penses deux fois plus.' },
+    ],
+  },
+);
+
 export const BIRTHDAY_EVENT = 'birthday';
 
 export function notifyEventResult(s: Parameters<GameEvent['text']>[0], title: string, msg: string) {

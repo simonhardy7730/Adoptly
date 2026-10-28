@@ -13,6 +13,7 @@ import { objectives } from '../game/objectives';
 import { visibleActions } from '../game/actions';
 import { activeContracts } from '../game/sponsors';
 import { totalCaps } from '../game/national';
+import { FirstSteps } from './FirstSteps';
 
 const NOTIF_ICON: Record<string, string> = { invite: '📨', injury: '🚑', offer: '📝', event: '📖', info: 'ℹ️', money: '💶', sponsor: '🤝', national: '🎽', success: '🌟', warning: '⚠️' };
 
@@ -38,6 +39,7 @@ export function Dashboard() {
     p.energy < 35 ? 'rest' : null,
     p.injury ? 'physio' : null,
     age <= 17 && !p.injury && p.energy >= 25 ? 'street_match' : null,
+    !g.membership ? 'visit_local_club' : null,
     p.school.grade < 10 && age < 18 ? 'study' : null,
     g.identity.position === 'GK' ? 'train_goalkeeping' : 'train_technique',
     'train_physical',
@@ -54,7 +56,7 @@ export function Dashboard() {
       <div className="col" style={{ gap: 16 }}>
         <div className="card">
           <div className="hero">
-            <Avatar a={g.appearance} age={age} size={130} colors={club?.colors ?? ['#1fa860', '#ffffff']} />
+            <Avatar a={g.appearance} age={age} size={130} colors={club?.colors} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div className="row wrap" style={{ gap: 6, marginBottom: 6 }}>
                 <span className="pill">{nat.flag} {nat.name}{g.identity.secondNationality ? ` · ${country(g.identity.secondNationality).flag}` : ''}</span>
@@ -75,6 +77,8 @@ export function Dashboard() {
             <div className="ovr"><b>{Math.round(ovr)}</b><span>NIVEAU</span></div>
           </div>
         </div>
+
+        <FirstSteps />
 
         <div className="card">
           <h3>⚡ Cette semaine <span className="sub">{g.slots.left}/{g.slots.max} action(s) restante(s)</span></h3>

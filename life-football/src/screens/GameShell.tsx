@@ -21,6 +21,7 @@ import { HistoryScreen } from './HistoryScreen';
 import { MatchScreen } from './MatchScreen';
 import { TryoutScreen } from './TryoutScreen';
 import { PracticeScreen } from './PracticeScreen';
+import { PrologueScreen } from './PrologueScreen';
 import type { GameState } from '../game/types';
 import { socialLocked } from '../game/social';
 
@@ -61,6 +62,8 @@ export function GameShell() {
   const block = blockingActivity(g);
   const nextLabel = block?.type === 'event' ? 'Décision en attente' : block?.type === 'tryout' ? 'Aller à la détection' : block?.type === 'league' ? 'Jouer le match' : block?.type === 'national' ? 'Match en sélection' : 'Semaine suivante';
   const p = g.player;
+
+  if (!g.prologue.done) return <PrologueScreen />;
 
   let lastGroup = '';
   return (

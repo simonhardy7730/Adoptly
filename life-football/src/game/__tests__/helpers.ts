@@ -10,14 +10,26 @@ import { answerClubOffer, answerTryout, completeTryout } from '../career';
 import { autoPlay, createMatchFor } from '../flow';
 import { answerCallup } from '../national';
 import { signSponsor } from '../sponsors';
+import { choosePrologue, finishPrologue, prologueScene } from '../prologue';
 
 export function makeInput(over: Partial<CreationInput['identity']> = {}): CreationInput {
   const identity = { ...defaultIdentity(), firstName: 'Léo', lastName: 'Testeur', nationality: 'FR', ...over };
   return { identity, appearance: defaultAppearance(), qualities: ['technique', 'passing', 'vision'], startAge: 9 };
 }
 
-export function newGame(seed = 42, over: Partial<CreationInput['identity']> = {}): GameState {
-  return createGame(makeInput(over), seed);
+export function newGame(seed = 42, over: Partial<CreationInput['identity']> = {}, prologue = true): GameState {
+  const s = createGame(makeInput(over), seed);
+  if (prologue) playPrologue(s);
+  return s;
+}
+
+/** Joue le prologue en prenant toujours le premier choix. */
+export function playPrologue(s: GameState) {
+  while (!s.prologue.done) {
+    const scene = prologueScene(s);
+    if (!scene) { finishPrologue(s); break; }
+    choosePrologue(s, scene.choices(s)[0].id);
+  }
 }
 
 export function resolveAllEvents(s: GameState) {

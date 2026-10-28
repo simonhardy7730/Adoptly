@@ -9,7 +9,7 @@ Tout est fictif : clubs, marques, personnages, compétitions.
 cd life-football
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 28 tests (règles de jeu + parcours complets simulés)
+npm test           # 39 tests (règles de jeu + parcours complets simulés)
 npm run build      # build de production dans dist/
 ```
 
@@ -31,6 +31,8 @@ src/
     sponsors.ts    Offres, négociation, exclusivité, obligations, paiements
     national.ts    Convocations, matchs internationaux, verrouillage
     eligibility.ts Règles d'éligibilité configurables
+    creation.ts    Validation du créateur par étape, cohérence poste / profil
+    prologue.ts    Moteur du prologue narratif (scènes dans content/prologue.ts)
     social.ts      Réseau social fictif « Tribune »
     save.ts        Sauvegarde localStorage versionnée + migrations
   content/       Données éditables (pays, profils, marques, aliments, événements, noms)
@@ -40,6 +42,24 @@ src/
 
 Langue : textes en français. Les données de contenu sont isolées dans `content/` pour
 pouvoir être dupliquées par langue.
+
+## Créateur et début d'histoire
+
+- 5 étapes (Identité, Apparence, Profil sportif, Origines, Récapitulatif) validées par
+  `game/creation.ts` : messages par champ, onglets verrouillés tant qu'une étape précédente
+  est incomplète, bouton Suivant qui refuse d'avancer.
+- Aperçu en direct : silhouette complète (taille, corpulence, maillot, motif, crampons,
+  accessoire) ou portrait, et caractéristiques **identiques** à celles du joueur créé
+  (graine partagée, variation aléatoire à somme nulle, bouton « Relancer »).
+- Caractéristiques initiales = âge + poste + pied fort + profil + 3 qualités + origines +
+  morphologie (détail affiché dans « D'où viennent ces valeurs ? »).
+- Prologue en 4 chapitres (famille, quartier, premier souvenir, rêve) : chaque choix modifie
+  caractéristiques, relations, argent ou drapeaux, et certains programment des événements
+  plus tard (tournoi du quartier, idole en dédicace, promesse à la sœur).
+- Guide « Tes premiers pas » : entraînement, match de quartier, visite du club local
+  (licence), première détection.
+- Sauvegarde v2 : identité, apparence, trace de création (qualités, graine, valeurs
+  initiales) et choix du prologue. Les sauvegardes v1 sont migrées automatiquement.
 
 ## Ce qui est jouable
 
@@ -60,6 +80,24 @@ pouvoir être dupliquées par langue.
 - Sélections jeunes (U15→U21) et A, double nationalité, verrouillage après match officiel A.
 - Finances avec historique et comparaison revenus sportifs / commerciaux, impôts simplifiés.
 - 3 emplacements de sauvegarde, sauvegarde auto et manuelle.
+
+## Points d'extension pour les prochains systèmes
+
+Aucun de ces systèmes n'a d'écran factice ; chacun a un point d'ancrage dans l'état existant.
+
+| Système | Où le brancher |
+| --- | --- |
+| Clubs et centres de formation | `game/career.ts` (`Club`, `ClubMembership`, championnat) ; nouveaux niveaux dans `world.ts` |
+| Détections et mini-jeux | `minigames/logic.ts` (logique pure) + composant ; épreuves choisies dans `store` (`advance`) |
+| Agents et contrats | nouveau `game/agents.ts` ; contrats pros à côté de `ClubOffer` ; revenus via `addMoney(…, 'salary')` |
+| Sponsors et équipementiers | `game/sponsors.ts`, marques dans `content/brands.ts` |
+| Sélections nationales | `game/national.ts`, règles dans `game/eligibility.ts` |
+| Vie sociale et famille | PNJ (`Npc`) dans `world.ts`, actions dans `actions.ts`, événements dans `content/events.ts` |
+| Carrière pro et transferts | prolongement de `career.ts` (offres, statut) et `week.ts` (salaires mensuels) |
+| Retraite et entraîneur | nouvelle phase dans `GameState` + écran dédié ; le moteur `match.ts` sert de base |
+
+Toute nouvelle donnée persistée = champ dans `types.ts` + migration dans `save.ts`
+(incrémenter `SAVE_VERSION`) + test de migration.
 
 ## Pas encore développé
 

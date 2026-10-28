@@ -2,7 +2,7 @@
 
 import type { GameState } from './types';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const SLOT_COUNT = 3;
 const PREFIX = 'lifefootball.save.';
 
@@ -35,7 +35,16 @@ interface SaveEnvelope {
  * de la version N vers N+1. Exemple pour une future v2 :
  *   1: (s) => ({ ...s, version: 2, nouveauChamp: valeurParDefaut })
  */
-export const MIGRATIONS: Record<number, (s: any) => any> = {};
+export const MIGRATIONS: Record<number, (s: any) => any> = {
+  // v1 → v2 : équipement visuel du joueur, trace de la création, prologue narratif.
+  1: (s) => ({
+    ...s,
+    version: 2,
+    appearance: { kitColor: '#1fa860', kitColor2: '#ffffff', kitPattern: 'plain', bootsColor: '#1b1b1b', accessory: 'none', ...s.appearance },
+    creation: s.creation ?? { qualities: [], startAge: 9, seed: 0, initialAttrs: { ...s.player.attrs } },
+    prologue: s.prologue ?? { done: true, step: 0, choices: {} },
+  }),
+};
 
 export function migrate(state: any): GameState {
   let s = state;

@@ -8,6 +8,7 @@ import { PageTitle, StatBar, Stars } from '../ui/kit';
 import { playerOverall, potentialEstimate, overall } from '../game/stats';
 import { nationEligibility, ELIGIBILITY_RULES } from '../game/eligibility';
 import { currentClub } from '../game/career';
+import { PROLOGUE } from '../content/prologue';
 import type { Position } from '../game/types';
 
 export function ProfileScreen() {
@@ -24,7 +25,7 @@ export function ProfileScreen() {
       <div className="grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)' }}>
         <div className="col" style={{ gap: 16 }}>
           <div className="card center">
-            <Avatar a={g.appearance} age={age} size={190} colors={club?.colors ?? ['#1fa860', '#ffffff']} />
+            <Avatar a={g.appearance} age={age} size={190} colors={club?.colors} />
             <div className="hero-name" style={{ fontSize: 30 }}>{id.firstName} {id.lastName}</div>
             {id.nickname && <div className="green">« {id.nickname} »</div>}
             <div className="small muted">{age} ans · né(e) en {MONTHS[id.birthMonth - 1]} {id.birthYear} à {id.birthCity} ({country(id.birthCountry).name})</div>
@@ -39,6 +40,16 @@ export function ProfileScreen() {
               <div><div className="tiny dim">Milieu</div><b className="small">{background(id.background).label}</b></div>
               <div><div className="tiny dim">Environnement</div><b className="small">{environment(id.environment).label}</b></div>
             </div>
+          </div>
+          <div className="card">
+            <h3>📖 Ton histoire</h3>
+            {g.creation.qualities.length > 0 && <div className="row between small"><span className="muted">Qualités de départ</span><b>{g.creation.qualities.map((q) => ATTR_LABELS[q]).join(', ')}</b></div>}
+            <div className="row between small"><span className="muted">Âge au début</span><b>{g.creation.startAge} ans</b></div>
+            {PROLOGUE.map((sc) => {
+              const cid = g.prologue.choices[sc.id];
+              const c = cid ? sc.choices(g).find((x) => x.id === cid) : undefined;
+              return c ? <div key={sc.id} className="feed-item"><div className="ic">{sc.icon}</div><div><div className="tiny dim">{sc.title}</div><div className="small">{c.label}</div></div></div> : null;
+            })}
           </div>
           <div className="card">
             <h3>🌍 Nationalités & éligibilité</h3>

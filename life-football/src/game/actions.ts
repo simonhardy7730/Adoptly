@@ -7,6 +7,7 @@ import { addMoney, changeRelation, journal, npcByRole } from './helpers';
 import { applyTraining, FOCUS_SPLIT, type TrainingFocus } from './stats';
 import { background } from '../content/profiles';
 import { food } from '../content/foods';
+import { createClubOffer } from './career';
 import { chance, clamp, round1 } from './rng';
 import { ATTR_LABELS } from '../content/profiles';
 
@@ -121,6 +122,36 @@ export const ACTIONS: ActionDef[] = [
     stakes: () => ['Énergie −18', 'Réputation locale', 'Petite chance d’être repéré'],
     unavailable: (s) => injured(s) ?? needEnergy(s, 20) ?? (ageAt(s) > 17 ? 'Tu as passé l’âge des matchs de quartier' : null),
     run: () => 'match', // géré par le store : lance l'écran de match
+  },
+  {
+    id: 'visit_local_club',
+    label: 'Visiter le club local',
+    icon: '🏟️',
+    category: 'football',
+    cost: 1,
+    description: (s) => {
+      const c = localClub(s);
+      return c ? `${c.name}, à ${c.distanceKm} km. Les clubs amateurs accueillent les enfants qui veulent jouer : une licence suffit.` : 'Aucun club local.';
+    },
+    stakes: () => ['Proposition d’inscription possible', 'Cotisation annuelle ~80 €', 'Énergie −8'],
+    unavailable: (s) => {
+      if (s.membership) return 'Tu as déjà un club';
+      const c = localClub(s);
+      if (!c) return 'Aucun club local';
+      if (s.clubOffers.some((o) => o.clubId === c.id && o.status === 'pending')) return 'Proposition en attente dans l’onglet Club';
+      if ((s.events.flags.localVisit ?? -99) > s.t - 12) return 'Déjà visité récemment';
+      return null;
+    },
+    run: (s) => {
+      const c = localClub(s)!;
+      s.events.flags.localVisit = s.t;
+      s.player.energy = clamp(s.player.energy - 8);
+      // Un club amateur accueille presque tout le monde ; le rôle dépend du niveau.
+      const margin = (s.player.attrs.technique + s.player.attrs.passing) / 2 - 20;
+      createClubOffer(s, c, margin);
+      changeRelation(s, 'parent', 1);
+      return `L’éducateur de ${c.name} te fait faire quelques ateliers et te propose une licence. Réponds dans l’onglet Club.`;
+    },
   },
   {
     id: 'study',
@@ -293,6 +324,10 @@ export const ACTIONS: ActionDef[] = [
   },
 ];
 
+export function localClub(s: GameState) {
+  return [...s.clubs].filter((c) => c.tier === 1).sort((a, b) => a.distanceKm - b.distanceKm)[0];
+}
+
 export function physioCost(s: GameState) {
   const club = s.membership && s.clubs.find((c) => c.id === s.membership!.clubId);
   return club && club.tier >= 2 ? 0 : 20;
@@ -337,11 +372,14 @@ export function visibleActions(s: GameState): ActionDef[] {
 export function performAction(s: GameState, id: string): { ok: boolean; message: string } {
   const a = ACTIONS.find((x) => x.id === id);
   if (!a) return { ok: false, message: 'Action inconnue' };
+  if (!s.prologue.done) return { ok: false, message: 'Termine d’abord le prologue.' };
   if (s.slots.left < a.cost) return { ok: false, message: 'Plus de temps libre cette semaine.' };
   const reason = a.unavailable(s);
   if (reason) return { ok: false, message: reason };
   s.slots.left -= a.cost;
   s.weekLog.push(a.id);
+  s.events.flags[`done_${a.id}`] = (s.events.flags[`done_${a.id}`] ?? 0) + 1;
+  if (a.id.startsWith('train_') || a.id === 'private_coach') s.events.flags.done_train = (s.events.flags.done_train ?? 0) + 1;
   const message = a.run(s);
   return { ok: true, message };
 }

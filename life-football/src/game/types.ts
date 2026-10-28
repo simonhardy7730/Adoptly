@@ -59,6 +59,11 @@ export interface Appearance {
   heightClass: 'small' | 'medium' | 'tall';
   build: 'slim' | 'normal' | 'strong';
   jerseyNumber: number;
+  kitColor: string;
+  kitColor2: string;
+  kitPattern: string;
+  bootsColor: string;
+  accessory: string;
 }
 
 export interface Injury {
@@ -330,6 +335,19 @@ export interface PendingEvent {
   data?: Record<string, string | number>;
 }
 
+export interface CreationRecord {
+  qualities: AttrKey[];
+  startAge: number;
+  seed: number;
+  initialAttrs: Attributes;
+}
+
+export interface PrologueState {
+  done: boolean;
+  step: number;
+  choices: Record<string, string>;
+}
+
 export interface GameState {
   version: number;
   id: string;
@@ -341,6 +359,8 @@ export interface GameState {
   startYear: number;
   identity: Identity;
   appearance: Appearance;
+  creation: CreationRecord;
+  prologue: PrologueState;
   player: PlayerState;
   slots: { left: number; max: number };
   weekLog: string[]; // actions effectuées cette semaine
